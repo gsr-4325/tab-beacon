@@ -1,0 +1,154 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: light dark;
+  --bg: #0b1020;
+  --panel: #131a2a;
+  --panel-border: #24304d;
+  --text: #e5ecff;
+  --muted: #9fb1d9;
+  --primary: #3b82f6;
+  --danger: #ef4444;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 32px 20px 56px;
+}
+
+.hero,
+.card,
+.rule {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+}
+
+.hero {
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.subtitle {
+  color: var(--muted);
+  max-width: 720px;
+}
+
+.card {
+  margin-top: 20px;
+  padding: 20px;
+}
+
+.section-header,
+.rule-head,
+.row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rules {
+  display: grid;
+  gap: 16px;
+}
+
+.rule {
+  padding: 16px;
+  display: grid;
+  gap: 14px;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+input,
+textarea,
+select,
+button {
+  font: inherit;
+}
+
+input[type="text"],
+input:not([type]),
+textarea,
+select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #31405f;
+  background: #0d1426;
+  color: var(--text);
+}
+
+button {
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  background: #2a3756;
+  color: var(--text);
+}
+
+button.primary {
+  background: var(--primary);
+}
+
+button.danger {
+  background: var(--danger);
+}
+
+.examples {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.examples article {
+  border: 1px solid #31405f;
+  border-radius: 12px;
+  padding: 14px;
+  background: #0d1426;
+}
+
+.examples code {
+  display: block;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #09101d;
+  overflow-wrap: anywhere;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.smart-toggle {
+  margin-top: 26px;
+}
