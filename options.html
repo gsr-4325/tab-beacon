@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>TabBeacon Settings</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div>
+          <h1>TabBeacon</h1>
+          <p class="subtitle">AIやWebアプリの「考え中 / 処理中」を、タブアイコンで見分けるための MVP 設定画面です。</p>
+        </div>
+        <button id="saveAll" class="primary">保存</button>
+      </header>
+
+      <section class="card">
+        <h2>方針</h2>
+        <ul>
+          <li><code>selectorType</code> は <strong>auto / css / xpath</strong> に対応</li>
+          <li><strong>auto</strong> は入力文字列から CSS / XPath を自動判定</li>
+          <li><strong>Smart busy detection</strong> は <code>aria-busy="true"</code> や Stop 系ボタンを補助的に検出</li>
+          <li>今は 1 条件 1 ルールの小さな構成です</li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <h2>ルール</h2>
+          <button id="addRule" type="button">ルール追加</button>
+        </div>
+        <div id="rulesContainer" class="rules"></div>
+      </section>
+
+      <section class="card">
+        <h2>入力例</h2>
+        <div class="examples">
+          <article>
+            <h3>CSS セレクタ</h3>
+            <code>[aria-busy="true"]</code>
+            <code>button[data-testid*="stop"]</code>
+          </article>
+          <article>
+            <h3>XPath</h3>
+            <code>//*[@aria-busy="true"]</code>
+            <code>//button[contains(@aria-label, "Stop")]</code>
+          </article>
+          <article>
+            <h3>URL パターン</h3>
+            <code>https://chatgpt.com/*</code>
+            <code>https://claude.ai/*</code>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <template id="ruleTemplate">
+      <article class="rule">
+        <div class="rule-head">
+          <input class="rule-name" placeholder="Rule name" />
+          <label class="inline"><input type="checkbox" class="rule-enabled" />有効</label>
+          <button type="button" class="danger remove-rule">削除</button>
+        </div>
+
+        <label>
+          URL パターン
+          <textarea class="rule-matches" rows="3" placeholder="1行に1つずつ入力"></textarea>
+        </label>
+
+        <div class="row">
+          <label>
+            セレクタ種別
+            <select class="rule-selector-type">
+              <option value="auto">auto</option>
+              <option value="css">css</option>
+              <option value="xpath">xpath</option>
+            </select>
+          </label>
+
+          <label class="inline smart-toggle">
+            <input type="checkbox" class="rule-smart-busy" />
+            Smart busy detection を使う
+          </label>
+        </div>
+
+        <label>
+          Busy 判定クエリ
+          <input class="rule-busy-query" placeholder='例: [aria-busy="true"] または //button[contains(@aria-label, "Stop")]' />
+        </label>
+
+        <div class="hint"></div>
+      </article>
+    </template>
+
+    <script src="options.js"></script>
+  </body>
+</html>
