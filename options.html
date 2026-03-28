@@ -11,7 +11,7 @@
       <header class="hero">
         <div>
           <h1>TabBeacon</h1>
-          <p class="subtitle">AIやWebアプリの「考え中 / 処理中」を、タブアイコンで見分けるための MVP 設定画面です。</p>
+          <p class="subtitle">AIやWebアプリの考え中 / 処理中を、DOM条件と network 条件の両方から見分けるための設定画面です。</p>
         </div>
         <button id="saveAll" class="primary">保存</button>
       </header>
@@ -19,10 +19,10 @@
       <section class="card">
         <h2>方針</h2>
         <ul>
-          <li><code>selectorType</code> は <strong>auto / css / xpath</strong> に対応</li>
-          <li><strong>auto</strong> は入力文字列から CSS / XPath を自動判定</li>
-          <li><strong>Smart busy detection</strong> は <code>aria-busy="true"</code> や Stop 系ボタンを補助的に検出</li>
-          <li>今は 1 条件 1 ルールの小さな構成です</li>
+          <li>1 ルールの中に複数条件を持てます</li>
+          <li><code>ANY</code> はどれか 1 つ一致、<code>ALL</code> は全部一致です</li>
+          <li>条件は <strong>DOM</strong> と <strong>Network</strong> を混在できます</li>
+          <li>Smart busy detection はルール全体に対する補助シグナルです</li>
         </ul>
       </section>
 
@@ -38,14 +38,14 @@
         <h2>入力例</h2>
         <div class="examples">
           <article>
-            <h3>CSS セレクタ</h3>
+            <h3>DOM 条件</h3>
             <code>[aria-busy="true"]</code>
-            <code>button[data-testid*="stop"]</code>
+            <code>//button[contains(@aria-label, "Stop")]</code>
           </article>
           <article>
-            <h3>XPath</h3>
-            <code>//*[@aria-busy="true"]</code>
-            <code>//button[contains(@aria-label, "Stop")]</code>
+            <h3>Network 条件</h3>
+            <code>urlContains: /backend-api/</code>
+            <code>pathPrefix: /backend-api/conversation</code>
           </article>
           <article>
             <h3>URL パターン</h3>
@@ -69,13 +69,12 @@
           <textarea class="rule-matches" rows="3" placeholder="1行に1つずつ入力"></textarea>
         </label>
 
-        <div class="row">
+        <div class="row rule-controls">
           <label>
-            セレクタ種別
-            <select class="rule-selector-type">
-              <option value="auto">auto</option>
-              <option value="css">css</option>
-              <option value="xpath">xpath</option>
+            条件の結合
+            <select class="rule-match-mode">
+              <option value="any">ANY</option>
+              <option value="all">ALL</option>
             </select>
           </label>
 
@@ -85,13 +84,85 @@
           </label>
         </div>
 
-        <label>
-          Busy 判定クエリ
-          <input class="rule-busy-query" placeholder='例: [aria-busy="true"] または //button[contains(@aria-label, "Stop")]' />
-        </label>
-
-        <div class="hint"></div>
+        <section class="conditions-panel">
+          <div class="section-header">
+            <h3>条件</h3>
+            <button type="button" class="add-condition">条件追加</button>
+          </div>
+          <div class="conditions-container"></div>
+        </section>
       </article>
+    </template>
+
+    <template id="conditionTemplate">
+      <div class="condition">
+        <div class="condition-row">
+          <label>
+            条件ソース
+            <select class="condition-source">
+              <option value="dom">dom</option>
+              <option value="network">network</option>
+            </select>
+          </label>
+
+          <div class="condition-dom-fields">
+            <label>
+              セレクタ種別
+              <select class="condition-selector-type">
+                <option value="auto">auto</option>
+                <option value="css">css</option>
+                <option value="xpath">xpath</option>
+              </select>
+            </label>
+
+            <label class="condition-query-wrap">
+              Busy 判定クエリ
+              <input class="condition-query" placeholder='例: [aria-busy="true"] または //button[contains(@aria-label, "Stop")]' />
+            </label>
+          </div>
+
+          <div class="condition-network-fields hidden">
+            <label>
+              URL マッチ
+              <select class="condition-match-type">
+                <option value="urlContains">urlContains</option>
+                <option value="pathPrefix">pathPrefix</option>
+                <option value="regex">regex</option>
+              </select>
+            </label>
+
+            <label class="condition-value-wrap">
+              値
+              <input class="condition-value" placeholder="例: /backend-api/conversation" />
+            </label>
+
+            <label>
+              Method
+              <select class="condition-method">
+                <option value="ANY">ANY</option>
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="PATCH">PATCH</option>
+                <option value="DELETE">DELETE</option>
+              </select>
+            </label>
+
+            <label>
+              Resource kind
+              <select class="condition-resource-kind">
+                <option value="any">any</option>
+                <option value="fetch-xhr">fetch/xhr</option>
+                <option value="websocket">websocket</option>
+                <option value="other">other</option>
+              </select>
+            </label>
+          </div>
+
+          <button type="button" class="danger remove-condition">削除</button>
+        </div>
+        <div class="hint condition-hint"></div>
+      </div>
     </template>
 
     <script src="options.js"></script>

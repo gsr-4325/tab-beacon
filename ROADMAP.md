@@ -13,37 +13,58 @@ AI チャットや Web アプリの「処理中」を、通知音やデスクト
 - [x] CSS / XPath / auto 判定
 - [x] `aria-busy` と Stop 系 UI による Smart busy detection
 
-## Phase 2: 自分で使って詰める
+## Phase 2: 使えるルールエンジンへ育てる
 
-- [ ] ChatGPT で busy 判定の実測
+- [x] リピータブルな条件フィールド
+- [x] ルール単位の `ANY / ALL` 条件結合
+- [x] 複数 DOM 条件の評価
+- [x] 旧 `busyQuery` 形式からの後方互換読み込み
+- [x] 同一 URL にマッチした複数ルールを OR として評価
+- [ ] `exists / notExists / textIncludes / attributeEquals` を追加
+- [ ] ルールの簡易バリデーション
+- [ ] 設定画面からのテスト実行ボタン
+
+## Phase 3: ChatGPT での実測と安定化
+
+- [ ] ChatGPT の現行 DOM で busy 判定を実測
 - [ ] 誤検知の整理
-- [ ] busy 判定の優先順位見直し
+- [ ] `aria-busy` 以外の壊れにくいシグナル候補を整理
 - [ ] 1週間の実使用で有用性を確認
 - [ ] CPU 負荷と違和感の確認
+- [ ] favicon 復元まわりの edge case を洗い出し
 
-## Phase 3: 条件エンジンを少し拡張
+## Phase 4: Network 監視の実装プラン
 
-- [ ] `exists / notExists / textIncludes / attributeEquals` を追加
-- [ ] CSS / XPath の両対応を維持
-- [ ] 複数条件の OR 対応
-- [ ] ルールの簡易バリデーション
+- [x] ルールスキーマに `source: dom | network` を追加
+- [x] `background.service_worker` を追加
+- [x] タブ単位・ルール単位の in-flight request カウンタの最小実装
+- [x] network 条件として `urlContains / pathPrefix / regex` を実装
+- [x] network 条件として `method / resourceKind` フィルタを実装
+- [x] DOM と network の hybrid 判定の土台を実装
+- [ ] request 終了後のクールダウンを実装
+- [ ] 関係ない通信を避けるための除外戦略を整理
+- [ ] WebSocket / streaming fetch / SSE の扱い方針を整理
+- [ ] options UI に network 条件編集 UI を追加
 
-## Phase 4: 設定体験の改善
+## Phase 5: 設定体験の改善
 
+- [x] 条件行ごとの source 切り替え UI
 - [ ] 要素ピッカー
 - [ ] 現在のページからルールを追加
-- [ ] テスト実行ボタン
 - [ ] import / export
+- [ ] ユーザー向けエラーメッセージとヒント表示
+- [ ] デバッグ表示または診断モード
 
-## Phase 5: 公開前の整理
+## Phase 6: 公開前の整理
 
 - [ ] `<all_urls>` をやめて権限を絞る
 - [ ] optional permissions の検討
 - [ ] README のスクリーンショット追加
+- [ ] README に新ルール形式の説明を追加
 - [ ] ストア掲載文面の作成
 - [ ] ライセンス決定
 
-## Phase 6: 拡張候補
+## Phase 7: 拡張候補
 
 - [ ] done / error 状態の表示
 - [ ] サイト別の軽いプリセット

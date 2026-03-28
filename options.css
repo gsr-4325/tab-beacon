@@ -21,14 +21,16 @@ body {
 }
 
 .page {
-  max-width: 980px;
+  max-width: 1080px;
   margin: 0 auto;
   padding: 32px 20px 56px;
 }
 
 .hero,
 .card,
-.rule {
+.rule,
+.condition,
+.conditions-panel {
   background: var(--panel);
   border: 1px solid var(--panel-border);
   border-radius: 16px;
@@ -55,14 +57,16 @@ body {
 
 .section-header,
 .rule-head,
-.row {
+.row,
+.condition-row {
   display: flex;
   gap: 16px;
   align-items: center;
   justify-content: space-between;
 }
 
-.rules {
+.rules,
+.conditions-container {
   display: grid;
   gap: 16px;
 }
@@ -71,6 +75,28 @@ body {
   padding: 16px;
   display: grid;
   gap: 14px;
+}
+
+.conditions-panel {
+  padding: 14px;
+}
+
+.condition {
+  padding: 14px;
+  border-radius: 12px;
+}
+
+.condition-dom-fields,
+.condition-network-fields {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex: 1;
+}
+
+.condition-query-wrap,
+.condition-value-wrap {
+  flex: 1;
 }
 
 label {
@@ -151,4 +177,35 @@ button.danger {
 
 .smart-toggle {
   margin-top: 26px;
+}
+
+.rule-controls {
+  align-items: flex-end;
+}
+
+.hidden {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .condition-row,
+  .condition-dom-fields,
+  .condition-network-fields {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 760px) {
+  .hero,
+  .section-header,
+  .rule-head,
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .smart-toggle {
+    margin-top: 0;
+  }
 }

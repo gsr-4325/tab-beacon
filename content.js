@@ -10,15 +10,21 @@ const DEFAULT_RULES = [
     name: "ChatGPT (starter)",
     enabled: true,
     matches: ["https://chatgpt.com/*", "https://chat.openai.com/*"],
-    selectorType: "auto",
-    busyQuery: '[aria-busy="true"]',
+    matchMode: "any",
+    busyWhen: [
+      {
+        source: "dom",
+        selectorType: "auto",
+        query: '[aria-busy="true"]'
+      }
+    ],
     useSmartBusySignals: true,
     iconMode: "overlaySpinner"
   }
 ];
 
 let state = {
-  activeRule: null,
+  activeRules: [],
   currentStatus: "idle",
   originalIcons: [],
   animationTimer: null,
@@ -27,7 +33,9 @@ let state = {
   baseIconDataUrl: null,
   observer: null,
   reevaluateTimer: null,
-  historyHooked: false
+  historyHooked: false,
+  runtimeHooked: false,
+  networkSnapshot: {}
 };
 
 bootstrap().catch((error) => {
@@ -35,14 +43,16 @@ bootstrap().catch((error) => {
 });
 
 async function bootstrap() {
-  const rules = await loadRules();
-  const rule = pickRuleForLocation(rules, location.href);
-  if (!rule) return;
+  const rules = (await loadRules()).map(normalizeRule).filter((rule) => rule.enabled);
+  const matchingRules = pickRulesForLocation(rules, location.href);
+  if (!matchingRules.length) return;
 
-  state.activeRule = normalizeRule(rule);
+  state.activeRules = matchingRules;
   state.originalIcons = captureOriginalIcons();
   state.baseIconDataUrl = await resolveBaseIconDataUrl(state.originalIcons);
 
+  installRuntimeHooks();
+  await registerCurrentTabUrl();
   applyStatus(evaluateBusyState() ? "busy" : "idle");
   installObservers();
   installHistoryHooks();
@@ -61,21 +71,46 @@ async function loadRules() {
   return rules;
 }
 
-function normalizeRule(rule) {
-  return {
-    selectorType: "auto",
-    busyQuery: "",
-    useSmartBusySignals: true,
-    iconMode: "overlaySpinner",
-    ...rule
+function normalizeRule(rule, index = 0) {
+  const normalized = {
+    id: rule.id || `rule-${index}`,
+    enabled: rule.enabled !== false,
+    matches: Array.isArray(rule.matches) ? rule.matches : [],
+    matchMode: rule.matchMode === "all" ? "all" : "any",
+    busyWhen: [],
+    useSmartBusySignals: rule.useSmartBusySignals !== false,
+    iconMode: rule.iconMode || "overlaySpinner"
   };
+
+  if (Array.isArray(rule.busyWhen) && rule.busyWhen.length) {
+    normalized.busyWhen = rule.busyWhen;
+  } else if (typeof rule.busyQuery === "string" && rule.busyQuery.trim()) {
+    normalized.busyWhen = [
+      {
+        source: "dom",
+        selectorType: rule.selectorType || "auto",
+        query: rule.busyQuery.trim()
+      }
+    ];
+  }
+
+  normalized.busyWhen = normalized.busyWhen
+    .map((condition) => ({
+      source: condition.source === "network" ? "network" : "dom",
+      selectorType: condition.selectorType || "auto",
+      query: typeof condition.query === "string" ? condition.query.trim() : "",
+      matchType: condition.matchType || "urlContains",
+      value: typeof condition.value === "string" ? condition.value.trim() : "",
+      method: condition.method || "ANY",
+      resourceKind: condition.resourceKind || "any"
+    }))
+    .filter((condition) => (condition.source === "network" ? condition.value : condition.query));
+
+  return normalized;
 }
 
-function pickRuleForLocation(rules, href) {
-  return rules.find((rule) => {
-    if (!rule.enabled) return false;
-    return (rule.matches || []).some((pattern) => wildcardMatch(pattern, href));
-  }) || null;
+function pickRulesForLocation(rules, href) {
+  return rules.filter((rule) => rule.matches.some((pattern) => wildcardMatch(pattern, href)));
 }
 
 function wildcardMatch(pattern, href) {
@@ -83,6 +118,29 @@ function wildcardMatch(pattern, href) {
     .replace(/[.+^${}()|[\]\\]/g, "\\$&")
     .replace(/\*/g, ".*");
   return new RegExp(`^${escaped}$`).test(href);
+}
+
+function installRuntimeHooks() {
+  if (state.runtimeHooked) return;
+  state.runtimeHooked = true;
+
+  chrome.runtime.onMessage.addListener((message) => {
+    if (!message || message.type !== "tab-beacon/network-state") return;
+    state.networkSnapshot = message.snapshot || {};
+    scheduleReevaluate();
+  });
+}
+
+async function registerCurrentTabUrl() {
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: "tab-beacon/register-tab",
+      url: location.href
+    });
+    state.networkSnapshot = response?.snapshot || {};
+  } catch (error) {
+    console.warn("[TabBeacon] failed to register tab URL", error);
+  }
 }
 
 function installObservers() {
@@ -118,19 +176,23 @@ function installHistoryHooks() {
     const original = history[name];
     history[name] = function (...args) {
       const result = original.apply(this, args);
-      scheduleReevaluate();
+      registerCurrentTabUrl().finally(scheduleReevaluate);
       return result;
     };
   };
 
   wrap("pushState");
   wrap("replaceState");
-  window.addEventListener("popstate", scheduleReevaluate);
-  window.addEventListener("hashchange", scheduleReevaluate);
+  window.addEventListener("popstate", () => {
+    registerCurrentTabUrl().finally(scheduleReevaluate);
+  });
+  window.addEventListener("hashchange", () => {
+    registerCurrentTabUrl().finally(scheduleReevaluate);
+  });
 }
 
 function scheduleReevaluate() {
-  if (!state.activeRule) return;
+  if (!state.activeRules.length) return;
   clearTimeout(state.reevaluateTimer);
   state.reevaluateTimer = setTimeout(() => {
     applyStatus(evaluateBusyState() ? "busy" : "idle");
@@ -138,16 +200,27 @@ function scheduleReevaluate() {
 }
 
 function evaluateBusyState() {
-  const rule = state.activeRule;
-  if (!rule) return false;
+  if (!state.activeRules.length) return false;
+  return state.activeRules.some((rule) => evaluateRuleBusy(rule));
+}
 
-  const explicitQueryMatch = rule.busyQuery.trim()
-    ? queryExists(rule.busyQuery.trim(), rule.selectorType)
+function evaluateRuleBusy(rule) {
+  const explicitResults = rule.busyWhen.map((condition, conditionIndex) => evaluateCondition(rule, condition, conditionIndex));
+  const explicitMatch = explicitResults.length
+    ? rule.matchMode === "all"
+      ? explicitResults.every(Boolean)
+      : explicitResults.some(Boolean)
     : false;
 
   const smartSignalsMatch = rule.useSmartBusySignals && detectSmartBusySignals();
+  return explicitMatch || smartSignalsMatch;
+}
 
-  return explicitQueryMatch || smartSignalsMatch;
+function evaluateCondition(rule, condition, conditionIndex) {
+  if (condition.source === "network") {
+    return !!state.networkSnapshot?.[rule.id]?.[String(conditionIndex)];
+  }
+  return queryExists(condition.query, condition.selectorType);
 }
 
 function queryExists(query, selectorType = "auto") {
@@ -403,13 +476,14 @@ function restoreOriginalIcons() {
   }
 }
 
-function cleanup(resetRule = true) {
+function cleanup(resetRules = true) {
   clearTimeout(state.reevaluateTimer);
   stopAnimation();
   restoreOriginalIcons();
   state.observer?.disconnect();
   state.observer = null;
-  if (resetRule) {
-    state.activeRule = null;
+  if (resetRules) {
+    state.activeRules = [];
+    state.networkSnapshot = {};
   }
 }
