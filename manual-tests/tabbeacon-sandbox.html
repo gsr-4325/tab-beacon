@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>TabBeacon Sandbox</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: #0b1020;
+        color: #e5ecff;
+      }
+      .page {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 32px 20px 56px;
+      }
+      .card {
+        background: #131a2a;
+        border: 1px solid #24304d;
+        border-radius: 16px;
+        padding: 20px;
+        margin-top: 20px;
+      }
+      h1, h2 { margin-top: 0; }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 12px;
+      }
+      button {
+        font: inherit;
+        border: 0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        cursor: pointer;
+        background: #2a3756;
+        color: #e5ecff;
+      }
+      button.primary { background: #2563eb; }
+      button.warn { background: #b45309; }
+      code, pre {
+        background: #09101d;
+        border-radius: 8px;
+        padding: 4px 8px;
+      }
+      pre {
+        padding: 12px;
+        overflow: auto;
+        white-space: pre-wrap;
+      }
+      .busy-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: #0d1426;
+        border: 1px solid #31405f;
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #22c55e;
+      }
+      .dot.busy { background: #f59e0b; }
+      .stack { display: grid; gap: 12px; }
+      input[type="text"] {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid #31405f;
+        background: #0d1426;
+        color: #e5ecff;
+      }
+      .hidden { display: none !important; }
+      #busyContainer {
+        margin-top: 14px;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+      }
+      #log {
+        max-height: 280px;
+        overflow: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="card">
+        <h1>TabBeacon Sandbox</h1>
+        <p>TabBeacon の DOM 条件と network 条件を手動で試すためのローカルページです。</p>
+        <div class="busy-pill"><span id="statusDot" class="dot"></span><span id="statusText">idle</span></div>
+      </header>
+
+      <section class="card stack">
+        <h2>1. DOM 条件テスト</h2>
+        <p>おすすめ条件: <code>[aria-busy="true"]</code></p>
+        <div class="row">
+          <button id="addBusy" class="primary">aria-busy 要素を追加</button>
+          <button id="removeBusy">aria-busy 要素を削除</button>
+          <button id="toggleStop">Stop ボタンをトグル</button>
+          <button id="runDomScenario" class="warn">5秒 busy シナリオ</button>
+        </div>
+        <div id="busyContainer"></div>
+      </section>
+
+      <section class="card stack">
+        <h2>2. Network 条件テスト</h2>
+        <p>最初は <code>urlContains: postman-echo.com</code> + <code>GET</code> + <code>fetch/xhr</code> をおすすめします。</p>
+        <label>
+          テスト URL
+          <input id="networkUrl" type="text" value="https://postman-echo.com/delay/5?tabbeacon=1" />
+        </label>
+        <div class="row">
+          <button id="runFetchGet" class="primary">fetch GET</button>
+          <button id="runFetchPost">fetch POST</button>
+          <button id="runXhrGet">XHR GET</button>
+        </div>
+        <p>注意: <code>file://</code> からの network はブラウザ制約や CORS の影響を受けることがあります。</p>
+      </section>
+
+      <section class="card stack">
+        <h2>3. 参考ルール</h2>
+        <pre>URL pattern
+file:///*manual-tests/*
+
+Condition A
+source: dom
+selectorType: css
+query: [aria-busy="true"]
+
+Condition B
+source: network
+matchType: urlContains
+value: postman-echo.com
+method: GET
+resourceKind: fetch/xhr
+
+matchMode: ANY</pre>
+      </section>
+
+      <section class="card stack">
+        <h2>4. ログ</h2>
+        <pre id="log"></pre>
+      </section>
+    </main>
+
+    <script>
+      const busyContainer = document.getElementById('busyContainer');
+      const logEl = document.getElementById('log');
+      const statusDot = document.getElementById('statusDot');
+      const statusText = document.getElementById('statusText');
+      const networkUrlEl = document.getElementById('networkUrl');
+      let stopButtonVisible = false;
+      let busyNode = null;
+      let stopNode = null;
+
+      function log(message) {
+        const line = `[${new Date().toLocaleTimeString()}] ${message}`;
+        logEl.textContent = `${line}\n${logEl.textContent}`.trim();
+      }
+
+      function setStatus(isBusy, reason) {
+        statusDot.classList.toggle('busy', isBusy);
+        statusText.textContent = isBusy ? `busy (${reason})` : 'idle';
+      }
+
+      function renderBusyNode() {
+        if (busyNode) return;
+        busyNode = document.createElement('div');
+        busyNode.setAttribute('aria-busy', 'true');
+        busyNode.setAttribute('aria-live', 'polite');
+        busyNode.textContent = 'Sandbox busy element is active';
+        busyNode.className = 'busy-pill';
+        busyContainer.appendChild(busyNode);
+        setStatus(true, 'DOM');
+        log('aria-busy element added');
+      }
+
+      function removeBusyNode() {
+        if (busyNode) {
+          busyNode.remove();
+          busyNode = null;
+          log('aria-busy element removed');
+        }
+        if (!stopNode) setStatus(false, 'none');
+      }
+
+      function toggleStopButton() {
+        if (stopNode) {
+          stopNode.remove();
+          stopNode = null;
+          stopButtonVisible = false;
+          log('stop button removed');
+          if (!busyNode) setStatus(false, 'none');
+          return;
+        }
+
+        stopNode = document.createElement('button');
+        stopNode.textContent = 'Stop generating';
+        stopNode.setAttribute('aria-label', 'Stop generating');
+        stopNode.dataset.testid = 'stop-button';
+        busyContainer.appendChild(stopNode);
+        stopButtonVisible = true;
+        setStatus(true, 'DOM');
+        log('stop button added');
+      }
+
+      async function runDomScenario() {
+        renderBusyNode();
+        if (!stopNode) toggleStopButton();
+        log('5-second DOM busy scenario started');
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+        removeBusyNode();
+        if (stopNode) toggleStopButton();
+        setStatus(false, 'none');
+        log('5-second DOM busy scenario ended');
+      }
+
+      async function runFetch(method) {
+        const url = networkUrlEl.value.trim();
+        if (!url) return;
+        log(`fetch ${method} started: ${url}`);
+        try {
+          const response = await fetch(url, {
+            method,
+            mode: 'cors',
+            headers: method === 'POST' ? { 'Content-Type': 'application/json' } : undefined,
+            body: method === 'POST' ? JSON.stringify({ source: 'tabbeacon-sandbox', ts: Date.now() }) : undefined
+          });
+          log(`fetch ${method} completed: status ${response.status}`);
+        } catch (error) {
+          log(`fetch ${method} failed: ${error.message}`);
+        }
+      }
+
+      function runXhrGet() {
+        const url = networkUrlEl.value.trim();
+        if (!url) return;
+        log(`XHR GET started: ${url}`);
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.onreadystatechange = () => {
+          if (xhr.readyState === 4) {
+            log(`XHR GET completed: status ${xhr.status}`);
+          }
+        };
+        xhr.onerror = () => {
+          log('XHR GET failed');
+        };
+        xhr.send();
+      }
+
+      document.getElementById('addBusy').addEventListener('click', renderBusyNode);
+      document.getElementById('removeBusy').addEventListener('click', removeBusyNode);
+      document.getElementById('toggleStop').addEventListener('click', toggleStopButton);
+      document.getElementById('runDomScenario').addEventListener('click', runDomScenario);
+      document.getElementById('runFetchGet').addEventListener('click', () => runFetch('GET'));
+      document.getElementById('runFetchPost').addEventListener('click', () => runFetch('POST'));
+      document.getElementById('runXhrGet').addEventListener('click', runXhrGet);
+    </script>
+  </body>
+</html>
