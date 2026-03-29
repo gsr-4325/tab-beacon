@@ -230,7 +230,7 @@ function createRuleNode(rule = createEmptyRule()) {
     disableRuleEditing(root);
   }
 
-  setRuleCollapsed(root, false);
+  setRuleCollapsed(root, true);
   return root;
 }
 
