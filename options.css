@@ -288,11 +288,21 @@ select:disabled {
 }
 
 .smart-toggle {
-  margin-top: 26px;
+  margin-top: 30px;
 }
 
 .rule-controls {
   align-items: flex-end;
+  margin-top: 8px;
+  margin-bottom: 6px;
+}
+
+.rule-controls > label:first-child {
+  gap: 10px;
+}
+
+.rule-controls > label:first-child select {
+  margin-top: 2px;
 }
 
 .hidden {
