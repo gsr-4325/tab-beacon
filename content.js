@@ -269,6 +269,7 @@ function detectSmartBusySignals() {
   if (ariaBusy) return true;
 
   const maybeStopButton = Array.from(document.querySelectorAll("button,[role='button'],a"))
+    .filter((node) => !node.closest('[data-tabbeacon-ignore-smart-busy="true"]'))
     .slice(0, 120)
     .some((node) => {
       const label = [
@@ -416,10 +417,19 @@ async function generateSpinnerFrames(baseIconDataUrl) {
     const ctx = canvas.getContext("2d");
 
     ctx.drawImage(baseImage, 0, 0, 32, 32);
+    ctx.fillStyle = 'rgba(7, 12, 24, 0.42)';
+    ctx.beginPath();
+    ctx.roundRect(0, 0, 32, 32, 8);
+    ctx.fill();
 
-    const centerX = 24;
-    const centerY = 24;
-    const radius = 5.5;
+    ctx.beginPath();
+    ctx.fillStyle = 'rgba(37, 99, 235, 0.16)';
+    ctx.arc(16, 16, 10.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    const centerX = 16;
+    const centerY = 16;
+    const radius = 8.2;
 
     for (let dotIndex = 0; dotIndex < FRAME_COUNT; dotIndex += 1) {
       const normalized = (dotIndex - frameIndex + FRAME_COUNT) % FRAME_COUNT;
@@ -429,10 +439,16 @@ async function generateSpinnerFrames(baseIconDataUrl) {
       const y = centerY + Math.sin(angle) * radius;
 
       ctx.beginPath();
-      ctx.fillStyle = `rgba(37, 99, 235, ${Math.max(0.18, alpha)})`;
-      ctx.arc(x, y, 2.2, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.2, alpha)})`;
+      ctx.arc(x, y, 2.45, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.38)';
+    ctx.lineWidth = 1.15;
+    ctx.arc(16, 16, 11.6, 0, Math.PI * 2);
+    ctx.stroke();
 
     frames.push(canvas.toDataURL("image/png"));
   }
