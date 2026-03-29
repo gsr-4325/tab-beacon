@@ -115,7 +115,7 @@ function pickRulesForLocation(rules, href) {
 
 function wildcardMatch(pattern, href) {
   const escaped = pattern
-    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+    .replace(/[.+^\${}()|[\\]\\]/g, "\\$&")
     .replace(/\*/g, ".*");
   return new RegExp(`^${escaped}$`).test(href);
 }
@@ -251,7 +251,7 @@ function resolveSelectorType(query, selectorType) {
   }
 
   const trimmed = query.trim();
-  const xpathHint = /^(\.?\/{1,2}|\(|ancestor::|descendant::|following-sibling::|preceding-sibling::|self::|@)/i;
+  const xpathHint = /^(\.?\/{1,2}|\(|ancestor::|descendant::|following-sibling::|preceding-sibling::|self::|@)\/i;
   if (xpathHint.test(trimmed) || trimmed.includes("::") || trimmed.includes("[@")) {
     return "xpath";
   }
@@ -284,7 +284,7 @@ function detectSmartBusySignals() {
         .toLowerCase();
 
       if (!label) return false;
-      return /(stop|cancel|interrupt|停止|中断|生成を停止)/i.test(label);
+      return /(stop|cancel|interrupt|停止|中断|生成を停止�/i.test(label);
     });
 
   if (maybeStopButton) return true;
@@ -337,7 +337,7 @@ function imageUrlToDataUrl(url) {
         canvas.height = 32;
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, 32, 32);
-        resolve(canvas.toDataURL("image/png"));
+        resolve(canvas.toDataUrl("image/png"));
       } catch (error) {
         reject(error);
       }
@@ -366,7 +366,7 @@ function createFallbackBaseIcon() {
   const initial = (document.title || location.hostname || "?").trim().charAt(0).toUpperCase() || "?";
   ctx.fillText(initial, 16, 17);
 
-  return canvas.toDataURL("image/png");
+  return canvas.toDataUrl("image/png");
 }
 
 function applyStatus(nextStatus) {
@@ -417,13 +417,13 @@ async function generateSpinnerFrames(baseIconDataUrl) {
     const ctx = canvas.getContext("2d");
 
     ctx.drawImage(baseImage, 0, 0, 32, 32);
-    ctx.fillStyle = 'rgba(7, 12, 24, 0.42)';
+    ctx.fillStyle = "rgba(7, 12, 24, 0.42)";
     ctx.beginPath();
     ctx.roundRect(0, 0, 32, 32, 8);
     ctx.fill();
 
     ctx.beginPath();
-    ctx.fillStyle = 'rgba(37, 99, 235, 0.16)';
+    ctx.fillStyle = "rgba(37, 99, 235, 0.16)";
     ctx.arc(16, 16, 10.8, 0, Math.PI * 2);
     ctx.fill();
 
@@ -445,12 +445,12 @@ async function generateSpinnerFrames(baseIconDataUrl) {
     }
 
     ctx.beginPath();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.38)';
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.38)";
     ctx.lineWidth = 1.15;
     ctx.arc(16, 16, 11.6, 0, Math.PI * 2);
     ctx.stroke();
 
-    frames.push(canvas.toDataURL("image/png"));
+    frames.push(canvas.toDataUrl("image/png"));
   }
 
   return frames;
@@ -466,7 +466,7 @@ function loadImage(url) {
 }
 
 function removeAllIconLinks() {
-  document.querySelectorAll("link[rel~='icon']").forEach((link) => link.remove());
+  document.querySelectorAll(link[rel~='icon']).forEach((link) => link.remove());
 }
 
 function ensureGeneratedIconLink() {
@@ -500,6 +500,14 @@ function restoreOriginalIcons() {
       link.href = icon.href;
       document.head.appendChild(link);
     }
+    return;
+  }
+
+  if (state.baseIconDataUrl) {
+    const link = document.createElement("link");
+    link.rel = "icon";
+    link.href = state.baseIconDataUrl;
+    document.head.appendChild(link);
   }
 }
 
