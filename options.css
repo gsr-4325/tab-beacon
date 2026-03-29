@@ -12,6 +12,13 @@
   --primary: #3b82f6;
   --danger: #ef4444;
   --badge-bg: #0d1426;
+  --rules-surface: #10182a;
+  --rule-surface: #142033;
+  --conditions-surface: #182539;
+  --condition-surface: #1b2b41;
+  --system-rule-surface: #1a202b;
+  --system-conditions-surface: #1d2430;
+  --system-condition-surface: #202937;
 }
 
 body {
@@ -74,10 +81,19 @@ body {
   gap: 16px;
 }
 
+.rules {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--rules-surface);
+  border: 1px solid rgba(53, 72, 110, 0.45);
+}
+
 .rule {
   padding: 16px;
   display: grid;
   gap: 14px;
+  background: var(--rule-surface);
 }
 
 .rule.collapsed .rule-body {
@@ -147,11 +163,28 @@ body {
 
 .conditions-panel {
   padding: 14px;
+  background: var(--conditions-surface);
 }
 
 .condition {
   padding: 14px;
   border-radius: 12px;
+  background: var(--condition-surface);
+}
+
+.readonly-rule {
+  background: var(--system-rule-surface);
+  border-color: rgba(95, 108, 133, 0.38);
+}
+
+.readonly-rule .conditions-panel {
+  background: var(--system-conditions-surface);
+  border-color: rgba(95, 108, 133, 0.28);
+}
+
+.readonly-rule .condition {
+  background: var(--system-condition-surface);
+  border-color: rgba(95, 108, 133, 0.24);
 }
 
 .condition-header {
