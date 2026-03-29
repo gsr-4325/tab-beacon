@@ -205,7 +205,9 @@ function evaluateBusyState() {
 }
 
 function evaluateRuleBusy(rule) {
-  const explicitResults = rule.busyWhen.map((condition, conditionIndex) => evaluateCondition(rule, condition, conditionIndex));
+  const explicitResults = rule.busyWhen.map((condition, conditionIndex) =>
+    evaluateCondition(rule, condition, conditionIndex)
+  );
   const explicitMatch = explicitResults.length
     ? rule.matchMode === "all"
       ? explicitResults.every(Boolean)
@@ -268,6 +270,7 @@ function detectSmartBusySignals() {
   const ariaBusy = document.querySelector('[aria-busy="true"]');
   if (ariaBusy) return true;
 
+  const stopLikePattern = /(\bstop\b|\bcancel\b|\binterrupt\b|\u505c\u6b62|\u4e2d\u65ad|\u751f\u6210\u3092\u505c\u6b62)/i;
   const maybeStopButton = Array.from(document.querySelectorAll("button,[role='button'],a"))
     .filter((node) => !node.closest('[data-tabbeacon-ignore-smart-busy="true"]'))
     .slice(0, 120)
@@ -283,8 +286,7 @@ function detectSmartBusySignals() {
         .trim()
         .toLowerCase();
 
-      if (!label) return false;
-      return /(stop|cancel|interrupt|停止|中断|生成を停止)/i.test(label);
+      return !!label && stopLikePattern.test(label);
     });
 
   if (maybeStopButton) return true;
@@ -417,13 +419,13 @@ async function generateSpinnerFrames(baseIconDataUrl) {
     const ctx = canvas.getContext("2d");
 
     ctx.drawImage(baseImage, 0, 0, 32, 32);
-    ctx.fillStyle = 'rgba(7, 12, 24, 0.42)';
+    ctx.fillStyle = "rgba(7, 12, 24, 0.42)";
     ctx.beginPath();
     ctx.roundRect(0, 0, 32, 32, 8);
     ctx.fill();
 
     ctx.beginPath();
-    ctx.fillStyle = 'rgba(37, 99, 235, 0.16)';
+    ctx.fillStyle = "rgba(37, 99, 235, 0.16)";
     ctx.arc(16, 16, 10.8, 0, Math.PI * 2);
     ctx.fill();
 
@@ -445,7 +447,7 @@ async function generateSpinnerFrames(baseIconDataUrl) {
     }
 
     ctx.beginPath();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.38)';
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.38)";
     ctx.lineWidth = 1.15;
     ctx.arc(16, 16, 11.6, 0, Math.PI * 2);
     ctx.stroke();
@@ -500,6 +502,14 @@ function restoreOriginalIcons() {
       link.href = icon.href;
       document.head.appendChild(link);
     }
+    return;
+  }
+
+  if (state.baseIconDataUrl) {
+    const link = document.createElement("link");
+    link.rel = "icon";
+    link.href = state.baseIconDataUrl;
+    document.head.appendChild(link);
   }
 }
 
