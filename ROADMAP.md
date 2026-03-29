@@ -20,6 +20,7 @@ AI チャットや Web アプリの「処理中」を、通知音やデスクト
 - [x] 複数 DOM 条件の評価
 - [x] 旧 `busyQuery` 形式からの後方互換読み込み
 - [x] 同一 URL にマッチした複数ルールを OR として評価
+- [x] ルールに `origin / slug / readonly` を追加
 - [ ] `exists / notExists / textIncludes / attributeEquals` を追加
 - [ ] ルールの簡易バリデーション
 - [ ] 設定画面からのテスト実行ボタン
@@ -50,6 +51,9 @@ AI チャットや Web アプリの「処理中」を、通知音やデスクト
 ## Phase 5: 設定体験の改善
 
 - [x] 条件行ごとの source 切り替え UI
+- [x] デバッグツール表示スイッチを追加
+- [x] ローカル sandbox 用デバッグプリセット追加ボタンを実装
+- [x] システムプリセットの重複追加防止を実装
 - [ ] 要素ピッカー
 - [ ] 現在のページからルールを追加
 - [ ] import / export
@@ -58,6 +62,9 @@ AI チャットや Web アプリの「処理中」を、通知音やデスクト
 
 ## Phase 6: 公開前の整理
 
+- [x] `_locales/en` と `_locales/ja` を追加
+- [x] options UI の i18n 化を開始
+- [ ] content / background 側のユーザー向け文言も i18n 化
 - [ ] `<all_urls>` をやめて権限を絞る
 - [ ] optional permissions の検討
 - [ ] README のスクリーンショット追加

@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>TabBeacon Settings</title>
+    <title data-i18n="optionsTitle">TabBeacon Settings</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="options.css" />
   </head>
@@ -10,45 +10,62 @@
     <main class="page">
       <header class="hero">
         <div>
-          <h1>TabBeacon</h1>
-          <p class="subtitle">AIやWebアプリの考え中 / 処理中を、DOM条件と network 条件の両方から見分けるための設定画面です。</p>
+          <h1 data-i18n="appName">TabBeacon</h1>
+          <p class="subtitle" data-i18n="optionsSubtitle">Configure DOM and network conditions to show a busy state on the tab icon.</p>
         </div>
-        <button id="saveAll" class="primary">保存</button>
+        <button id="saveAll" class="primary" data-i18n="save">Save</button>
       </header>
 
       <section class="card">
-        <h2>方針</h2>
+        <h2 data-i18n="policyTitle">Principles</h2>
         <ul>
-          <li>1 ルールの中に複数条件を持てます</li>
-          <li><code>ANY</code> はどれか 1 つ一致、<code>ALL</code> は全部一致です</li>
-          <li>条件は <strong>DOM</strong> と <strong>Network</strong> を混在できます</li>
-          <li>Smart busy detection はルール全体に対する補助シグナルです</li>
+          <li data-i18n="policyLine1">A single rule can have multiple conditions.</li>
+          <li data-i18n="policyLine2">ANY matches when at least one condition is true. ALL matches when every condition is true.</li>
+          <li data-i18n="policyLine3">You can mix DOM and network conditions in the same rule.</li>
+          <li data-i18n="policyLine4">Smart busy detection acts as a rule-wide fallback signal.</li>
         </ul>
       </section>
 
       <section class="card">
         <div class="section-header">
-          <h2>ルール</h2>
-          <button id="addRule" type="button">ルール追加</button>
+          <h2 data-i18n="debugTitle">Debug tools</h2>
+          <label class="inline">
+            <input id="showDebugTools" type="checkbox" />
+            <span data-i18n="debugToggle">Show debug tools</span>
+          </label>
+        </div>
+        <div id="debugPanel" class="stack hidden">
+          <p class="hint" data-i18n="debugDescription">Use this section to install a local sandbox preset without overwriting your own rules.</p>
+          <div class="row">
+            <button id="installDebugPreset" type="button" data-i18n="debugLoadPreset">Install local sandbox preset</button>
+          </div>
+          <div id="debugPresetStatus" class="hint"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <h2 data-i18n="rulesTitle">Rules</h2>
+          <button id="addRule" type="button" data-i18n="addRule">Add rule</button>
         </div>
         <div id="rulesContainer" class="rules"></div>
       </section>
 
       <section class="card">
-        <h2>入力例</h2>
+        <h2 data-i18n="examplesTitle">Examples</h2>
         <div class="examples">
           <article>
-            <h3>DOM 条件</h3>
+            <h3 data-i18n="exampleDomTitle">DOM condition</h3>
             <code>[aria-busy="true"]</code>
             <code>//button[contains(@aria-label, "Stop")]</code>
           </article>
           <article>
-            <h3>Network 条件</h3>
+            <h3 data-i18n="exampleNetworkTitle">Network condition</h3>
             <code>urlContains: /backend-api/</code>
             <code>pathPrefix: /backend-api/conversation</code>
           </article>
           <article>
-            <h3>URL パターン</h3>
+            <h3 data-i18n="exampleUrlTitle">URL pattern</h3>
             <code>https://chatgpt.com/*</code>
             <code>https://claude.ai/*</code>
           </article>
@@ -59,35 +76,41 @@
     <template id="ruleTemplate">
       <article class="rule">
         <div class="rule-head">
-          <input class="rule-name" placeholder="Rule name" />
-          <label class="inline"><input type="checkbox" class="rule-enabled" />有効</label>
-          <button type="button" class="danger remove-rule">削除</button>
+          <div class="rule-title-area">
+            <input class="rule-name" data-i18n-placeholder="ruleNamePlaceholder" placeholder="Rule name" />
+            <div class="rule-meta">
+              <span class="rule-origin-badge"></span>
+              <span class="rule-readonly-note hidden" data-i18n="ruleReadonlyNotice">This preset is managed by the extension and is read-only.</span>
+            </div>
+          </div>
+          <label class="inline"><input type="checkbox" class="rule-enabled" /><span data-i18n="enabled">Enabled</span></label>
+          <button type="button" class="danger remove-rule" data-i18n="remove">Remove</button>
         </div>
 
         <label>
-          URL パターン
-          <textarea class="rule-matches" rows="3" placeholder="1行に1つずつ入力"></textarea>
+          <span data-i18n="urlPatterns">URL patterns</span>
+          <textarea class="rule-matches" rows="3" data-i18n-placeholder="urlPatternsPlaceholder" placeholder="Enter one pattern per line"></textarea>
         </label>
 
         <div class="row rule-controls">
           <label>
-            条件の結合
+            <span data-i18n="matchMode">Condition join</span>
             <select class="rule-match-mode">
-              <option value="any">ANY</option>
-              <option value="all">ALL</option>
+              <option value="any" data-i18n="matchModeAny">ANY</option>
+              <option value="all" data-i18n="matchModeAll">ALL</option>
             </select>
           </label>
 
           <label class="inline smart-toggle">
             <input type="checkbox" class="rule-smart-busy" />
-            Smart busy detection を使う
+            <span data-i18n="smartBusyToggle">Use smart busy detection</span>
           </label>
         </div>
 
         <section class="conditions-panel">
           <div class="section-header">
-            <h3>条件</h3>
-            <button type="button" class="add-condition">条件追加</button>
+            <h3 data-i18n="conditionsTitle">Conditions</h3>
+            <button type="button" class="add-condition" data-i18n="addCondition">Add condition</button>
           </div>
           <div class="conditions-container"></div>
         </section>
@@ -98,46 +121,46 @@
       <div class="condition">
         <div class="condition-row">
           <label>
-            条件ソース
+            <span data-i18n="conditionSource">Condition source</span>
             <select class="condition-source">
-              <option value="dom">dom</option>
-              <option value="network">network</option>
+              <option value="dom" data-i18n="conditionSourceDom">dom</option>
+              <option value="network" data-i18n="conditionSourceNetwork">network</option>
             </select>
           </label>
 
           <div class="condition-dom-fields">
             <label>
-              セレクタ種別
+              <span data-i18n="selectorType">Selector type</span>
               <select class="condition-selector-type">
-                <option value="auto">auto</option>
-                <option value="css">css</option>
-                <option value="xpath">xpath</option>
+                <option value="auto" data-i18n="selectorTypeAuto">auto</option>
+                <option value="css" data-i18n="selectorTypeCss">css</option>
+                <option value="xpath" data-i18n="selectorTypeXpath">xpath</option>
               </select>
             </label>
 
             <label class="condition-query-wrap">
-              Busy 判定クエリ
-              <input class="condition-query" placeholder='例: [aria-busy="true"] または //button[contains(@aria-label, "Stop")]' />
+              <span data-i18n="busyQuery">Busy query</span>
+              <input class="condition-query" data-i18n-placeholder="busyQueryPlaceholder" placeholder='Example: [aria-busy="true"] or //button[contains(@aria-label, "Stop")]' />
             </label>
           </div>
 
           <div class="condition-network-fields hidden">
             <label>
-              URL マッチ
+              <span data-i18n="networkMatchType">URL match</span>
               <select class="condition-match-type">
-                <option value="urlContains">urlContains</option>
-                <option value="pathPrefix">pathPrefix</option>
-                <option value="regex">regex</option>
+                <option value="urlContains" data-i18n="matchTypeUrlContains">urlContains</option>
+                <option value="pathPrefix" data-i18n="matchTypePathPrefix">pathPrefix</option>
+                <option value="regex" data-i18n="matchTypeRegex">regex</option>
               </select>
             </label>
 
             <label class="condition-value-wrap">
-              値
-              <input class="condition-value" placeholder="例: /backend-api/conversation" />
+              <span data-i18n="networkValue">Value</span>
+              <input class="condition-value" data-i18n-placeholder="networkValuePlaceholder" placeholder="Example: /backend-api/conversation" />
             </label>
 
             <label>
-              Method
+              <span data-i18n="networkMethod">Method</span>
               <select class="condition-method">
                 <option value="ANY">ANY</option>
                 <option value="GET">GET</option>
@@ -149,22 +172,23 @@
             </label>
 
             <label>
-              Resource kind
+              <span data-i18n="networkResourceKind">Resource kind</span>
               <select class="condition-resource-kind">
-                <option value="any">any</option>
-                <option value="fetch-xhr">fetch/xhr</option>
-                <option value="websocket">websocket</option>
-                <option value="other">other</option>
+                <option value="any" data-i18n="resourceKindAny">any</option>
+                <option value="fetch-xhr" data-i18n="resourceKindFetchXhr">fetch/xhr</option>
+                <option value="websocket" data-i18n="resourceKindWebsocket">websocket</option>
+                <option value="other" data-i18n="resourceKindOther">other</option>
               </select>
             </label>
           </div>
 
-          <button type="button" class="danger remove-condition">削除</button>
+          <button type="button" class="danger remove-condition" data-i18n="remove">Remove</button>
         </div>
         <div class="hint condition-hint"></div>
       </div>
     </template>
 
+    <script src="i18n.js"></script>
     <script src="options.js"></script>
   </body>
 </html>
