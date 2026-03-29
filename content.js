@@ -115,7 +115,7 @@ function pickRulesForLocation(rules, href) {
 
 function wildcardMatch(pattern, href) {
   const escaped = pattern
-    .replace(/[.+^\${}()|[\\]\\]/g, "\\$&")
+    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
     .replace(/\*/g, ".*");
   return new RegExp(`^${escaped}$`).test(href);
 }
@@ -205,7 +205,9 @@ function evaluateBusyState() {
 }
 
 function evaluateRuleBusy(rule) {
-  const explicitResults = rule.busyWhen.map((condition, conditionIndex) => evaluateCondition(rule, condition, conditionIndex));
+  const explicitResults = rule.busyWhen.map((condition, conditionIndex) =>
+    evaluateCondition(rule, condition, conditionIndex)
+  );
   const explicitMatch = explicitResults.length
     ? rule.matchMode === "all"
       ? explicitResults.every(Boolean)
@@ -251,7 +253,7 @@ function resolveSelectorType(query, selectorType) {
   }
 
   const trimmed = query.trim();
-  const xpathHint = /^(\.?\/{1,2}|\(|ancestor::|descendant::|following-sibling::|preceding-sibling::|self::|@)\/i;
+  const xpathHint = /^(\.?\/{1,2}|\(|ancestor::|descendant::|following-sibling::|preceding-sibling::|self::|@)/i;
   if (xpathHint.test(trimmed) || trimmed.includes("::") || trimmed.includes("[@")) {
     return "xpath";
   }
@@ -268,6 +270,7 @@ function detectSmartBusySignals() {
   const ariaBusy = document.querySelector('[aria-busy="true"]');
   if (ariaBusy) return true;
 
+  const stopLikePattern = /(\bstop\b|\bcancel\b|\binterrupt\b|\u505c\u6b62|\u4e2d\u65ad|\u751f\u6210\u3092\u505c\u6b62)/i;
   const maybeStopButton = Array.from(document.querySelectorAll("button,[role='button'],a"))
     .filter((node) => !node.closest('[data-tabbeacon-ignore-smart-busy="true"]'))
     .slice(0, 120)
@@ -283,8 +286,7 @@ function detectSmartBusySignals() {
         .trim()
         .toLowerCase();
 
-      if (!label) return false;
-      return /(stop|cancel|interrupt|停止|中断|生成を停止�/i.test(label);
+      return !!label && stopLikePattern.test(label);
     });
 
   if (maybeStopButton) return true;
@@ -337,7 +339,7 @@ function imageUrlToDataUrl(url) {
         canvas.height = 32;
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, 32, 32);
-        resolve(canvas.toDataUrl("image/png"));
+        resolve(canvas.toDataURL("image/png"));
       } catch (error) {
         reject(error);
       }
@@ -366,7 +368,7 @@ function createFallbackBaseIcon() {
   const initial = (document.title || location.hostname || "?").trim().charAt(0).toUpperCase() || "?";
   ctx.fillText(initial, 16, 17);
 
-  return canvas.toDataUrl("image/png");
+  return canvas.toDataURL("image/png");
 }
 
 function applyStatus(nextStatus) {
@@ -450,7 +452,7 @@ async function generateSpinnerFrames(baseIconDataUrl) {
     ctx.arc(16, 16, 11.6, 0, Math.PI * 2);
     ctx.stroke();
 
-    frames.push(canvas.toDataUrl("image/png"));
+    frames.push(canvas.toDataURL("image/png"));
   }
 
   return frames;
@@ -466,7 +468,7 @@ function loadImage(url) {
 }
 
 function removeAllIconLinks() {
-  document.querySelectorAll(link[rel~='icon']).forEach((link) => link.remove());
+  document.querySelectorAll("link[rel~='icon']").forEach((link) => link.remove());
 }
 
 function ensureGeneratedIconLink() {
