@@ -1,59 +1,87 @@
-# TabBeacon
+# README
 
-TabBeacon は、Web ページ上の要素状態を監視して、タブの favicon に状態を重ねて表示する Chrome 拡張の実験プロジェクトです。最初の主用途は、AI チャットが考え中かどうかを別タブ作業中でも視覚的に把握できるようにすることです。
+## 概要
 
-## 現在の状態
+TabBeacon は、Web ページ上の状態変化を監視し、タブの favicon に busy 表示を重ねる Chrome / Edge 向け Manifest V3 拡張の実験プロジェクトです。最初の主用途は、ChatGPT などの AI チャットが考え中かどうかを、別タブ作業中でも視覚的に把握しやすくすることです。
 
-このリポジトリには、Manifest V3 ベースの MVP 土台が入っています。
+現在の manifest version は `0.3.1` です。
 
-- content script ベースでページの状態を監視
-- favicon に簡易スピナーを重ねて busy 状態を表示
-- options page からルールを編集
-- selectorType: `auto / css / xpath`
-- `auto` 指定時は入力文字列から CSS / XPath を自動判定
+## 現在の到達点
+
+- DOM 条件と network 条件を 1 ルール内で混在可能
+- selectorType は `auto / css / xpath`
+- `auto` 指定時は CSS / XPath を自動判定
+- ルール単位で `ANY / ALL` 条件結合
+- 複数ルールが同一 URL にマッチした場合は OR 評価
 - Smart busy detection
   - `aria-busy="true"`
   - Stop / Cancel / Interrupt / 停止 / 中断 系の UI 文言
+- favicon busy overlay アニメーション
+- 元 favicon が無いページでも fallback icon を復元可能
+- options page からルール編集
+- 条件カードの折りたたみ
+- ルールカードの折りたたみ（デフォルトで閉じる）
+- `user / system preset` の区別
+- ローカル sandbox 用デバッグプリセット
+- `_locales/en` と `_locales/ja` の土台
+- 設定画面フッターのバージョン表示
 
-## いまの設計方針
+## ユーザー確認済みの挙動
 
-- まずは **小さく動く MVP** を優先する
-- サイト別プリセットを増やしすぎず、まずは自分で使って検証する
-- CSS セレクタだけでなく XPath も扱う
-- 壊れにくさを上げるために `aria-*` 系のシグナルを優先する
-- favicon アニメーションは毎回の生描画ではなく、事前生成フレームを再利用する
+次は会話中に実際に確認できたものです。
 
-## まだ割り切っている点
+- `aria-busy` 要素の追加で busy overlay が始まる
+- `aria-busy` 要素の削除で busy overlay が止まる
+- sandbox 上で favicon の busy / idle 反映が正しく動く
+- Rules セクションの視覚的差異は意図どおり
+- `content.js` の UTF-8 問題は main に hotfix 済み
 
-- `content_scripts` と `host_permissions` はいま `"<all_urls>"` を使っている
-  - MVP をすぐ試せるようにするための割り切り
-  - 公開前には権限を絞る予定
-- 条件はまだ 1 ルール 1 busyQuery の最小構成
-- cross-origin の都合で元 favicon を描けない場合はフォールバックアイコンを使う
-- Smart busy detection はまだヒューリスティック
-
-## ディレクトリ構成
+## 主要ファイル
 
 - `manifest.json` : Manifest V3 定義
-- `content.js` : DOM 監視と favicon 更新
+- `background.js` : タブ単位 / ルール単位の network 監視の最小実装
+- `content.js` : DOM 監視、Smart busy detection、favicon 更新
 - `options.html` / `options.js` / `options.css` : 設定画面
-- `icons/` : 拡張アイコン
-- `ROADMAP.md` : 今後の進め方
+- `i18n.js` : options UI の i18n 補助
+- `_locales/en/messages.json` / `_locales/ja/messages.json` : locale 文字列
+- `manual-tests/tabbeacon-sandbox.html` : ローカル手動テストページ
+- `ROADMAP.md` : 実装進捗と未着手タスク
 
 ## ローカルで試す
 
-1. Chrome で `chrome://extensions` を開く
+### 拡張の読み込み
+
+1. Chrome なら `chrome://extensions`、Edge なら `edge://extensions` を開く
 2. 右上のデベロッパーモードを ON
 3. 「パッケージ化されていない拡張機能を読み込む」を選ぶ
 4. このリポジトリのルートを読み込む
-5. 拡張の詳細からオプション画面を開く
-6. ChatGPT などのルールを設定して busy 状態の見え方を確認する
+5. 設定画面を開く
 
-## 直近で確認したいこと
+### sandbox のテスト
 
-- ChatGPT の現行 DOM で `aria-busy` と Stop 系検知がどれだけ安定するか
-- 別タブ作業時に本当に「待ち時間の認知コスト」が減るか
-- 誤検知や CPU 負荷が気にならないか
+1. 拡張の詳細で **Allow access to file URLs** を ON にする
+2. 設定画面の Debug tools を開く
+3. **Install local sandbox preset** を押す
+4. `manual-tests/tabbeacon-sandbox.html` を `file://` で開く
+5. `aria-busy 要素を追加` / `削除` や `5秒 busy シナリオ` を試す
+
+## まだ割り切っている点
+
+- `content_scripts` と `host_permissions` はまだ `"<all_urls>"`
+- Smart busy detection はヒューリスティックで、サイト別の厳密最適化はまだ未着手
+- network 監視は最小土台で、クールダウンや除外戦略は未実装
+- content / background 側のユーザー向け文言の i18n はまだ途中
+- import / export、要素ピッカー、診断 UI は未実装
+- ライセンスは未設定
+
+## 次の AI への引き継ぎメモ
+
+- まず `ROADMAP.md` を見て、完了済みと未完了を確認する
+- issue は main の実装より古いことがあるので、着手前に現状コードと直近コミットを照合する
+- 最近の安定化で重要だったのは次の 2 点
+  - favicon 復元 fallback の追加
+  - `content.js` の UTF-8 hotfix
+- 直近で次に進めるなら、network 条件の診断 UI、ChatGPT 実測、権限の絞り込みの順が妥当
 
 ## ライセンス
 
