@@ -65,6 +65,7 @@ const showDebugToolsCheckbox = document.getElementById("showDebugTools");
 const debugPanel = document.getElementById("debugPanel");
 const installDebugPresetButton = document.getElementById("installDebugPreset");
 const debugPresetStatus = document.getElementById("debugPresetStatus");
+const versionText = document.getElementById("versionText");
 
 init().catch((error) => {
   console.error("[TabBeacon] options init failed", error);
@@ -72,6 +73,7 @@ init().catch((error) => {
 
 async function init() {
   I18N.apply(document);
+  versionText.textContent = `v${chrome.runtime.getManifest().version}`;
   const [rulesResult, uiStateResult] = await Promise.all([
     chrome.storage.local.get(STORAGE_KEY),
     chrome.storage.local.get(UI_STATE_KEY)
@@ -176,6 +178,7 @@ function createRuleNode(rule = createEmptyRule()) {
   const removeRuleButton = root.querySelector(".remove-rule");
   const originBadge = root.querySelector(".rule-origin-badge");
   const readonlyNote = root.querySelector(".rule-readonly-note");
+  const ruleToggleButton = root.querySelector(".rule-toggle");
 
   I18N.apply(root);
 
@@ -211,6 +214,10 @@ function createRuleNode(rule = createEmptyRule()) {
     refreshConditionIndexes(conditionsContainer);
   });
 
+  ruleToggleButton.addEventListener('click', () => {
+    setRuleCollapsed(root, !root.classList.contains('collapsed'));
+  });
+
   removeRuleButton.addEventListener("click", () => {
     if (rule.readonly) return;
     root.remove();
@@ -223,6 +230,7 @@ function createRuleNode(rule = createEmptyRule()) {
     disableRuleEditing(root);
   }
 
+  setRuleCollapsed(root, false);
   return root;
 }
 
@@ -329,12 +337,21 @@ function refreshConditionIndexes(container) {
   });
 }
 
+function setRuleCollapsed(root, collapsed) {
+  root.classList.toggle('collapsed', collapsed);
+  const toggleButton = root.querySelector('.rule-toggle');
+  if (toggleButton) {
+    toggleButton.setAttribute('aria-expanded', String(!collapsed));
+    toggleButton.setAttribute('title', collapsed ? 'Expand rule' : 'Collapse rule');
+  }
+}
+
 function setConditionCollapsed(root, collapsed) {
   root.classList.toggle('collapsed', collapsed);
   const toggleButton = root.querySelector('.condition-toggle');
   if (toggleButton) {
     toggleButton.setAttribute('aria-expanded', String(!collapsed));
-    toggleButton.setAttribute('title', collapsed ? t('expandCondition') : t('collapseCondition'));
+    toggleButton.setAttribute('title', collapsed ? 'Expand condition' : 'Collapse condition');
   }
 }
 

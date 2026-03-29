@@ -24,7 +24,7 @@ body {
 .page {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 32px 20px 56px;
+  padding: 32px 20px 18px;
 }
 
 .hero,
@@ -80,6 +80,42 @@ body {
   gap: 14px;
 }
 
+.rule.collapsed .rule-body {
+  display: none;
+}
+
+.rule-head-start,
+.rule-head-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.rule-head-start {
+  flex: 1;
+}
+
+.rule-toggle,
+.condition-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px solid #31405f;
+}
+
+.rule-toggle-icon,
+.condition-toggle-icon {
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.rule.collapsed .rule-toggle-icon,
+.condition.collapsed .condition-toggle-icon {
+  transform: rotate(-90deg);
+}
+
 .rule-title-area {
   display: grid;
   gap: 8px;
@@ -120,24 +156,6 @@ body {
 
 .condition-header {
   gap: 12px;
-}
-
-.condition-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  background: transparent;
-  border: 1px solid #31405f;
-}
-
-.condition-toggle-icon {
-  display: inline-block;
-  transition: transform 0.15s ease;
-}
-
-.condition.collapsed .condition-toggle-icon {
-  transform: rotate(-90deg);
 }
 
 .condition-title-text,
@@ -281,7 +299,16 @@ select:disabled {
   display: none;
 }
 
+.app-footer {
+  padding: 0 20px 28px;
+  text-align: center;
+  color: var(--muted);
+}
+
 @media (max-width: 900px) {
+  .rule-head,
+  .rule-head-start,
+  .rule-head-actions,
   .condition-row,
   .condition-dom-fields,
   .condition-network-fields,
@@ -298,7 +325,6 @@ select:disabled {
 @media (max-width: 760px) {
   .hero,
   .section-header,
-  .rule-head,
   .row {
     flex-direction: column;
     align-items: stretch;
