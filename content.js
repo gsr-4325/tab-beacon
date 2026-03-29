@@ -465,22 +465,33 @@ function loadImage(url) {
   });
 }
 
-function setGeneratedIcon(dataUrl) {
+function removeAllIconLinks() {
+  document.querySelectorAll("link[rel~='icon']").forEach((link) => link.remove());
+}
+
+function ensureGeneratedIconLink() {
   let link = document.getElementById(EXT_ICON_LINK_ID);
-  if (!link) {
-    link = document.createElement("link");
-    link.id = EXT_ICON_LINK_ID;
-    link.rel = "icon";
-    document.head.appendChild(link);
+  if (link) {
+    return link;
   }
+
+  removeAllIconLinks();
+  link = document.createElement("link");
+  link.id = EXT_ICON_LINK_ID;
+  link.rel = "icon";
+  document.head.appendChild(link);
+  return link;
+}
+
+function setGeneratedIcon(dataUrl) {
+  const link = ensureGeneratedIconLink();
   link.href = dataUrl;
 }
 
 function restoreOriginalIcons() {
-  const generated = document.getElementById(EXT_ICON_LINK_ID);
-  if (generated) generated.remove();
+  removeAllIconLinks();
 
-  if (!document.querySelector("link[rel~='icon']") && state.originalIcons.length) {
+  if (state.originalIcons.length) {
     for (const icon of state.originalIcons) {
       const link = document.createElement("link");
       link.rel = icon.rel;
