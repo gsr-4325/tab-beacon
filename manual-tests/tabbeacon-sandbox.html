@@ -6,11 +6,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       * { box-sizing: border-box; }
+      :root {
+        color-scheme: dark;
+        --bg: #081321;
+        --bg-2: #0b1830;
+        --card: #0f1c34;
+        --card-2: #132445;
+        --border: #23416f;
+        --border-strong: #3d73c9;
+        --text: #e8f0ff;
+        --muted: #a8bcdf;
+        --primary: #2563eb;
+        --accent: #06b6d4;
+        --warn: #d97706;
+        --success: #22c55e;
+      }
       body {
         margin: 0;
         font-family: system-ui, sans-serif;
-        background: #0b1020;
-        color: #e5ecff;
+        background: radial-gradient(circle at top, var(--bg-2), var(--bg) 45%);
+        color: var(--text);
       }
       .page {
         max-width: 980px;
@@ -18,18 +33,46 @@
         padding: 32px 20px 56px;
       }
       .card {
-        background: #131a2a;
-        border: 1px solid #24304d;
-        border-radius: 16px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 18px;
         padding: 20px;
         margin-top: 20px;
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.26);
       }
-      h1, h2 { margin-top: 0; }
+      .hero-card {
+        background: linear-gradient(180deg, rgba(19, 36, 69, 0.96), rgba(15, 28, 52, 0.98));
+        border-color: var(--border-strong);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.32);
+      }
+      .hero-top,
+      .section-head,
       .row {
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
-        margin-top: 12px;
+        align-items: center;
+        justify-content: space-between;
+      }
+      h1, h2 { margin-top: 0; }
+      h1 { margin-bottom: 10px; }
+      .stack { display: grid; gap: 12px; }
+      .subtitle {
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      .sandbox-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(6, 182, 212, 0.12);
+        border: 1px solid rgba(6, 182, 212, 0.45);
+        color: #c9f5ff;
+        font-size: 0.92rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
       }
       button {
         font: inherit;
@@ -38,10 +81,18 @@
         padding: 10px 14px;
         cursor: pointer;
         background: #2a3756;
-        color: #e5ecff;
+        color: var(--text);
       }
-      button.primary { background: #2563eb; }
-      button.warn { background: #b45309; }
+      button.primary { background: var(--primary); }
+      button.warn { background: var(--warn); }
+      button.ghost {
+        background: rgba(37, 99, 235, 0.08);
+        border: 1px solid rgba(61, 115, 201, 0.4);
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
       code, pre {
         background: #09101d;
         border-radius: 8px;
@@ -51,6 +102,7 @@
         padding: 12px;
         overflow: auto;
         white-space: pre-wrap;
+        max-height: 280px;
       }
       .busy-pill {
         display: inline-flex;
@@ -65,47 +117,68 @@
         width: 10px;
         height: 10px;
         border-radius: 50%;
-        background: #22c55e;
+        background: var(--success);
       }
       .dot.busy { background: #f59e0b; }
-      .stack { display: grid; gap: 12px; }
       input[type="text"] {
         width: 100%;
         padding: 10px 12px;
         border-radius: 10px;
         border: 1px solid #31405f;
         background: #0d1426;
-        color: #e5ecff;
+        color: var(--text);
       }
-      .hidden { display: none !important; }
       #busyContainer {
         margin-top: 14px;
         min-height: 48px;
         display: flex;
         align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
       }
-      #log {
-        max-height: 280px;
-        overflow: auto;
+      .log-actions {
+        display: inline-flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .hint {
+        color: var(--muted);
+      }
+      .strong-border {
+        border-left: 4px solid var(--accent);
+      }
+      @media (max-width: 720px) {
+        .hero-top,
+        .section-head,
+        .row {
+          align-items: stretch;
+          flex-direction: column;
+        }
       }
     </style>
   </head>
   <body>
     <main class="page">
-      <header class="card">
-        <h1>TabBeacon Sandbox</h1>
-        <p>TabBeacon の DOM 条件と network 条件を手動で試すためのローカルページです。</p>
-        <div class="busy-pill"><span id="statusDot" class="dot"></span><span id="statusText">idle</span></div>
+      <header class="card hero-card strong-border">
+        <div class="hero-top">
+          <div>
+            <div class="sandbox-badge">Sandbox</div>
+            <h1>TabBeacon Sandbox</h1>
+            <p class="subtitle">TabBeacon の DOM 条件と network 条件を手動で試すためのローカルページです。</p>
+          </div>
+          <div class="busy-pill"><span id="statusDot" class="dot"></span><span id="statusText">idle</span></div>
+        </div>
       </header>
 
       <section class="card stack">
         <h2>1. DOM 条件テスト</h2>
         <p>おすすめ条件: <code>[aria-busy="true"]</code></p>
-        <div class="row">
-          <button id="addBusy" class="primary">aria-busy 要素を追加</button>
-          <button id="removeBusy">aria-busy 要素を削除</button>
-          <button id="toggleStop">Stop ボタンをトグル</button>
-          <button id="runDomScenario" class="warn">5秒 busy シナリオ</button>
+        <div class="row" data-tabbeacon-ignore-smart-busy="true">
+          <button id="addBusy" class="primary" data-tabbeacon-ignore-smart-busy="true">aria-busy 要素を追加</button>
+          <button id="removeBusy" data-tabbeacon-ignore-smart-busy="true">aria-busy 要素を削除</button>
+          <button id="toggleBusyAction" data-tabbeacon-ignore-smart-busy="true">生成中ボタンをトグル</button>
+          <button id="runDomScenario" class="warn" data-tabbeacon-ignore-smart-busy="true">5秒 busy シナリオ</button>
+          <button id="resetSandbox" class="ghost" data-tabbeacon-ignore-smart-busy="true">状態リセット</button>
         </div>
         <div id="busyContainer"></div>
       </section>
@@ -117,12 +190,12 @@
           テスト URL
           <input id="networkUrl" type="text" value="https://postman-echo.com/delay/5?tabbeacon=1" />
         </label>
-        <div class="row">
-          <button id="runFetchGet" class="primary">fetch GET</button>
-          <button id="runFetchPost">fetch POST</button>
-          <button id="runXhrGet">XHR GET</button>
+        <div class="row" data-tabbeacon-ignore-smart-busy="true">
+          <button id="runFetchGet" class="primary" data-tabbeacon-ignore-smart-busy="true">fetch GET</button>
+          <button id="runFetchPost" data-tabbeacon-ignore-smart-busy="true">fetch POST</button>
+          <button id="runXhrGet" data-tabbeacon-ignore-smart-busy="true">XHR GET</button>
         </div>
-        <p>注意: <code>file://</code> からの network はブラウザ制約や CORS の影響を受けることがあります。</p>
+        <p class="hint">注意: <code>file://</code> からの network はブラウザ制約や CORS の影響を受けることがあります。</p>
       </section>
 
       <section class="card stack">
@@ -146,7 +219,12 @@ matchMode: ANY</pre>
       </section>
 
       <section class="card stack">
-        <h2>4. ログ</h2>
+        <div class="section-head">
+          <h2>4. ログ</h2>
+          <div class="log-actions" data-tabbeacon-ignore-smart-busy="true">
+            <button id="copyLog" type="button" class="ghost" title="ログをコピー" aria-label="ログをコピー" data-tabbeacon-ignore-smart-busy="true">📋 コピー</button>
+          </div>
+        </div>
         <pre id="log"></pre>
       </section>
     </main>
@@ -157,9 +235,10 @@ matchMode: ANY</pre>
       const statusDot = document.getElementById('statusDot');
       const statusText = document.getElementById('statusText');
       const networkUrlEl = document.getElementById('networkUrl');
-      let stopButtonVisible = false;
+      const runDomScenarioButton = document.getElementById('runDomScenario');
       let busyNode = null;
       let stopNode = null;
+      let domScenarioTimer = null;
 
       function log(message) {
         const line = `[${new Date().toLocaleTimeString()}] ${message}`;
@@ -169,6 +248,10 @@ matchMode: ANY</pre>
       function setStatus(isBusy, reason) {
         statusDot.classList.toggle('busy', isBusy);
         statusText.textContent = isBusy ? `busy (${reason})` : 'idle';
+      }
+
+      function updateScenarioButtonState() {
+        runDomScenarioButton.disabled = !!domScenarioTimer;
       }
 
       function renderBusyNode() {
@@ -192,12 +275,11 @@ matchMode: ANY</pre>
         if (!stopNode) setStatus(false, 'none');
       }
 
-      function toggleStopButton() {
+      function toggleBusyActionButton() {
         if (stopNode) {
           stopNode.remove();
           stopNode = null;
-          stopButtonVisible = false;
-          log('stop button removed');
+          log('busy action button removed');
           if (!busyNode) setStatus(false, 'none');
           return;
         }
@@ -207,20 +289,52 @@ matchMode: ANY</pre>
         stopNode.setAttribute('aria-label', 'Stop generating');
         stopNode.dataset.testid = 'stop-button';
         busyContainer.appendChild(stopNode);
-        stopButtonVisible = true;
         setStatus(true, 'DOM');
-        log('stop button added');
+        log('busy action button added');
       }
 
-      async function runDomScenario() {
-        renderBusyNode();
-        if (!stopNode) toggleStopButton();
-        log('5-second DOM busy scenario started');
-        await new Promise((resolve) => setTimeout(resolve, 5000));
+      function clearDomScenarioTimer() {
+        if (domScenarioTimer) {
+          clearTimeout(domScenarioTimer);
+          domScenarioTimer = null;
+          updateScenarioButtonState();
+        }
+      }
+
+      function resetSandboxState({ silent = false } = {}) {
+        clearDomScenarioTimer();
+        if (busyNode) {
+          busyNode.remove();
+          busyNode = null;
+        }
+        if (stopNode) {
+          stopNode.remove();
+          stopNode = null;
+        }
+        setStatus(false, 'none');
+        if (!silent) {
+          log('sandbox state reset');
+        }
+      }
+
+      function finishDomScenario() {
+        clearDomScenarioTimer();
         removeBusyNode();
-        if (stopNode) toggleStopButton();
+        if (stopNode) toggleBusyActionButton();
         setStatus(false, 'none');
         log('5-second DOM busy scenario ended');
+      }
+
+      function runDomScenario() {
+        if (domScenarioTimer) {
+          log('DOM busy scenario is already running');
+          return;
+        }
+        renderBusyNode();
+        if (!stopNode) toggleBusyActionButton();
+        log('5-second DOM busy scenario started');
+        domScenarioTimer = window.setTimeout(finishDomScenario, 5000);
+        updateScenarioButtonState();
       }
 
       async function runFetch(method) {
@@ -257,13 +371,25 @@ matchMode: ANY</pre>
         xhr.send();
       }
 
+      async function copyLog() {
+        try {
+          await navigator.clipboard.writeText(logEl.textContent || '');
+          log('log copied to clipboard');
+        } catch (error) {
+          log(`failed to copy log: ${error.message}`);
+        }
+      }
+
       document.getElementById('addBusy').addEventListener('click', renderBusyNode);
       document.getElementById('removeBusy').addEventListener('click', removeBusyNode);
-      document.getElementById('toggleStop').addEventListener('click', toggleStopButton);
+      document.getElementById('toggleBusyAction').addEventListener('click', toggleBusyActionButton);
       document.getElementById('runDomScenario').addEventListener('click', runDomScenario);
+      document.getElementById('resetSandbox').addEventListener('click', () => resetSandboxState());
       document.getElementById('runFetchGet').addEventListener('click', () => runFetch('GET'));
       document.getElementById('runFetchPost').addEventListener('click', () => runFetch('POST'));
       document.getElementById('runXhrGet').addEventListener('click', runXhrGet);
+      document.getElementById('copyLog').addEventListener('click', copyLog);
+      updateScenarioButtonState();
     </script>
   </body>
 </html>
