@@ -73,47 +73,60 @@
       </section>
     </main>
 
+    <footer class="app-footer">
+      <small id="versionText">v0.0.0</small>
+    </footer>
+
     <template id="ruleTemplate">
       <article class="rule">
         <div class="rule-head">
-          <div class="rule-title-area">
-            <input class="rule-name" data-i18n-placeholder="ruleNamePlaceholder" placeholder="Rule name" />
-            <div class="rule-meta">
-              <span class="rule-origin-badge"></span>
-              <span class="rule-readonly-note hidden" data-i18n="ruleReadonlyNotice">This preset is managed by the extension and is read-only.</span>
+          <div class="rule-head-start">
+            <button type="button" class="rule-toggle" aria-expanded="true" title="Toggle rule section">
+              <span class="rule-toggle-icon">▾</span>
+            </button>
+            <div class="rule-title-area">
+              <input class="rule-name" data-i18n-placeholder="ruleNamePlaceholder" placeholder="Rule name" />
+              <div class="rule-meta">
+                <span class="rule-origin-badge"></span>
+                <span class="rule-readonly-note hidden" data-i18n="ruleReadonlyNotice">This preset is managed by the extension and is read-only.</span>
+              </div>
             </div>
           </div>
-          <label class="inline"><input type="checkbox" class="rule-enabled" /><span data-i18n="enabled">Enabled</span></label>
-          <button type="button" class="danger remove-rule" data-i18n="remove">Remove</button>
-        </div>
-
-        <label>
-          <span data-i18n="urlPatterns">URL patterns</span>
-          <textarea class="rule-matches" rows="3" data-i18n-placeholder="urlPatternsPlaceholder" placeholder="Enter one pattern per line"></textarea>
-        </label>
-
-        <div class="row rule-controls">
-          <label>
-            <span data-i18n="matchMode">Condition join</span>
-            <select class="rule-match-mode">
-              <option value="any" data-i18n="matchModeAny">ANY</option>
-              <option value="all" data-i18n="matchModeAll">ALL</option>
-            </select>
-          </label>
-
-          <label class="inline smart-toggle">
-            <input type="checkbox" class="rule-smart-busy" />
-            <span data-i18n="smartBusyToggle">Use smart busy detection</span>
-          </label>
-        </div>
-
-        <section class="conditions-panel">
-          <div class="section-header">
-            <h3 data-i18n="conditionsTitle">Conditions</h3>
-            <button type="button" class="add-condition" data-i18n="addCondition">Add condition</button>
+          <div class="rule-head-actions">
+            <label class="inline"><input type="checkbox" class="rule-enabled" /><span data-i18n="enabled">Enabled</span></label>
+            <button type="button" class="danger remove-rule" data-i18n="remove">Remove</button>
           </div>
-          <div class="conditions-container"></div>
-        </section>
+        </div>
+
+        <div class="rule-body">
+          <label>
+            <span data-i18n="urlPatterns">URL patterns</span>
+            <textarea class="rule-matches" rows="3" data-i18n-placeholder="urlPatternsPlaceholder" placeholder="Enter one pattern per line"></textarea>
+          </label>
+
+          <div class="row rule-controls">
+            <label>
+              <span data-i18n="matchMode">Condition join</span>
+              <select class="rule-match-mode">
+                <option value="any" data-i18n="matchModeAny">ANY</option>
+                <option value="all" data-i18n="matchModeAll">ALL</option>
+              </select>
+            </label>
+
+            <label class="inline smart-toggle">
+              <input type="checkbox" class="rule-smart-busy" />
+              <span data-i18n="smartBusyToggle">Use smart busy detection</span>
+            </label>
+          </div>
+
+          <section class="conditions-panel">
+            <div class="section-header">
+              <h3 data-i18n="conditionsTitle">Conditions</h3>
+              <button type="button" class="add-condition" data-i18n="addCondition">Add condition</button>
+            </div>
+            <div class="conditions-container"></div>
+          </section>
+        </div>
       </article>
     </template>
 
@@ -122,7 +135,7 @@
         <div class="condition-header">
           <button type="button" class="condition-toggle">
             <span class="condition-toggle-icon">▾</span>
-            <span class="condition-title-text" data-i18n="conditionLabel">Condition</span>
+            <span class="condition-title-text">Condition</span>
             <span class="condition-index"></span>
           </button>
           <span class="condition-summary"></span>
