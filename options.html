@@ -119,72 +119,81 @@
 
     <template id="conditionTemplate">
       <div class="condition">
-        <div class="condition-row">
-          <label>
-            <span data-i18n="conditionSource">Condition source</span>
-            <select class="condition-source">
-              <option value="dom" data-i18n="conditionSourceDom">dom</option>
-              <option value="network" data-i18n="conditionSourceNetwork">network</option>
-            </select>
-          </label>
-
-          <div class="condition-dom-fields">
-            <label>
-              <span data-i18n="selectorType">Selector type</span>
-              <select class="condition-selector-type">
-                <option value="auto" data-i18n="selectorTypeAuto">auto</option>
-                <option value="css" data-i18n="selectorTypeCss">css</option>
-                <option value="xpath" data-i18n="selectorTypeXpath">xpath</option>
-              </select>
-            </label>
-
-            <label class="condition-query-wrap">
-              <span data-i18n="busyQuery">Busy query</span>
-              <input class="condition-query" data-i18n-placeholder="busyQueryPlaceholder" placeholder='Example: [aria-busy="true"] or //button[contains(@aria-label, "Stop")]' />
-            </label>
-          </div>
-
-          <div class="condition-network-fields hidden">
-            <label>
-              <span data-i18n="networkMatchType">URL match</span>
-              <select class="condition-match-type">
-                <option value="urlContains" data-i18n="matchTypeUrlContains">urlContains</option>
-                <option value="pathPrefix" data-i18n="matchTypePathPrefix">pathPrefix</option>
-                <option value="regex" data-i18n="matchTypeRegex">regex</option>
-              </select>
-            </label>
-
-            <label class="condition-value-wrap">
-              <span data-i18n="networkValue">Value</span>
-              <input class="condition-value" data-i18n-placeholder="networkValuePlaceholder" placeholder="Example: /backend-api/conversation" />
-            </label>
-
-            <label>
-              <span data-i18n="networkMethod">Method</span>
-              <select class="condition-method">
-                <option value="ANY">ANY</option>
-                <option value="GET">GET</option>
-                <option value="POST">POST</option>
-                <option value="PUT">PUT</option>
-                <option value="PATCH">PATCH</option>
-                <option value="DELETE">DELETE</option>
-              </select>
-            </label>
-
-            <label>
-              <span data-i18n="networkResourceKind">Resource kind</span>
-              <select class="condition-resource-kind">
-                <option value="any" data-i18n="resourceKindAny">any</option>
-                <option value="fetch-xhr" data-i18n="resourceKindFetchXhr">fetch/xhr</option>
-                <option value="websocket" data-i18n="resourceKindWebsocket">websocket</option>
-                <option value="other" data-i18n="resourceKindOther">other</option>
-              </select>
-            </label>
-          </div>
-
+        <div class="condition-header">
+          <button type="button" class="condition-toggle">
+            <span class="condition-toggle-icon">▾</span>
+            <span class="condition-title-text" data-i18n="conditionLabel">Condition</span>
+            <span class="condition-index"></span>
+          </button>
+          <span class="condition-summary"></span>
           <button type="button" class="danger remove-condition" data-i18n="remove">Remove</button>
         </div>
-        <div class="hint condition-hint"></div>
+        <div class="condition-body">
+          <div class="condition-row">
+            <label>
+              <span data-i18n="conditionSource">Condition source</span>
+              <select class="condition-source">
+                <option value="dom" data-i18n="conditionSourceDom">dom</option>
+                <option value="network" data-i18n="conditionSourceNetwork">network</option>
+              </select>
+            </label>
+
+            <div class="condition-dom-fields">
+              <label>
+                <span data-i18n="selectorType">Selector type</span>
+                <select class="condition-selector-type">
+                  <option value="auto" data-i18n="selectorTypeAuto">auto</option>
+                  <option value="css" data-i18n="selectorTypeCss">css</option>
+                  <option value="xpath" data-i18n="selectorTypeXpath">xpath</option>
+                </select>
+              </label>
+
+              <label class="condition-query-wrap">
+                <span data-i18n="busyQuery">Busy query</span>
+                <input class="condition-query" data-i18n-placeholder="busyQueryPlaceholder" placeholder='Example: [aria-busy="true"] or //button[contains(@aria-label, "Stop")]' />
+              </label>
+            </div>
+
+            <div class="condition-network-fields hidden">
+              <label>
+                <span data-i18n="networkMatchType">URL match</span>
+                <select class="condition-match-type">
+                  <option value="urlContains" data-i18n="matchTypeUrlContains">urlContains</option>
+                  <option value="pathPrefix" data-i18n="matchTypePathPrefix">pathPrefix</option>
+                  <option value="regex" data-i18n="matchTypeRegex">regex</option>
+                </select>
+              </label>
+
+              <label class="condition-value-wrap">
+                <span data-i18n="networkValue">Value</span>
+                <input class="condition-value" data-i18n-placeholder="networkValuePlaceholder" placeholder="Example: /backend-api/conversation" />
+              </label>
+
+              <label>
+                <span data-i18n="networkMethod">Method</span>
+                <select class="condition-method">
+                  <option value="ANY">ANY</option>
+                  <option value="GET">GET</option>
+                  <option value="POST">POST</option>
+                  <option value="PUT">PUT</option>
+                  <option value="PATCH">PATCH</option>
+                  <option value="DELETE">DELETE</option>
+                </select>
+              </label>
+
+              <label>
+                <span data-i18n="networkResourceKind">Resource kind</span>
+                <select class="condition-resource-kind">
+                  <option value="any" data-i18n="resourceKindAny">any</option>
+                  <option value="fetch-xhr" data-i18n="resourceKindFetchXhr">fetch/xhr</option>
+                  <option value="websocket" data-i18n="resourceKindWebsocket">websocket</option>
+                  <option value="other" data-i18n="resourceKindOther">other</option>
+                </select>
+              </label>
+            </div>
+          </div>
+          <div class="hint condition-hint"></div>
+        </div>
       </div>
     </template>
 

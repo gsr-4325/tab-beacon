@@ -59,7 +59,8 @@ body {
 .section-header,
 .rule-head,
 .row,
-.condition-row {
+.condition-row,
+.condition-header {
   display: flex;
   gap: 16px;
   align-items: center;
@@ -115,6 +116,52 @@ body {
 .condition {
   padding: 14px;
   border-radius: 12px;
+}
+
+.condition-header {
+  gap: 12px;
+}
+
+.condition-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px solid #31405f;
+}
+
+.condition-toggle-icon {
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.condition.collapsed .condition-toggle-icon {
+  transform: rotate(-90deg);
+}
+
+.condition-title-text,
+.condition-index {
+  font-weight: 600;
+}
+
+.condition-summary {
+  flex: 1;
+  color: var(--muted);
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.condition-body {
+  margin-top: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.condition.collapsed .condition-body {
+  display: none;
 }
 
 .condition-dom-fields,
@@ -237,9 +284,14 @@ select:disabled {
 @media (max-width: 900px) {
   .condition-row,
   .condition-dom-fields,
-  .condition-network-fields {
+  .condition-network-fields,
+  .condition-header {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .condition-summary {
+    white-space: normal;
   }
 }
 

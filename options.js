@@ -204,8 +204,11 @@ function createRuleNode(rule = createEmptyRule()) {
     conditionsContainer.appendChild(createConditionNode(undefined, rule.readonly));
   }
 
+  refreshConditionIndexes(conditionsContainer);
+
   root.querySelector(".add-condition").addEventListener("click", () => {
     conditionsContainer.appendChild(createConditionNode(undefined, rule.readonly));
+    refreshConditionIndexes(conditionsContainer);
   });
 
   removeRuleButton.addEventListener("click", () => {
@@ -243,6 +246,8 @@ function createConditionNode(condition = createEmptyCondition(), readonly = fals
   const networkFields = root.querySelector(".condition-network-fields");
   const hintEl = root.querySelector(".condition-hint");
   const removeConditionButton = root.querySelector('.remove-condition');
+  const toggleButton = root.querySelector('.condition-toggle');
+  const summaryEl = root.querySelector('.condition-summary');
 
   I18N.apply(root);
 
@@ -258,6 +263,16 @@ function createConditionNode(condition = createEmptyCondition(), readonly = fals
     const source = sourceEl.value;
     domFields.classList.toggle("hidden", source !== "dom");
     networkFields.classList.toggle("hidden", source !== "network");
+    const summary = buildConditionSummary({
+      source,
+      selectorType: selectorTypeEl.value,
+      query: queryEl.value.trim(),
+      matchType: matchTypeEl.value,
+      value: valueEl.value.trim(),
+      method: methodEl.value,
+      resourceKind: resourceKindEl.value
+    });
+    summaryEl.textContent = summary;
     updateConditionHint({
       source,
       selectorType: selectorTypeEl.value,
@@ -274,6 +289,11 @@ function createConditionNode(condition = createEmptyCondition(), readonly = fals
     el.addEventListener("change", update);
   });
 
+  toggleButton.addEventListener('click', () => {
+    const collapsed = !root.classList.contains('collapsed');
+    setConditionCollapsed(root, collapsed);
+  });
+
   update();
 
   removeConditionButton.addEventListener("click", () => {
@@ -282,6 +302,9 @@ function createConditionNode(condition = createEmptyCondition(), readonly = fals
     root.remove();
     if (parent && !parent.children.length) {
       parent.appendChild(createConditionNode(undefined, readonly));
+    }
+    if (parent) {
+      refreshConditionIndexes(parent);
     }
   });
 
@@ -293,7 +316,35 @@ function createConditionNode(condition = createEmptyCondition(), readonly = fals
     });
   }
 
+  setConditionCollapsed(root, false);
   return root;
+}
+
+function refreshConditionIndexes(container) {
+  Array.from(container.querySelectorAll('.condition')).forEach((conditionRoot, index) => {
+    const indexEl = conditionRoot.querySelector('.condition-index');
+    if (indexEl) {
+      indexEl.textContent = String(index + 1);
+    }
+  });
+}
+
+function setConditionCollapsed(root, collapsed) {
+  root.classList.toggle('collapsed', collapsed);
+  const toggleButton = root.querySelector('.condition-toggle');
+  if (toggleButton) {
+    toggleButton.setAttribute('aria-expanded', String(!collapsed));
+    toggleButton.setAttribute('title', collapsed ? t('expandCondition') : t('collapseCondition'));
+  }
+}
+
+function buildConditionSummary(condition) {
+  if (condition.source === 'network') {
+    const value = condition.value || t('hintEmptyQuery');
+    return `${condition.matchType} · ${condition.method} · ${condition.resourceKind} · ${value}`;
+  }
+  const value = condition.query || t('hintEmptyQuery');
+  return `${condition.selectorType} · ${value}`;
 }
 
 function createEmptyRule() {
