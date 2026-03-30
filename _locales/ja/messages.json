@@ -1,347 +1,99 @@
 {
-  "appName": {
-    "message": "TabBeacon"
-  },
-  "manifestDescription": {
-    "message": "監視対象のページ条件に一致したとき、ページのタブ favicon に busy 表示を出します。"
-  },
-  "actionDefaultTitle": {
-    "message": "TabBeacon"
-  },
-  "optionsTitle": {
-    "message": "TabBeacon Settings"
-  },
-  "optionsSubtitle": {
-    "message": "DOM 条件と network 条件を設定して、タブアイコンに busy 状態を表示します。"
-  },
-  "save": {
-    "message": "保存"
-  },
-  "saved": {
-    "message": "保存しました"
-  },
-  "policyTitle": {
-    "message": "Principles"
-  },
-  "policyLine1": {
-    "message": "1つのルールには複数の条件を持てます。"
-  },
-  "policyLine2": {
-    "message": "ANY はどれか1つが真なら一致、ALL はすべて真なら一致です。"
-  },
-  "policyLine3": {
-    "message": "1つのルールの中で DOM 条件と network 条件を混在できます。"
-  },
-  "policyLine4": {
-    "message": "Smart busy detection はルール全体の補助シグナルです。"
-  },
-  "debugTitle": {
-    "message": "Debug tools"
-  },
-  "debugToggle": {
-    "message": "デバッグツールを表示"
-  },
-  "debugDescription": {
-    "message": "このセクションでは、自分のルールを壊さずにローカル sandbox 用プリセットを追加できます。"
-  },
-  "debugLoadPreset": {
-    "message": "ローカル sandbox プリセットを追加"
-  },
-  "debugPresetInstalled": {
-    "message": "ローカル sandbox プリセットは既に追加されています。"
-  },
-  "debugPresetMissing": {
-    "message": "ローカル sandbox プリセットはまだ追加されていません。"
-  },
-  "networkDiagnosticsTitle": {
-    "message": "Network diagnostics"
-  },
-  "networkDiagnosticsDescription": {
-    "message": "network busy 判定に効いた request を確認します。"
-  },
-  "refreshTabList": {
-    "message": "タブ一覧を更新"
-  },
-  "refreshDiagnostics": {
-    "message": "診断を更新"
-  },
-  "clearDiagnostics": {
-    "message": "履歴をクリア"
-  },
-  "diagnosticTargetTab": {
-    "message": "対象タブ"
-  },
-  "diagnosticColumnStarted": {
-    "message": "開始時刻"
-  },
-  "diagnosticColumnStatus": {
-    "message": "状態"
-  },
-  "diagnosticColumnRequest": {
-    "message": "Request"
-  },
-  "diagnosticColumnMatchedBy": {
-    "message": "一致条件"
-  },
-  "networkDiagnosticsEmptyState": {
-    "message": "対象タブを選んで診断を更新すると、一致した request を確認できます。"
-  },
-  "networkDiagnosticsEmptyRows": {
-    "message": "一致した request はまだありません。"
-  },
-  "networkDiagnosticsNoTabs": {
-    "message": "確認対象にできる http/file タブが開かれていません。"
-  },
-  "networkDiagnosticsNoSelection": {
-    "message": "診断対象のタブを選択してください。"
-  },
-  "networkDiagnosticsTabMissing": {
-    "message": "そのタブはもう存在しません。タブ一覧を更新して選び直してください。"
-  },
-  "networkDiagnosticsError": {
-    "message": "選択したタブの network diagnostics を読み込めませんでした。"
-  },
-  "networkDiagnosticsTabSummary": {
-    "message": "タブ: $TITLE$ / $URL$ / active matched requests: $ACTIVE$ / captured entries: $COUNT$",
-    "placeholders": {
-      "title": {
-        "content": "$1"
-      },
-      "url": {
-        "content": "$2"
-      },
-      "active": {
-        "content": "$3"
-      },
-      "count": {
-        "content": "$4"
-      }
-    }
-  },
-  "networkDiagnosticsTabSummaryPending": {
-    "message": "タブ: $TITLE$ / $URL$ / 診断を更新すると最新の一致 request を読み込みます。",
-    "placeholders": {
-      "title": {
-        "content": "$1"
-      },
-      "url": {
-        "content": "$2"
-      }
-    }
-  },
-  "noInspectableTabs": {
-    "message": "確認できるタブがありません"
-  },
-  "untitledTab": {
-    "message": "無題のタブ"
-  },
-  "diagnosticStatusInflight": {
-    "message": "inflight"
-  },
-  "diagnosticStatusCompleted": {
-    "message": "completed"
-  },
-  "diagnosticStatusError": {
-    "message": "error"
-  },
-  "diagnosticFinishedAt": {
-    "message": "完了: $TIME$",
-    "placeholders": {
-      "time": {
-        "content": "$1"
-      }
-    }
-  },
-  "diagnosticStillInflight": {
-    "message": "まだ進行中"
-  },
-  "diagnosticUnknownCondition": {
-    "message": "不明なルール $RULE$ / 条件 #$INDEX$",
-    "placeholders": {
-      "rule": {
-        "content": "$1"
-      },
-      "index": {
-        "content": "$2"
-      }
-    }
-  },
-  "diagnosticMissingCondition": {
-    "message": "現在のエディタ状態ではこの条件は存在しません"
-  },
-  "rulesTitle": {
-    "message": "Rules"
-  },
-  "addRule": {
-    "message": "ルールを追加"
-  },
-  "examplesTitle": {
-    "message": "Examples"
-  },
-  "exampleDomTitle": {
-    "message": "DOM 条件"
-  },
-  "exampleNetworkTitle": {
-    "message": "Network 条件"
-  },
-  "exampleUrlTitle": {
-    "message": "URL パターン"
-  },
-  "ruleNamePlaceholder": {
-    "message": "ルール名"
-  },
-  "enabled": {
-    "message": "有効"
-  },
-  "remove": {
-    "message": "削除"
-  },
-  "urlPatterns": {
-    "message": "URL patterns"
-  },
-  "urlPatternsPlaceholder": {
-    "message": "1行に1つずつ入力"
-  },
-  "matchMode": {
-    "message": "Condition join"
-  },
-  "matchModeAny": {
-    "message": "ANY"
-  },
-  "matchModeAll": {
-    "message": "ALL"
-  },
-  "smartBusyToggle": {
-    "message": "Smart busy detection を使う"
-  },
-  "conditionsTitle": {
-    "message": "Conditions"
-  },
-  "conditionLabel": {
-    "message": "Condition"
-  },
-  "collapseRule": {
-    "message": "ルールを閉じる"
-  },
-  "expandRule": {
-    "message": "ルールを開く"
-  },
-  "collapseCondition": {
-    "message": "条件を閉じる"
-  },
-  "expandCondition": {
-    "message": "条件を開く"
-  },
-  "addCondition": {
-    "message": "条件を追加"
-  },
-  "conditionSource": {
-    "message": "Condition source"
-  },
-  "conditionSourceDom": {
-    "message": "dom"
-  },
-  "conditionSourceNetwork": {
-    "message": "network"
-  },
-  "selectorType": {
-    "message": "Selector type"
-  },
-  "selectorTypeAuto": {
-    "message": "auto"
-  },
-  "selectorTypeCss": {
-    "message": "css"
-  },
-  "selectorTypeXpath": {
-    "message": "xpath"
-  },
-  "busyQuery": {
-    "message": "Busy query"
-  },
-  "busyQueryPlaceholder": {
-    "message": "例: [aria-busy=\"true\"] または //button[contains(@aria-label, \"Stop\")]"
-  },
-  "networkMatchType": {
-    "message": "URL match"
-  },
-  "matchTypeUrlContains": {
-    "message": "urlContains"
-  },
-  "matchTypePathPrefix": {
-    "message": "pathPrefix"
-  },
-  "matchTypeRegex": {
-    "message": "regex"
-  },
-  "networkValue": {
-    "message": "Value"
-  },
-  "networkValuePlaceholder": {
-    "message": "例: /backend-api/conversation"
-  },
-  "networkMethod": {
-    "message": "Method"
-  },
-  "networkResourceKind": {
-    "message": "Resource kind"
-  },
-  "resourceKindAny": {
-    "message": "any"
-  },
-  "resourceKindFetchXhr": {
-    "message": "fetch/xhr"
-  },
-  "resourceKindWebsocket": {
-    "message": "websocket"
-  },
-  "resourceKindOther": {
-    "message": "other"
-  },
-  "ruleOriginUser": {
-    "message": "ユーザールール"
-  },
-  "ruleOriginSystem": {
-    "message": "システムプリセット"
-  },
-  "ruleReadonlyNotice": {
-    "message": "このプリセットは拡張側が管理しており、読み取り専用です。"
-  },
-  "hintEmptyQuery": {
-    "message": "クエリが空です"
-  },
-  "hintCurrentInterpretation": {
-    "message": "現在の解釈: $TYPE$",
-    "placeholders": {
-      "type": {
-        "content": "$1"
-      }
-    }
-  },
-  "hintSmartBusy": {
-    "message": "Smart busy detection はルール全体の補助シグナルです。"
-  },
-  "hintNetworkSummary": {
-    "message": "Network 条件 / $MATCH$ / $METHOD$ / $KIND$ / $VALUE$",
-    "placeholders": {
-      "match": {
-        "content": "$1"
-      },
-      "method": {
-        "content": "$2"
-      },
-      "kind": {
-        "content": "$3"
-      },
-      "value": {
-        "content": "$4"
-      }
-    }
-  },
-  "untitledRule": {
-    "message": "名称未設定ルール"
-  },
-  "presetDebugLocalSandboxName": {
-    "message": "Debug: Local Sandbox"
-  }
+  "appName": {"message": "TabBeacon"},
+  "manifestDescription": {"message": "監視対象のページ条件に一致したとき、ページのタブ favicon に busy 表示を出します。"},
+  "actionDefaultTitle": {"message": "TabBeacon"},
+  "optionsTitle": {"message": "TabBeacon Settings"},
+  "optionsSubtitle": {"message": "DOM 条件と network 条件を設定して、タブアイコンに busy 状態を表示します。"},
+  "save": {"message": "保存"},
+  "saved": {"message": "保存しました"},
+  "policyTitle": {"message": "Principles"},
+  "policyLine1": {"message": "1つのルールには複数の条件を持てます。"},
+  "policyLine2": {"message": "ANY はどれか1つが真なら一致、ALL はすべて真なら一致です。"},
+  "policyLine3": {"message": "1つのルールの中で DOM 条件と network 条件を混在できます。"},
+  "policyLine4": {"message": "Smart busy detection はルール全体の補助シグナルです。"},
+  "debugTitle": {"message": "Debug tools"},
+  "debugToggle": {"message": "デバッグツールを表示"},
+  "debugDescription": {"message": "このセクションでは、自分のルールを壊さずにローカル sandbox 用プリセットを追加できます。"},
+  "debugLoadPreset": {"message": "ローカル sandbox プリセットを追加"},
+  "debugPresetInstalled": {"message": "ローカル sandbox プリセットは既に追加されています。"},
+  "debugPresetMissing": {"message": "ローカル sandbox プリセットはまだ追加されていません。"},
+  "networkDiagnosticsTitle": {"message": "Network diagnostics"},
+  "networkDiagnosticsDescription": {"message": "最近観測した request を見ながら、どれが network 条件に一致したかを確認します。"},
+  "refreshTabList": {"message": "タブ一覧を更新"},
+  "refreshDiagnostics": {"message": "診断を更新"},
+  "clearDiagnostics": {"message": "履歴をクリア"},
+  "diagnosticTargetTab": {"message": "対象タブ"},
+  "diagnosticColumnStarted": {"message": "開始時刻"},
+  "diagnosticColumnStatus": {"message": "状態"},
+  "diagnosticColumnRequest": {"message": "Request"},
+  "diagnosticColumnMatchedBy": {"message": "一致条件"},
+  "networkDiagnosticsEmptyState": {"message": "対象タブを選んで診断を更新すると、最近観測した request を確認できます。"},
+  "networkDiagnosticsEmptyRows": {"message": "最近観測した request はまだありません。"},
+  "networkDiagnosticsNoTabs": {"message": "確認対象にできる http/file タブが開かれていません。"},
+  "networkDiagnosticsNoSelection": {"message": "診断対象のタブを選択してください。"},
+  "networkDiagnosticsTabMissing": {"message": "そのタブはもう存在しません。タブ一覧を更新して選び直してください。"},
+  "networkDiagnosticsError": {"message": "選択したタブの network diagnostics を読み込めませんでした。"},
+  "networkDiagnosticsTabSummary": {"message": "タブ: $TITLE$ / $URL$ / active captured requests: $ACTIVE$ / captured entries: $COUNT$", "placeholders": {"title": {"content": "$1"}, "url": {"content": "$2"}, "active": {"content": "$3"}, "count": {"content": "$4"}}},
+  "networkDiagnosticsTabSummaryPending": {"message": "タブ: $TITLE$ / $URL$ / 診断を更新すると最新の request を読み込みます。", "placeholders": {"title": {"content": "$1"}, "url": {"content": "$2"}}},
+  "noInspectableTabs": {"message": "確認できるタブがありません"},
+  "untitledTab": {"message": "無題のタブ"},
+  "diagnosticStatusInflight": {"message": "inflight"},
+  "diagnosticStatusCompleted": {"message": "completed"},
+  "diagnosticStatusError": {"message": "error"},
+  "diagnosticFinishedAt": {"message": "完了: $TIME$", "placeholders": {"time": {"content": "$1"}}},
+  "diagnosticStillInflight": {"message": "まだ進行中"},
+  "diagnosticUnknownCondition": {"message": "不明なルール $RULE$ / 条件 #$INDEX$", "placeholders": {"rule": {"content": "$1"}, "index": {"content": "$2"}}},
+  "diagnosticMissingCondition": {"message": "現在のエディタ状態ではこの条件は存在しません"},
+  "rulesTitle": {"message": "Rules"},
+  "addRule": {"message": "ルールを追加"},
+  "examplesTitle": {"message": "Examples"},
+  "exampleDomTitle": {"message": "DOM 条件"},
+  "exampleNetworkTitle": {"message": "Network 条件"},
+  "exampleUrlTitle": {"message": "URL パターン"},
+  "ruleNamePlaceholder": {"message": "ルール名"},
+  "enabled": {"message": "有効"},
+  "remove": {"message": "削除"},
+  "urlPatterns": {"message": "URL patterns"},
+  "urlPatternsPlaceholder": {"message": "1行に1つずつ入力"},
+  "matchMode": {"message": "Condition join"},
+  "matchModeAny": {"message": "ANY"},
+  "matchModeAll": {"message": "ALL"},
+  "smartBusyToggle": {"message": "Smart busy detection を使う"},
+  "conditionsTitle": {"message": "Conditions"},
+  "conditionLabel": {"message": "Condition"},
+  "collapseRule": {"message": "ルールを閉じる"},
+  "expandRule": {"message": "ルールを開く"},
+  "collapseCondition": {"message": "条件を閉じる"},
+  "expandCondition": {"message": "条件を開く"},
+  "addCondition": {"message": "条件を追加"},
+  "conditionSource": {"message": "Condition source"},
+  "conditionSourceDom": {"message": "dom"},
+  "conditionSourceNetwork": {"message": "network"},
+  "selectorType": {"message": "Selector type"},
+  "selectorTypeAuto": {"message": "auto"},
+  "selectorTypeCss": {"message": "css"},
+  "selectorTypeXpath": {"message": "xpath"},
+  "busyQuery": {"message": "Busy query"},
+  "busyQueryPlaceholder": {"message": "例: [aria-busy=\"true\"] または //button[contains(@aria-label, \"Stop\")]"},
+  "networkMatchType": {"message": "URL match"},
+  "matchTypeUrlContains": {"message": "urlContains"},
+  "matchTypePathPrefix": {"message": "pathPrefix"},
+  "matchTypeRegex": {"message": "regex"},
+  "networkValue": {"message": "Value"},
+  "networkValuePlaceholder": {"message": "例: /backend-api/conversation"},
+  "networkMethod": {"message": "Method"},
+  "networkResourceKind": {"message": "Resource kind"},
+  "resourceKindAny": {"message": "any"},
+  "resourceKindFetchXhr": {"message": "fetch/xhr"},
+  "resourceKindWebsocket": {"message": "websocket"},
+  "resourceKindOther": {"message": "other"},
+  "ruleOriginUser": {"message": "ユーザールール"},
+  "ruleOriginSystem": {"message": "システムプリセット"},
+  "ruleReadonlyNotice": {"message": "このプリセットは拡張側が管理しており、読み取り専用です。"},
+  "hintEmptyQuery": {"message": "クエリが空です"},
+  "hintCurrentInterpretation": {"message": "現在の解釈: $TYPE$", "placeholders": {"type": {"content": "$1"}}},
+  "hintSmartBusy": {"message": "Smart busy detection はルール全体の補助シグナルです。"},
+  "hintNetworkSummary": {"message": "Network 条件 / $MATCH$ / $METHOD$ / $KIND$ / $VALUE$", "placeholders": {"match": {"content": "$1"}, "method": {"content": "$2"}, "kind": {"content": "$3"}, "value": {"content": "$4"}}},
+  "untitledRule": {"message": "名称未設定ルール"},
+  "presetDebugLocalSandboxName": {"message": "Debug: Local Sandbox"}
 }
