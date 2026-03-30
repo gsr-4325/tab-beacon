@@ -1,9 +1,11 @@
 const STORAGE_KEY = "tabBeaconRules";
+const MAX_DIAGNOSTIC_ENTRIES = 80;
 
 let rulesCache = [];
 const tabUrls = new Map();
 const requestMatches = new Map();
 const tabConditionCounts = new Map();
+const tabDiagnosticEntries = new Map();
 
 initialize().catch((error) => {
   console.error("[TabBeacon:bg] initialize failed", error);
@@ -25,6 +27,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 chrome.tabs.onRemoved.addListener((tabId) => {
   tabUrls.delete(tabId);
   tabConditionCounts.delete(tabId);
+  tabDiagnosticEntries.delete(tabId);
   for (const [requestId, record] of requestMatches.entries()) {
     if (record.tabId === tabId) {
       requestMatches.delete(requestId);
@@ -55,6 +58,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
     }
   }
+
+  if (message.type === "tab-beacon/get-network-diagnostics") {
+    const tabId = resolveRequestedTabId(message, sender);
+    if (tabId >= 0) {
+      sendResponse({ diagnostics: buildDiagnosticsForTab(tabId) });
+      return true;
+    }
+  }
+
+  if (message.type === "tab-beacon/clear-network-diagnostics") {
+    const tabId = resolveRequestedTabId(message, sender);
+    if (tabId >= 0) {
+      clearDiagnosticHistoryForTab(tabId);
+      sendResponse({ diagnostics: buildDiagnosticsForTab(tabId) });
+      return true;
+    }
+  }
 });
 
 chrome.webRequest.onBeforeRequest.addListener(
@@ -66,14 +86,14 @@ chrome.webRequest.onBeforeRequest.addListener(
 
 chrome.webRequest.onCompleted.addListener(
   (details) => {
-    handleRequestFinished(details.requestId);
+    handleRequestFinished(details.requestId, "completed");
   },
   { urls: ["<all_urls>"] }
 );
 
 chrome.webRequest.onErrorOccurred.addListener(
   (details) => {
-    handleRequestFinished(details.requestId);
+    handleRequestFinished(details.requestId, "error");
   },
   { urls: ["<all_urls>"] }
 );
@@ -82,6 +102,7 @@ async function initialize() {
   rulesCache = normalizeRules(await loadRules());
   requestMatches.clear();
   tabConditionCounts.clear();
+  tabDiagnosticEntries.clear();
 }
 
 async function loadRules() {
@@ -95,12 +116,14 @@ function normalizeRules(rules) {
       id: rule.id || `rule-${index}`,
       enabled: rule.enabled !== false,
       matches: Array.isArray(rule.matches) ? rule.matches : [],
-      busyWhen: Array.isArray(rule.busyWhen) ? rule.busyWhen : [],
+      busyWhen: [],
       selectorType: rule.selectorType || "auto",
       busyQuery: typeof rule.busyQuery === "string" ? rule.busyQuery.trim() : ""
     };
 
-    if (!normalized.busyWhen.length && normalized.busyQuery) {
+    if (Array.isArray(rule.busyWhen) && rule.busyWhen.length) {
+      normalized.busyWhen = rule.busyWhen;
+    } else if (normalized.busyQuery) {
       normalized.busyWhen = [
         {
           source: "dom",
@@ -147,9 +170,12 @@ function handleRequestStarted(details) {
 
   if (!matchingConditions.length) return;
 
+  const diagnosticEntryId = appendDiagnosticEntry(details.tabId, details, matchingConditions);
+
   requestMatches.set(details.requestId, {
     tabId: details.tabId,
-    matches: matchingConditions
+    matches: matchingConditions,
+    diagnosticEntryId
   });
 
   const counts = tabConditionCounts.get(details.tabId) || new Map();
@@ -161,10 +187,12 @@ function handleRequestStarted(details) {
   sendSnapshotToTab(details.tabId);
 }
 
-function handleRequestFinished(requestId) {
+function handleRequestFinished(requestId, finalStatus = "completed") {
   const record = requestMatches.get(requestId);
   if (!record) return;
   requestMatches.delete(requestId);
+
+  updateDiagnosticEntry(record.tabId, record.diagnosticEntryId, finalStatus);
 
   const counts = tabConditionCounts.get(record.tabId);
   if (!counts) return;
@@ -237,6 +265,89 @@ function buildSnapshotForTab(tabId) {
     snapshot[ruleId][conditionIndex] = true;
   }
   return snapshot;
+}
+
+function appendDiagnosticEntry(tabId, details, matches) {
+  const entries = tabDiagnosticEntries.get(tabId) || [];
+  const entry = {
+    id: createDiagnosticEntryId(),
+    requestId: details.requestId,
+    url: details.url || "",
+    method: (details.method || "GET").toUpperCase(),
+    requestType: details.type || "unknown",
+    startedAt: Date.now(),
+    finishedAt: null,
+    status: "inflight",
+    matches: matches.map(({ ruleId, conditionIndex }) => ({
+      ruleId,
+      conditionIndex
+    }))
+  };
+
+  entries.unshift(entry);
+  if (entries.length > MAX_DIAGNOSTIC_ENTRIES) {
+    entries.length = MAX_DIAGNOSTIC_ENTRIES;
+  }
+  tabDiagnosticEntries.set(tabId, entries);
+  return entry.id;
+}
+
+function updateDiagnosticEntry(tabId, diagnosticEntryId, finalStatus) {
+  if (!diagnosticEntryId) return;
+  const entries = tabDiagnosticEntries.get(tabId);
+  if (!entries?.length) return;
+
+  const entry = entries.find((item) => item.id === diagnosticEntryId);
+  if (!entry) return;
+
+  entry.status = finalStatus;
+  entry.finishedAt = Date.now();
+}
+
+function clearDiagnosticHistoryForTab(tabId) {
+  const entries = tabDiagnosticEntries.get(tabId) || [];
+  const activeOnly = entries.filter((entry) => entry.status === "inflight");
+  if (activeOnly.length) {
+    tabDiagnosticEntries.set(tabId, activeOnly);
+  } else {
+    tabDiagnosticEntries.delete(tabId);
+  }
+}
+
+function buildDiagnosticsForTab(tabId) {
+  const entries = tabDiagnosticEntries.get(tabId) || [];
+  return {
+    tabId,
+    tabUrl: tabUrls.get(tabId) || "",
+    activeRequestCount: entries.filter((entry) => entry.status === "inflight").length,
+    matchedConditionCount: Array.from((tabConditionCounts.get(tabId) || new Map()).keys()).length,
+    snapshot: buildSnapshotForTab(tabId),
+    entries: entries.map((entry) => ({
+      id: entry.id,
+      requestId: entry.requestId,
+      url: entry.url,
+      method: entry.method,
+      requestType: entry.requestType,
+      startedAt: entry.startedAt,
+      finishedAt: entry.finishedAt,
+      status: entry.status,
+      matches: entry.matches
+    }))
+  };
+}
+
+function resolveRequestedTabId(message, sender) {
+  if (typeof message.tabId === "number" && message.tabId >= 0) {
+    return message.tabId;
+  }
+  if (sender.tab?.id >= 0) {
+    return sender.tab.id;
+  }
+  return -1;
+}
+
+function createDiagnosticEntryId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function sendSnapshotToTab(tabId) {
