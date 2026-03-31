@@ -1,0 +1,17 @@
+{
+  "name": "playwright-observer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node observe.js",
+    "observe": "node observe.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "playwright": "^1.58.2"
+  }
+}
