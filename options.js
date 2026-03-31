@@ -20,8 +20,46 @@ const DEFAULT_RULES = [
     busyWhen: [
       {
         source: "dom",
-        selectorType: "auto",
+        selectorType: "css",
         query: '[aria-busy="true"]'
+      },
+      {
+        source: "dom",
+        selectorType: "css",
+        query: '[data-testid="stop-button"]'
+      },
+      {
+        source: "network",
+        matchType: "pathPrefix",
+        value: "/backend-api/f/conversation",
+        method: "POST",
+        resourceKind: "fetch-xhr"
+      }
+    ],
+    useSmartBusySignals: true,
+    iconMode: "overlaySpinner"
+  },
+  {
+    id: crypto.randomUUID(),
+    slug: `user-default-${crypto.randomUUID().slice(0, 8)}`,
+    origin: USER_ORIGIN,
+    readonly: false,
+    name: "Gemini",
+    enabled: true,
+    matches: ["https://gemini.google.com/*"],
+    matchMode: "any",
+    busyWhen: [
+      {
+        source: "dom",
+        selectorType: "css",
+        query: 'button[aria-label="Stop response"]'
+      },
+      {
+        source: "network",
+        matchType: "urlContains",
+        value: "BardFrontendService/StreamGenerate",
+        method: "POST",
+        resourceKind: "fetch-xhr"
       }
     ],
     useSmartBusySignals: true,
@@ -62,6 +100,7 @@ const conditionTemplate = document.getElementById("conditionTemplate");
 const saveButton = document.getElementById("saveAll");
 const addRuleButton = document.getElementById("addRule");
 const showDebugToolsCheckbox = document.getElementById("showDebugTools");
+const enableDebugModeCheckbox = document.getElementById("enableDebugMode");
 const debugPanel = document.getElementById("debugPanel");
 const installDebugPresetButton = document.getElementById("installDebugPreset");
 const debugPresetStatus = document.getElementById("debugPresetStatus");
@@ -86,9 +125,11 @@ async function init() {
     chrome.storage.local.get(UI_STATE_KEY)
   ]);
 
-  const initialRules = Array.isArray(rulesResult[STORAGE_KEY]) && rulesResult[STORAGE_KEY].length
+  let initialRules = Array.isArray(rulesResult[STORAGE_KEY]) && rulesResult[STORAGE_KEY].length
     ? rulesResult[STORAGE_KEY]
     : DEFAULT_RULES;
+
+  initialRules = migrateRules(initialRules);
 
   const normalizedRules = initialRules.map(normalizeRuleForEditor);
   renderRules(normalizedRules);
@@ -97,6 +138,8 @@ async function init() {
   const showDebugTools = !!uiStateResult[UI_STATE_KEY]?.showDebugTools;
   showDebugToolsCheckbox.checked = showDebugTools;
   debugPanel.classList.toggle("hidden", !showDebugTools);
+
+  enableDebugModeCheckbox.checked = !!uiStateResult[UI_STATE_KEY]?.debugMode;
   updateDebugPresetStatus(normalizedRules);
 
   if (showDebugTools) {
@@ -121,10 +164,16 @@ function bindGlobalActions() {
     }
   });
 
+  enableDebugModeCheckbox.addEventListener("change", async () => {
+    const uiState = (await chrome.storage.local.get(UI_STATE_KEY))[UI_STATE_KEY] || {};
+    await chrome.storage.local.set({ [UI_STATE_KEY]: { ...uiState, debugMode: enableDebugModeCheckbox.checked } });
+  });
+
   showDebugToolsCheckbox.addEventListener("change", async () => {
     const checked = showDebugToolsCheckbox.checked;
     debugPanel.classList.toggle("hidden", !checked);
-    await chrome.storage.local.set({ [UI_STATE_KEY]: { showDebugTools: checked } });
+    const uiState = (await chrome.storage.local.get(UI_STATE_KEY))[UI_STATE_KEY] || {};
+    await chrome.storage.local.set({ [UI_STATE_KEY]: { ...uiState, showDebugTools: checked } });
     if (checked) {
       await refreshDiagnosticTabs({ refreshDiagnostics: true });
     }
@@ -161,6 +210,23 @@ function bindGlobalActions() {
   diagnosticTabSelect.addEventListener("change", async () => {
     await refreshNetworkDiagnosticsForSelectedTab();
   });
+}
+
+function migrateRules(rules) {
+  let changed = false;
+  const migrated = rules.map((rule) => {
+    if (!Array.isArray(rule.busyWhen)) return rule;
+    const filtered = rule.busyWhen.filter(
+      (c) => !(c.source === "dom" && c.query === '[aria-busy="true"]' && rule.name === "Gemini")
+    );
+    if (filtered.length === rule.busyWhen.length) return rule;
+    changed = true;
+    return { ...rule, busyWhen: filtered };
+  });
+  if (changed) {
+    chrome.storage.local.set({ [STORAGE_KEY]: migrated });
+  }
+  return migrated;
 }
 
 function normalizeRuleForEditor(rule) {

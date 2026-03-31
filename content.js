@@ -1,4 +1,9 @@
+(function () {
+if (window.__tabBeaconLoaded) return;
+window.__tabBeaconLoaded = true;
+
 const STORAGE_KEY = "tabBeaconRules";
+const UI_STATE_KEY = "tabBeaconUiState";
 const EXT_ICON_LINK_ID = "tabbeacon-generated-favicon";
 const FRAME_COUNT = 8;
 const FRAME_INTERVAL_MS = 250;
@@ -23,6 +28,11 @@ const DEFAULT_RULES = [
   }
 ];
 
+let debugMode = false;
+function dbg(...args) {
+  if (debugMode) console.log("[TabBeacon:dbg]", ...args);
+}
+
 let state = {
   activeRules: [],
   currentStatus: "idle",
@@ -43,13 +53,27 @@ bootstrap().catch((error) => {
 });
 
 async function bootstrap() {
-  const rules = (await loadRules()).map(normalizeRule).filter((rule) => rule.enabled);
-  const matchingRules = pickRulesForLocation(rules, location.href);
-  if (!matchingRules.length) return;
+  const [rules, uiState] = await Promise.all([
+    loadRules(),
+    chrome.storage.local.get(UI_STATE_KEY)
+  ]);
+  debugMode = !!uiState[UI_STATE_KEY]?.debugMode;
+
+  const normalizedRules = rules.map(normalizeRule).filter((rule) => rule.enabled);
+  const matchingRules = pickRulesForLocation(normalizedRules, location.href);
+
+  dbg("bootstrap", { url: location.href, totalRules: normalizedRules.length, matchingRules: matchingRules.length });
+
+  if (!matchingRules.length) {
+    dbg("no matching rules for this URL — exiting");
+    return;
+  }
 
   state.activeRules = matchingRules;
   state.originalIcons = captureOriginalIcons();
   state.baseIconDataUrl = await resolveBaseIconDataUrl(state.originalIcons);
+
+  dbg("active rules", matchingRules.map(r => ({ name: r.id, conditions: r.busyWhen.length })));
 
   installRuntimeHooks();
   await registerCurrentTabUrl();
@@ -162,7 +186,12 @@ function installObservers() {
 
 function watchStorageChanges() {
   chrome.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName !== "local" || !changes[STORAGE_KEY]) return;
+    if (areaName !== "local") return;
+    if (changes[UI_STATE_KEY]) {
+      debugMode = !!changes[UI_STATE_KEY].newValue?.debugMode;
+      dbg("debugMode updated:", debugMode);
+    }
+    if (!changes[STORAGE_KEY]) return;
     cleanup(false);
     bootstrap().catch((error) => console.error("[TabBeacon] reload failed", error));
   });
@@ -215,37 +244,53 @@ function evaluateRuleBusy(rule) {
     : false;
 
   const smartSignalsMatch = rule.useSmartBusySignals && detectSmartBusySignals();
-  return explicitMatch || smartSignalsMatch;
+  const result = explicitMatch || smartSignalsMatch;
+
+  if (debugMode) {
+    const conditionSummary = rule.busyWhen.map((c, i) => ({
+      i,
+      source: c.source,
+      q: c.source === "network" ? c.value : c.query,
+      hit: explicitResults[i]
+    }));
+    dbg(`rule [${rule.id}]`, { explicit: explicitMatch, smart: smartSignalsMatch, result, conditions: conditionSummary });
+  }
+
+  return result;
 }
 
 function evaluateCondition(rule, condition, conditionIndex) {
   if (condition.source === "network") {
-    return !!state.networkSnapshot?.[rule.id]?.[String(conditionIndex)];
+    const snap = state.networkSnapshot?.[rule.id];
+    const val = !!snap?.[String(conditionIndex)];
+    if (debugMode && (val || snap)) {
+      dbg(`network[${conditionIndex}] snap=${JSON.stringify(snap)} → ${val}`);
+    }
+    return val;
   }
-  return queryExists(condition.query, condition.selectorType);
+  const el = queryExistsElement(condition.query, condition.selectorType);
+  if (debugMode) {
+    dbg(`dom[${conditionIndex}] "${condition.query}" → ${el ? el.tagName : "null"}`);
+  }
+  return !!el;
 }
 
-function queryExists(query, selectorType = "auto") {
+function queryExistsElement(query, selectorType = "auto") {
   try {
     const resolvedType = resolveSelectorType(query, selectorType);
     if (resolvedType === "css") {
-      return !!document.querySelector(query);
+      return document.querySelector(query);
     }
     if (resolvedType === "xpath") {
-      const result = document.evaluate(
-        query,
-        document,
-        null,
-        XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null
-      );
-      return !!result.singleNodeValue;
+      const result = document.evaluate(query, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+      return result.singleNodeValue;
     }
   } catch (error) {
     console.warn("[TabBeacon] query evaluation failed", { query, selectorType, error });
   }
-  return false;
+  return null;
 }
+
 
 function resolveSelectorType(query, selectorType) {
   if (selectorType === "css" || selectorType === "xpath") {
@@ -373,6 +418,7 @@ function createFallbackBaseIcon() {
 
 function applyStatus(nextStatus) {
   if (state.currentStatus === nextStatus) return;
+  dbg(`status: ${state.currentStatus} → ${nextStatus}`);
   state.currentStatus = nextStatus;
 
   if (nextStatus === "busy") {
@@ -524,3 +570,5 @@ function cleanup(resetRules = true) {
     state.networkSnapshot = {};
   }
 }
+
+})();

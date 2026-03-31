@@ -7,16 +7,44 @@ const requestMatches = new Map();
 const tabConditionCounts = new Map();
 const tabDiagnosticEntries = new Map();
 
-initialize().catch((error) => {
-  console.error("[TabBeacon:bg] initialize failed", error);
+initialize()
+  .then(rebuildTabUrls)
+  .catch((error) => {
+    console.error("[TabBeacon:bg] initialize failed", error);
+  });
+
+chrome.runtime.onInstalled.addListener((details) => {
+  initialize()
+    .then(rebuildTabUrls)
+    .then(() => {
+      if (details.reason === "install" || details.reason === "update") {
+        injectIntoExistingTabs();
+      }
+    })
+    .catch((error) => console.error("[TabBeacon:bg] install init failed", error));
 });
 
-chrome.runtime.onInstalled.addListener(() => {
-  initialize().catch((error) => console.error("[TabBeacon:bg] install init failed", error));
-});
+async function injectIntoExistingTabs() {
+  const tabs = await chrome.tabs.query({ status: "complete" });
+  for (const tab of tabs) {
+    if (!tab.id || !tab.url) continue;
+    const url = tab.url;
+    if (
+      url.startsWith("chrome://") ||
+      url.startsWith("edge://") ||
+      url.startsWith("about:") ||
+      url.startsWith("chrome-extension://") ||
+      url.startsWith("devtools://")
+    ) continue;
+    chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["content.js"] })
+      .catch(() => {});
+  }
+}
 
 chrome.runtime.onStartup.addListener(() => {
-  initialize().catch((error) => console.error("[TabBeacon:bg] startup init failed", error));
+  initialize()
+    .then(rebuildTabUrls)
+    .catch((error) => console.error("[TabBeacon:bg] startup init failed", error));
 });
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
@@ -105,6 +133,15 @@ async function initialize() {
   tabDiagnosticEntries.clear();
 }
 
+async function rebuildTabUrls() {
+  const tabs = await chrome.tabs.query({});
+  for (const tab of tabs) {
+    if (tab.id >= 0 && tab.url) {
+      tabUrls.set(tab.id, tab.url);
+    }
+  }
+}
+
 async function loadRules() {
   const result = await chrome.storage.local.get(STORAGE_KEY);
   return Array.isArray(result[STORAGE_KEY]) ? result[STORAGE_KEY] : [];
@@ -134,8 +171,9 @@ function normalizeRules(rules) {
     }
 
     normalized.busyWhen = normalized.busyWhen
-      .map((condition) => ({
+      .map((condition, originalIndex) => ({
         source: condition.source === "network" ? "network" : "dom",
+        originalIndex,
         matchType: condition.matchType || "urlContains",
         value: typeof condition.value === "string" ? condition.value.trim() : "",
         method: condition.method || "ANY",
@@ -147,22 +185,33 @@ function normalizeRules(rules) {
   });
 }
 
-function handleRequestStarted(details) {
+async function handleRequestStarted(details) {
   if (details.tabId < 0) return;
 
-  const tabUrl = tabUrls.get(details.tabId);
-  if (!tabUrl) return;
+  let tabUrl = tabUrls.get(details.tabId);
+  if (!tabUrl) {
+    try {
+      const tab = await chrome.tabs.get(details.tabId);
+      if (tab?.url) {
+        tabUrl = tab.url;
+        tabUrls.set(details.tabId, tabUrl);
+      }
+    } catch {
+      return;
+    }
+    if (!tabUrl) return;
+  }
 
   const matchingConditions = [];
   for (const rule of rulesCache) {
     if (!rule.enabled) continue;
     if (!rule.matches.some((pattern) => wildcardMatch(pattern, tabUrl))) continue;
 
-    rule.busyWhen.forEach((condition, conditionIndex) => {
+    rule.busyWhen.forEach((condition) => {
       if (networkConditionMatches(condition, details)) {
         matchingConditions.push({
           ruleId: rule.id,
-          conditionIndex: String(conditionIndex)
+          conditionIndex: String(condition.originalIndex)
         });
       }
     });
