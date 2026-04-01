@@ -71,6 +71,12 @@
   "debugLoadPreset": {
     "message": "Install local sandbox preset"
   },
+  "debugOpenPackagedSandbox": {
+    "message": "Open packaged sandbox"
+  },
+  "debugLocalFileHint": {
+    "message": "For real file:// testing, open manual-tests/tabbeacon-sandbox.html from your local repo."
+  },
   "debugPresetInstalled": {
     "message": "The local sandbox preset is already installed."
   },

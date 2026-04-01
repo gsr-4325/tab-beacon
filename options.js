@@ -173,6 +173,7 @@ const debugSectionBody = document.getElementById("debugSectionBody");
 const enableDebugModeCheckbox = document.getElementById("enableDebugMode");
 const debugPanel = document.getElementById("debugPanel");
 const installDebugPresetButton = document.getElementById("installDebugPreset");
+const openPackagedSandboxButton = document.getElementById("openPackagedSandbox");
 const debugPresetStatus = document.getElementById("debugPresetStatus");
 let refreshDiagnosticTabsButton;
 let refreshDiagnosticsButton;
@@ -300,6 +301,10 @@ function bindGlobalActions() {
     if (isDebugSectionExpanded()) {
       await refreshNetworkDiagnosticsForSelectedTab();
     }
+  });
+
+  openPackagedSandboxButton.addEventListener("click", async () => {
+    await chrome.tabs.create({ url: chrome.runtime.getURL("manual-tests/tabbeacon-sandbox.html") });
   });
 
   refreshDiagnosticTabsButton.addEventListener("click", async () => {

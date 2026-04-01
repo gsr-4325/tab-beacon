@@ -71,6 +71,12 @@
   "debugLoadPreset": {
     "message": "ローカル sandbox プリセットを追加"
   },
+  "debugOpenPackagedSandbox": {
+    "message": "同梱 sandbox を開く"
+  },
+  "debugLocalFileHint": {
+    "message": "本当の file:// テストは、ローカル repo の manual-tests/tabbeacon-sandbox.html を開いてください。"
+  },
   "debugPresetInstalled": {
     "message": "ローカル sandbox プリセットは既に追加されています。"
   },
