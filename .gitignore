@@ -4,4 +4,4 @@ notes/
 
 *.del
 
-playwright-observer/
+node_modules/
