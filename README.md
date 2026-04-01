@@ -83,6 +83,21 @@ TabBeacon は、Web ページ上の状態変化を監視し、タブの favicon 
   - `content.js` の UTF-8 hotfix
 - 直近で次に進めるなら、network 条件の診断 UI、ChatGPT 実測、権限の絞り込みの順が妥当
 
+
+## Web ページの動的要素の分析
+
+`playwright-observer` を使用し、ログをAIAgentに渡して、該当する DOM 要素やネットワークのパターンを割り出させ、それらを TabBeacon のルールに落とし込む。
+
+### playwright-observer インストール
+
+tab-beacon のローカルリポジトリのディレクトリで
+
+```
+npm install github:gsr-4325/playwright-observer
+```
+
+使い方は [paywright-observer のページ](https://github.com/gsr-4325/playwright-observer) を参照。
+
 ## ライセンス
 
 未設定

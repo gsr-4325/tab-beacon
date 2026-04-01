@@ -7,27 +7,129 @@ const USER_ORIGIN = "user";
 const I18N = window.TabBeaconI18n || { t: (key) => key, apply: () => {} };
 const t = (key, substitutions) => I18N.t(key, substitutions);
 
-const DEFAULT_RULES = [
-  {
-    id: crypto.randomUUID(),
-    slug: `user-default-${crypto.randomUUID().slice(0, 8)}`,
-    origin: USER_ORIGIN,
-    readonly: false,
-    name: "ChatGPT",
-    enabled: true,
-    matches: ["https://chatgpt.com/*", "https://chat.openai.com/*"],
-    matchMode: "any",
-    busyWhen: [
-      {
-        source: "dom",
-        selectorType: "auto",
-        query: '[aria-busy="true"]'
-      }
-    ],
-    useSmartBusySignals: true,
-    iconMode: "overlaySpinner"
-  }
-];
+function buildDefaultRules() {
+  return [
+    {
+      id: crypto.randomUUID(),
+      slug: `user-default-${crypto.randomUUID().slice(0, 8)}`,
+      origin: USER_ORIGIN,
+      readonly: false,
+      name: "ChatGPT",
+      enabled: true,
+      matches: ["https://chatgpt.com/*", "https://chat.openai.com/*"],
+      matchMode: "any",
+      busyWhen: [
+        {
+          source: "dom",
+          selectorType: "css",
+          query: '[aria-busy="true"]'
+        },
+        {
+          source: "dom",
+          selectorType: "css",
+          query: '[data-testid="stop-button"]'
+        },
+        {
+          source: "network",
+          matchType: "pathPrefix",
+          value: "/backend-api/f/conversation",
+          method: "POST",
+          resourceKind: "fetch-xhr"
+        }
+      ],
+      useSmartBusySignals: true,
+      iconMode: "overlaySpinner"
+    },
+    {
+      id: crypto.randomUUID(),
+      slug: `user-default-${crypto.randomUUID().slice(0, 8)}`,
+      origin: USER_ORIGIN,
+      readonly: false,
+      name: "Gemini",
+      enabled: true,
+      matches: ["https://gemini.google.com/*"],
+      matchMode: "any",
+      busyWhen: [
+        {
+          source: "dom",
+          selectorType: "css",
+          query: 'button[aria-label="Stop response"]'
+        },
+        {
+          source: "dom",
+          selectorType: "css",
+          query: ".bard-avatar.thinking"
+        },
+        {
+          source: "dom",
+          selectorType: "css",
+          query: ".markdown-main-panel.animate"
+        },
+        {
+          source: "network",
+          matchType: "urlContains",
+          value: "BardFrontendService/StreamGenerate",
+          method: "POST",
+          resourceKind: "fetch-xhr"
+        }
+      ],
+      useSmartBusySignals: true,
+      iconMode: "overlaySpinner"
+    },
+    {
+      id: crypto.randomUUID(),
+      slug: `user-default-${crypto.randomUUID().slice(0, 8)}`,
+      origin: USER_ORIGIN,
+      readonly: false,
+      name: "Claude",
+      enabled: true,
+      matches: ["https://claude.ai/*"],
+      matchMode: "any",
+      busyWhen: [
+        {
+          source: "dom",
+          selectorType: "css",
+          query: 'button[aria-label="Stop response"]'
+        },
+        {
+          source: "network",
+          matchType: "regex",
+          value: "chat_conversations/[^/]+/completion$",
+          method: "POST",
+          resourceKind: "fetch-xhr"
+        }
+      ],
+      useSmartBusySignals: true,
+      iconMode: "overlaySpinner"
+    },
+    {
+      id: crypto.randomUUID(),
+      slug: `user-default-${crypto.randomUUID().slice(0, 8)}`,
+      origin: USER_ORIGIN,
+      readonly: false,
+      name: "Copilot",
+      enabled: true,
+      matches: ["https://www.copilot.com/*"],
+      matchMode: "any",
+      busyWhen: [
+        {
+          source: "dom",
+          selectorType: "css",
+          query: 'button[aria-label="Interrupt message"]'
+        },
+        {
+          source: "dom",
+          selectorType: "css",
+          query: '[data-testid="stop-button"]'
+        }
+      ],
+      useSmartBusySignals: true,
+      iconMode: "overlaySpinner"
+    }
+  ];
+}
+
+const DEFAULT_RULES = buildDefaultRules();
 
 const DEBUG_LOCAL_SANDBOX_PRESET = {
   id: `sys:${DEBUG_PRESET_SLUG}`,
@@ -60,8 +162,13 @@ const rulesContainer = document.getElementById("rulesContainer");
 const ruleTemplate = document.getElementById("ruleTemplate");
 const conditionTemplate = document.getElementById("conditionTemplate");
 const saveButton = document.getElementById("saveAll");
+const resetButton = document.getElementById("resetAll");
+const resetConfirmModal = document.getElementById("resetConfirmModal");
+const resetConfirmOkButton = document.getElementById("resetConfirmOk");
+const resetConfirmCancelButton = document.getElementById("resetConfirmCancel");
 const addRuleButton = document.getElementById("addRule");
 const showDebugToolsCheckbox = document.getElementById("showDebugTools");
+const enableDebugModeCheckbox = document.getElementById("enableDebugMode");
 const debugPanel = document.getElementById("debugPanel");
 const installDebugPresetButton = document.getElementById("installDebugPreset");
 const debugPresetStatus = document.getElementById("debugPresetStatus");
@@ -86,9 +193,11 @@ async function init() {
     chrome.storage.local.get(UI_STATE_KEY)
   ]);
 
-  const initialRules = Array.isArray(rulesResult[STORAGE_KEY]) && rulesResult[STORAGE_KEY].length
+  let initialRules = Array.isArray(rulesResult[STORAGE_KEY]) && rulesResult[STORAGE_KEY].length
     ? rulesResult[STORAGE_KEY]
     : DEFAULT_RULES;
+
+  initialRules = migrateRules(initialRules);
 
   const normalizedRules = initialRules.map(normalizeRuleForEditor);
   renderRules(normalizedRules);
@@ -97,6 +206,8 @@ async function init() {
   const showDebugTools = !!uiStateResult[UI_STATE_KEY]?.showDebugTools;
   showDebugToolsCheckbox.checked = showDebugTools;
   debugPanel.classList.toggle("hidden", !showDebugTools);
+
+  enableDebugModeCheckbox.checked = !!uiStateResult[UI_STATE_KEY]?.debugMode;
   updateDebugPresetStatus(normalizedRules);
 
   if (showDebugTools) {
@@ -106,9 +217,21 @@ async function init() {
   }
 }
 
+function markDirty() {
+  saveButton.disabled = false;
+}
+
+function markClean() {
+  saveButton.disabled = true;
+}
+
 function bindGlobalActions() {
+  rulesContainer.addEventListener("input", markDirty);
+  rulesContainer.addEventListener("change", markDirty);
+
   addRuleButton.addEventListener("click", () => {
     rulesContainer.appendChild(createRuleNode());
+    markDirty();
   });
 
   saveButton.addEventListener("click", async () => {
@@ -121,10 +244,36 @@ function bindGlobalActions() {
     }
   });
 
+  resetButton.addEventListener("click", () => {
+    resetConfirmModal.showModal();
+  });
+
+  resetConfirmCancelButton.addEventListener("click", () => {
+    resetConfirmModal.close();
+  });
+
+  resetConfirmOkButton.addEventListener("click", async () => {
+    resetConfirmModal.close();
+    const freshRules = buildDefaultRules();
+    await chrome.storage.local.set({ [STORAGE_KEY]: freshRules });
+    renderRules(freshRules.map(normalizeRuleForEditor));
+    markClean();
+    updateDebugPresetStatus(freshRules);
+    if (showDebugToolsCheckbox.checked) {
+      await refreshNetworkDiagnosticsForSelectedTab();
+    }
+  });
+
+  enableDebugModeCheckbox.addEventListener("change", async () => {
+    const uiState = (await chrome.storage.local.get(UI_STATE_KEY))[UI_STATE_KEY] || {};
+    await chrome.storage.local.set({ [UI_STATE_KEY]: { ...uiState, debugMode: enableDebugModeCheckbox.checked } });
+  });
+
   showDebugToolsCheckbox.addEventListener("change", async () => {
     const checked = showDebugToolsCheckbox.checked;
     debugPanel.classList.toggle("hidden", !checked);
-    await chrome.storage.local.set({ [UI_STATE_KEY]: { showDebugTools: checked } });
+    const uiState = (await chrome.storage.local.get(UI_STATE_KEY))[UI_STATE_KEY] || {};
+    await chrome.storage.local.set({ [UI_STATE_KEY]: { ...uiState, showDebugTools: checked } });
     if (checked) {
       await refreshDiagnosticTabs({ refreshDiagnostics: true });
     }
@@ -161,6 +310,23 @@ function bindGlobalActions() {
   diagnosticTabSelect.addEventListener("change", async () => {
     await refreshNetworkDiagnosticsForSelectedTab();
   });
+}
+
+function migrateRules(rules) {
+  let changed = false;
+  const migrated = rules.map((rule) => {
+    if (!Array.isArray(rule.busyWhen)) return rule;
+    const filtered = rule.busyWhen.filter(
+      (c) => !(c.source === "dom" && c.query === '[aria-busy="true"]' && rule.name === "Gemini")
+    );
+    if (filtered.length === rule.busyWhen.length) return rule;
+    changed = true;
+    return { ...rule, busyWhen: filtered };
+  });
+  if (changed) {
+    chrome.storage.local.set({ [STORAGE_KEY]: migrated });
+  }
+  return migrated;
 }
 
 function normalizeRuleForEditor(rule) {
@@ -250,6 +416,7 @@ function createRuleNode(rule = createEmptyRule()) {
   root.querySelector(".add-condition").addEventListener("click", () => {
     conditionsContainer.appendChild(createConditionNode(undefined, rule.readonly));
     refreshConditionIndexes(conditionsContainer);
+    markDirty();
   });
 
   ruleToggleButton.addEventListener("click", () => {
@@ -260,6 +427,7 @@ function createRuleNode(rule = createEmptyRule()) {
     if (rule.readonly) return;
     root.remove();
     updateDebugPresetStatus(collectRulesFromDom());
+    markDirty();
   });
 
   if (rule.readonly) {
@@ -352,6 +520,7 @@ function createConditionNode(condition = createEmptyCondition(), readonly = fals
     if (parent) {
       refreshConditionIndexes(parent);
     }
+    markDirty();
   });
 
   if (readonly) {
@@ -1016,6 +1185,7 @@ function slugify(value) {
 
 function setSaveButtonSavedState() {
   saveButton.textContent = t("saved");
+  markClean();
   window.setTimeout(() => {
     saveButton.textContent = t("save");
   }, 1200);

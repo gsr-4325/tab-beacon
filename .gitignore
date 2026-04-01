@@ -1,0 +1,7 @@
+notes/
+
+.claude/
+
+*.del
+
+playwright-observer/
