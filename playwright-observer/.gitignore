@@ -1,5 +1,0 @@
-node_modules/
-observations/
-*.log
-.env
-.env.local
