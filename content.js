@@ -8,6 +8,8 @@ const EXT_ICON_LINK_ID = "tabbeacon-generated-favicon";
 const FRAME_COUNT = 8;
 const FRAME_INTERVAL_MS = 250;
 const EVALUATE_DEBOUNCE_MS = 120;
+const EVALUATE_MAX_WAIT_MS = 400;
+const EXT_NAME = "TabBeacon";
 
 const DEFAULT_RULES = [
   {
@@ -43,6 +45,7 @@ let state = {
   baseIconDataUrl: null,
   observer: null,
   reevaluateTimer: null,
+  reevaluateMaxWaitTimer: null,
   historyHooked: false,
   runtimeHooked: false,
   networkSnapshot: {}
@@ -58,6 +61,18 @@ async function bootstrap() {
     chrome.storage.local.get(UI_STATE_KEY)
   ]);
   debugMode = !!uiState[UI_STATE_KEY]?.debugMode;
+
+  // Get extension version and log load message
+  if (debugMode) {
+    try {
+      const manifest = chrome.runtime.getManifest();
+      console.log(`✅ [${EXT_NAME} v${manifest.version}] Content script loaded on ${location.href}`);
+    } catch (e) {
+      console.log(`✅ [${EXT_NAME}] Content script loaded on ${location.href}`);
+    }
+    const hasChromeDOM = typeof chrome.dom?.openOrClosedShadowRoot === "function";
+    dbg(`chrome.dom.openOrClosedShadowRoot available: ${hasChromeDOM}`);
+  }
 
   const normalizedRules = rules.map(normalizeRule).filter((rule) => rule.enabled);
   const matchingRules = pickRulesForLocation(normalizedRules, location.href);
@@ -173,7 +188,17 @@ function installObservers() {
     return;
   }
 
-  state.observer = new MutationObserver(scheduleReevaluate);
+  state.observer = new MutationObserver((mutations) => {
+    scheduleReevaluate();
+    // When new elements with shadow roots are added, observe those shadow roots too
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          observeShadowRoots(node);
+        }
+      }
+    }
+  });
   state.observer.observe(document.body, {
     childList: true,
     subtree: true,
@@ -181,7 +206,28 @@ function installObservers() {
     characterData: false
   });
 
+  // Observe shadow roots already present in the initial DOM
+  observeShadowRoots(document.body);
+
   window.addEventListener("beforeunload", cleanup, { once: true });
+}
+
+function observeShadowRoots(root) {
+  const iter = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+  let node = iter.nextNode();
+  while (node) {
+    const shadow = getShadowRoot(node);
+    if (shadow) {
+      state.observer.observe(shadow, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        characterData: false
+      });
+      observeShadowRoots(shadow);
+    }
+    node = iter.nextNode();
+  }
 }
 
 function watchStorageChanges() {
@@ -224,8 +270,18 @@ function scheduleReevaluate() {
   if (!state.activeRules.length) return;
   clearTimeout(state.reevaluateTimer);
   state.reevaluateTimer = setTimeout(() => {
+    clearTimeout(state.reevaluateMaxWaitTimer);
+    state.reevaluateMaxWaitTimer = null;
     applyStatus(evaluateBusyState() ? "busy" : "idle");
   }, EVALUATE_DEBOUNCE_MS);
+  if (!state.reevaluateMaxWaitTimer) {
+    state.reevaluateMaxWaitTimer = setTimeout(() => {
+      state.reevaluateMaxWaitTimer = null;
+      clearTimeout(state.reevaluateTimer);
+      state.reevaluateTimer = null;
+      applyStatus(evaluateBusyState() ? "busy" : "idle");
+    }, EVALUATE_MAX_WAIT_MS);
+  }
 }
 
 function evaluateBusyState() {
@@ -279,7 +335,8 @@ function queryExistsElement(query, selectorType = "auto") {
   try {
     const resolvedType = resolveSelectorType(query, selectorType);
     if (resolvedType === "css") {
-      return document.querySelector(query);
+      const result = document.querySelector(query) || searchShadowDom(document, query);
+      return result;
     }
     if (resolvedType === "xpath") {
       const result = document.evaluate(query, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
@@ -289,6 +346,61 @@ function queryExistsElement(query, selectorType = "auto") {
     console.warn("[TabBeacon] query evaluation failed", { query, selectorType, error });
   }
   return null;
+}
+
+// Returns the shadow root of an element, including closed shadow roots.
+// chrome.dom.openOrClosedShadowRoot is available to MV3 extensions and
+// can pierce closed shadow roots that element.shadowRoot cannot access.
+// Only HTMLElements are supported; SVGElement etc. will throw.
+function getShadowRoot(element) {
+  if (!(element instanceof HTMLElement)) return element.shadowRoot ?? null;
+  if (typeof chrome.dom?.openOrClosedShadowRoot === "function") {
+    try {
+      return chrome.dom.openOrClosedShadowRoot(element);
+    } catch (_) {}
+  }
+  return element.shadowRoot ?? null;
+}
+
+function searchShadowDom(root, selector, _depth = 0) {
+  let shadowRootsChecked = 0;
+  const allElements = Array.from(root.querySelectorAll("*"));
+  for (const el of allElements) {
+    const shadow = getShadowRoot(el);
+    if (shadow) {
+      shadowRootsChecked++;
+      const found = shadow.querySelector(selector);
+      if (found) return found;
+      const deeper = searchShadowDom(shadow, selector, _depth + 1);
+      if (deeper) return deeper;
+    }
+  }
+  if (debugMode && _depth === 0) {
+    if (shadowRootsChecked === 0) {
+      dbg(`searchShadowDom: NO shadow roots found on page`);
+    } else {
+      // Collect ALL buttons across all shadow DOM levels for diagnosis
+      const allShadowButtons = collectAllShadowButtons(root);
+      dbg(`searchShadowDom: checked shadow roots for "${selector}". All shadow buttons (all depths):`, allShadowButtons.slice(0, 15));
+    }
+  }
+  return null;
+}
+
+function collectAllShadowButtons(root, _depth = 0) {
+  if (_depth > 8) return [];
+  const buttons = [];
+  for (const el of root.querySelectorAll("*")) {
+    const shadow = getShadowRoot(el);
+    if (shadow) {
+      for (const btn of shadow.querySelectorAll("button,[role='button']")) {
+        const label = btn.getAttribute("aria-label") || btn.getAttribute("title") || btn.textContent?.trim().slice(0, 40);
+        buttons.push(`d${_depth}:${btn.tagName}[${label || "(no label)"}]`);
+      }
+      buttons.push(...collectAllShadowButtons(shadow, _depth + 1));
+    }
+  }
+  return buttons;
 }
 
 
@@ -312,34 +424,62 @@ function resolveSelectorType(query, selectorType) {
 }
 
 function detectSmartBusySignals() {
-  const ariaBusy = document.querySelector('[aria-busy="true"]');
+  const ariaBusy = document.querySelector('[aria-busy="true"]') || searchShadowDom(document, '[aria-busy="true"]');
   if (ariaBusy) return true;
 
   const stopLikePattern = /(\bstop\b|\bcancel\b|\binterrupt\b|\u505c\u6b62|\u4e2d\u65ad|\u751f\u6210\u3092\u505c\u6b62)/i;
-  const maybeStopButton = Array.from(document.querySelectorAll("button,[role='button'],a"))
-    .filter((node) => !node.closest('[data-tabbeacon-ignore-smart-busy="true"]'))
+
+  const isStopLike = (node) => {
+    if (node.closest?.('[data-tabbeacon-ignore-smart-busy="true"]')) return false;
+    const label = [
+      node.getAttribute("aria-label"),
+      node.getAttribute("title"),
+      node.getAttribute("data-testid"),
+      node.textContent
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .trim()
+      .toLowerCase();
+    return !!label && stopLikePattern.test(label);
+  };
+
+  const lightDomMatch = Array.from(document.querySelectorAll("button,[role='button'],a"))
     .slice(0, 120)
-    .some((node) => {
-      const label = [
-        node.getAttribute("aria-label"),
-        node.getAttribute("title"),
-        node.getAttribute("data-testid"),
-        node.textContent
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .trim()
-        .toLowerCase();
+    .some(isStopLike);
+  if (lightDomMatch) return true;
 
-      return !!label && stopLikePattern.test(label);
-    });
+  // Also check shadow DOM for stop-like buttons
+  const shadowMatch = collectShadowElements(document, "button,[role='button'],a", 120).some(isStopLike);
+  if (shadowMatch) return true;
 
-  if (maybeStopButton) return true;
-
-  const liveBusy = document.querySelector('[aria-live][aria-busy="true"]');
+  const liveBusy = document.querySelector('[aria-live][aria-busy="true"]') || searchShadowDom(document, '[aria-live][aria-busy="true"]');
   if (liveBusy) return true;
 
   return false;
+}
+
+function collectShadowElements(root, selector, limit) {
+  const results = [];
+  const iter = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+  let node = iter.nextNode();
+  while (node && results.length < limit) {
+    const shadow = getShadowRoot(node);
+    if (shadow) {
+      const found = Array.from(shadow.querySelectorAll(selector));
+      for (const el of found) {
+        if (results.length >= limit) break;
+        results.push(el);
+      }
+      const deeper = collectShadowElements(shadow, selector, limit - results.length);
+      for (const el of deeper) {
+        if (results.length >= limit) break;
+        results.push(el);
+      }
+    }
+    node = iter.nextNode();
+  }
+  return results;
 }
 
 function captureOriginalIcons() {
@@ -561,6 +701,8 @@ function restoreOriginalIcons() {
 
 function cleanup(resetRules = true) {
   clearTimeout(state.reevaluateTimer);
+  clearTimeout(state.reevaluateMaxWaitTimer);
+  state.reevaluateMaxWaitTimer = null;
   stopAnimation();
   restoreOriginalIcons();
   state.observer?.disconnect();

@@ -185,16 +185,33 @@ function normalizeRules(rules) {
   });
 }
 
-async function handleRequestStarted(details) {
-  if (details.tabId < 0) return;
+// When a Service Worker makes a fetch on behalf of a page, Chrome assigns
+// tabId = -1 to the request.  We recover the real tab by matching the SW's
+// origin (details.initiator) against the URLs we track in tabUrls.
+function findFirstTabByOrigin(origin) {
+  for (const [tabId, tabUrl] of tabUrls.entries()) {
+    try {
+      if (new URL(tabUrl).origin === origin) return tabId;
+    } catch {}
+  }
+  return -1;
+}
 
-  let tabUrl = tabUrls.get(details.tabId);
+async function handleRequestStarted(details) {
+  let tabId = details.tabId;
+
+  if (tabId < 0 && details.initiator) {
+    tabId = findFirstTabByOrigin(details.initiator);
+  }
+  if (tabId < 0) return;
+
+  let tabUrl = tabUrls.get(tabId);
   if (!tabUrl) {
     try {
-      const tab = await chrome.tabs.get(details.tabId);
+      const tab = await chrome.tabs.get(tabId);
       if (tab?.url) {
         tabUrl = tab.url;
-        tabUrls.set(details.tabId, tabUrl);
+        tabUrls.set(tabId, tabUrl);
       }
     } catch {
       return;
@@ -219,21 +236,21 @@ async function handleRequestStarted(details) {
 
   if (!matchingConditions.length) return;
 
-  const diagnosticEntryId = appendDiagnosticEntry(details.tabId, details, matchingConditions);
+  const diagnosticEntryId = appendDiagnosticEntry(tabId, details, matchingConditions);
 
   requestMatches.set(details.requestId, {
-    tabId: details.tabId,
+    tabId,
     matches: matchingConditions,
     diagnosticEntryId
   });
 
-  const counts = tabConditionCounts.get(details.tabId) || new Map();
+  const counts = tabConditionCounts.get(tabId) || new Map();
   matchingConditions.forEach(({ ruleId, conditionIndex }) => {
     const key = `${ruleId}:${conditionIndex}`;
     counts.set(key, (counts.get(key) || 0) + 1);
   });
-  tabConditionCounts.set(details.tabId, counts);
-  sendSnapshotToTab(details.tabId);
+  tabConditionCounts.set(tabId, counts);
+  sendSnapshotToTab(tabId);
 }
 
 function handleRequestFinished(requestId, finalStatus = "completed") {
@@ -296,9 +313,10 @@ function networkConditionMatches(condition, details) {
 
 function resourceKindMatches(resourceKind, requestType) {
   if (resourceKind === "any") return true;
-  if (resourceKind === "fetch-xhr") return requestType === "xmlhttprequest";
+  // Service Worker fetches surface as "fetch" in webRequest; treat same as XHR
+  if (resourceKind === "fetch-xhr") return requestType === "xmlhttprequest" || requestType === "fetch";
   if (resourceKind === "websocket") return requestType === "websocket";
-  if (resourceKind === "other") return requestType !== "xmlhttprequest" && requestType !== "websocket";
+  if (resourceKind === "other") return requestType !== "xmlhttprequest" && requestType !== "fetch" && requestType !== "websocket";
   return true;
 }
 

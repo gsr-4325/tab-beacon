@@ -13,7 +13,8 @@
           <h1 data-i18n="appName">TabBeacon</h1>
           <p class="subtitle" data-i18n="optionsSubtitle">Configure DOM and network conditions to show a busy state on the tab icon.</p>
         </div>
-        <button id="saveAll" class="primary" data-i18n="save">Save</button>
+        <button id="resetAll" type="button" data-i18n="reset">Reset</button>
+        <button id="saveAll" class="primary" disabled data-i18n="save">Save</button>
       </header>
 
       <section class="card">
@@ -80,6 +81,15 @@
     <footer class="app-footer">
       <small id="versionText">v0.0.0</small>
     </footer>
+
+    <dialog id="resetConfirmModal" class="confirm-modal">
+      <h2 data-i18n="resetConfirmTitle">Reset to defaults?</h2>
+      <p data-i18n="resetConfirmMessage">This will replace all rules with the default settings. This cannot be undone.</p>
+      <div class="confirm-modal-actions">
+        <button id="resetConfirmCancel" type="button" data-i18n="resetConfirmCancel">Cancel</button>
+        <button id="resetConfirmOk" type="button" class="danger" data-i18n="resetConfirmOk">Reset</button>
+      </div>
+    </dialog>
 
     <template id="ruleTemplate">
       <article class="rule">

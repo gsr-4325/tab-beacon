@@ -348,6 +348,38 @@ select:disabled {
   color: var(--muted);
 }
 
+.confirm-modal {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  padding: 28px 28px 24px;
+  max-width: 420px;
+  width: 90%;
+}
+
+.confirm-modal::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.confirm-modal h2 {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+}
+
+.confirm-modal p {
+  margin: 0 0 24px;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 @media (max-width: 900px) {
   .rule-head,
   .rule-head-start,
