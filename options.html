@@ -9,44 +9,21 @@
   <body>
     <main class="page">
       <header class="hero">
-        <div>
+        <div class="hero-copy">
           <h1 data-i18n="appName">TabBeacon</h1>
           <p class="subtitle" data-i18n="optionsSubtitle">Configure DOM and network conditions to show a busy state on the tab icon.</p>
+          <ul class="hero-principles">
+            <li data-i18n="policyLine1">A single rule can have multiple conditions.</li>
+            <li data-i18n="policyLine2">ANY matches when at least one condition is true. ALL matches when every condition is true.</li>
+            <li data-i18n="policyLine3">You can mix DOM and network conditions in the same rule.</li>
+            <li data-i18n="policyLine4">Smart busy detection acts as a rule-wide fallback signal.</li>
+          </ul>
         </div>
-        <button id="resetAll" type="button" data-i18n="reset">Reset</button>
-        <button id="saveAll" class="primary" disabled data-i18n="save">Save</button>
+        <div class="hero-actions">
+          <button id="resetAll" type="button" data-i18n="reset">Reset</button>
+          <button id="saveAll" class="primary" disabled data-i18n="save">Save</button>
+        </div>
       </header>
-
-      <section class="card">
-        <h2 data-i18n="policyTitle">Principles</h2>
-        <ul>
-          <li data-i18n="policyLine1">A single rule can have multiple conditions.</li>
-          <li data-i18n="policyLine2">ANY matches when at least one condition is true. ALL matches when every condition is true.</li>
-          <li data-i18n="policyLine3">You can mix DOM and network conditions in the same rule.</li>
-          <li data-i18n="policyLine4">Smart busy detection acts as a rule-wide fallback signal.</li>
-        </ul>
-      </section>
-
-      <section class="card">
-        <div class="section-header">
-          <h2 data-i18n="debugTitle">Debug tools</h2>
-          <label class="inline">
-            <input id="showDebugTools" type="checkbox" />
-            <span data-i18n="debugToggle">Show debug tools</span>
-          </label>
-        </div>
-        <label class="inline">
-          <input id="enableDebugMode" type="checkbox" />
-          <span data-i18n="debugModeToggle">Enable debug mode (logs to page console)</span>
-        </label>
-        <div id="debugPanel" class="stack hidden">
-          <p class="hint" data-i18n="debugDescription">Use this section to install a local sandbox preset without overwriting your own rules.</p>
-          <div class="row">
-            <button id="installDebugPreset" type="button" data-i18n="debugLoadPreset">Install local sandbox preset</button>
-          </div>
-          <div id="debugPresetStatus" class="hint"></div>
-        </div>
-      </section>
 
       <section class="card">
         <div class="section-header">
@@ -54,6 +31,28 @@
           <button id="addRule" type="button" data-i18n="addRule">Add rule</button>
         </div>
         <div id="rulesContainer" class="rules"></div>
+      </section>
+
+      <section class="card debug-card">
+        <div class="section-header">
+          <button id="debugToggle" type="button" class="section-toggle" aria-expanded="false">
+            <span class="section-toggle-icon">▸</span>
+            <span data-i18n="debugTitle">Debug</span>
+          </button>
+        </div>
+        <div id="debugSectionBody" class="stack hidden">
+          <label class="inline">
+            <input id="enableDebugMode" type="checkbox" />
+            <span data-i18n="debugModeToggle">Enable debug mode (logs to page console)</span>
+          </label>
+          <div id="debugPanel" class="stack">
+            <p class="hint" data-i18n="debugDescription">Use this section to install a local sandbox preset without overwriting your own rules.</p>
+            <div class="row">
+              <button id="installDebugPreset" type="button" data-i18n="debugLoadPreset">Install local sandbox preset</button>
+            </div>
+            <div id="debugPresetStatus" class="hint"></div>
+          </div>
+        </div>
       </section>
 
       <section class="card">
@@ -79,7 +78,7 @@
     </main>
 
     <footer class="app-footer">
-      <small id="versionText">v0.0.0</small>
+      <small><span data-i18n="footerSince">Since 2026/04/01</span> · <span id="versionText">v0.0.0</span></small>
     </footer>
 
     <dialog id="resetConfirmModal" class="confirm-modal">
@@ -95,7 +94,7 @@
       <article class="rule">
         <div class="rule-head">
           <div class="rule-head-start">
-            <button type="button" class="rule-toggle" aria-expanded="true" title="Toggle rule section">
+            <button type="button" class="rule-toggle" aria-expanded="true">
               <span class="rule-toggle-icon">▾</span>
             </button>
             <div class="rule-title-area">

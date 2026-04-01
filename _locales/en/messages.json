@@ -1,104 +1,374 @@
 {
-  "appName": {"message": "TabBeacon"},
-  "manifestDescription": {"message": "Show a busy indicator on a page tab favicon when watched page conditions match."},
-  "actionDefaultTitle": {"message": "TabBeacon"},
-  "optionsTitle": {"message": "TabBeacon Settings"},
-  "optionsSubtitle": {"message": "Configure DOM and network conditions to show a busy state on the tab icon."},
-  "save": {"message": "Save"},
-  "saved": {"message": "Saved"},
-  "reset": {"message": "Reset"},
-  "resetConfirmTitle": {"message": "Reset to defaults?"},
-  "resetConfirmMessage": {"message": "This will replace all rules with the default settings. This cannot be undone."},
-  "resetConfirmOk": {"message": "Reset"},
-  "resetConfirmCancel": {"message": "Cancel"},
-  "policyTitle": {"message": "Principles"},
-  "policyLine1": {"message": "A single rule can have multiple conditions."},
-  "policyLine2": {"message": "ANY matches when at least one condition is true. ALL matches when every condition is true."},
-  "policyLine3": {"message": "You can mix DOM and network conditions in the same rule."},
-  "policyLine4": {"message": "Smart busy detection acts as a rule-wide fallback signal."},
-  "debugTitle": {"message": "Debug tools"},
-  "debugToggle": {"message": "Show debug tools"},
-  "debugDescription": {"message": "Use this section to install a local sandbox preset without overwriting your own rules."},
-  "debugLoadPreset": {"message": "Install local sandbox preset"},
-  "debugPresetInstalled": {"message": "The local sandbox preset is already installed."},
-  "debugPresetMissing": {"message": "The local sandbox preset is not installed yet."},
-  "networkDiagnosticsTitle": {"message": "Network diagnostics"},
-  "networkDiagnosticsDescription": {"message": "Inspect recent captured requests and see which ones matched your network conditions."},
-  "refreshTabList": {"message": "Refresh tab list"},
-  "refreshDiagnostics": {"message": "Refresh diagnostics"},
-  "clearDiagnostics": {"message": "Clear history"},
-  "diagnosticTargetTab": {"message": "Target tab"},
-  "diagnosticColumnStarted": {"message": "Started"},
-  "diagnosticColumnStatus": {"message": "Status"},
-  "diagnosticColumnRequest": {"message": "Request"},
-  "diagnosticColumnMatchedBy": {"message": "Matched by"},
-  "networkDiagnosticsEmptyState": {"message": "Select a tab and refresh diagnostics to inspect recent captured requests."},
-  "networkDiagnosticsEmptyRows": {"message": "No recent requests captured yet."},
-  "networkDiagnosticsNoTabs": {"message": "No inspectable http/file tabs are open right now."},
-  "networkDiagnosticsNoSelection": {"message": "Select a target tab to inspect diagnostics."},
-  "networkDiagnosticsTabMissing": {"message": "That tab is no longer available. Refresh the tab list and try again."},
-  "networkDiagnosticsError": {"message": "Could not load network diagnostics for the selected tab."},
-  "networkDiagnosticsTabSummary": {"message": "Tab: $TITLE$ / $URL$ / active captured requests: $ACTIVE$ / captured entries: $COUNT$", "placeholders": {"title": {"content": "$1"}, "url": {"content": "$2"}, "active": {"content": "$3"}, "count": {"content": "$4"}}},
-  "networkDiagnosticsTabSummaryPending": {"message": "Tab: $TITLE$ / $URL$ / refresh diagnostics to load the latest captured requests.", "placeholders": {"title": {"content": "$1"}, "url": {"content": "$2"}}},
-  "noInspectableTabs": {"message": "No inspectable tabs"},
-  "untitledTab": {"message": "Untitled tab"},
-  "diagnosticStatusInflight": {"message": "inflight"},
-  "diagnosticStatusCompleted": {"message": "completed"},
-  "diagnosticStatusError": {"message": "error"},
-  "diagnosticFinishedAt": {"message": "Finished: $TIME$", "placeholders": {"time": {"content": "$1"}}},
-  "diagnosticStillInflight": {"message": "Still in flight"},
-  "diagnosticUnknownCondition": {"message": "Unknown rule $RULE$ / condition #$INDEX$", "placeholders": {"rule": {"content": "$1"}, "index": {"content": "$2"}}},
-  "diagnosticMissingCondition": {"message": "Condition no longer exists in the current editor state"},
-  "rulesTitle": {"message": "Rules"},
-  "addRule": {"message": "Add rule"},
-  "examplesTitle": {"message": "Examples"},
-  "exampleDomTitle": {"message": "DOM condition"},
-  "exampleNetworkTitle": {"message": "Network condition"},
-  "exampleUrlTitle": {"message": "URL pattern"},
-  "ruleNamePlaceholder": {"message": "Rule name"},
-  "enabled": {"message": "Enabled"},
-  "remove": {"message": "Remove"},
-  "urlPatterns": {"message": "URL patterns"},
-  "urlPatternsPlaceholder": {"message": "Enter one pattern per line"},
-  "matchMode": {"message": "Condition join"},
-  "matchModeAny": {"message": "ANY"},
-  "matchModeAll": {"message": "ALL"},
-  "smartBusyToggle": {"message": "Use smart busy detection"},
-  "conditionsTitle": {"message": "Conditions"},
-  "conditionLabel": {"message": "Condition"},
-  "collapseRule": {"message": "Collapse rule"},
-  "expandRule": {"message": "Expand rule"},
-  "collapseCondition": {"message": "Collapse condition"},
-  "expandCondition": {"message": "Expand condition"},
-  "addCondition": {"message": "Add condition"},
-  "conditionSource": {"message": "Condition source"},
-  "conditionSourceDom": {"message": "dom"},
-  "conditionSourceNetwork": {"message": "network"},
-  "selectorType": {"message": "Selector type"},
-  "selectorTypeAuto": {"message": "auto"},
-  "selectorTypeCss": {"message": "css"},
-  "selectorTypeXpath": {"message": "xpath"},
-  "busyQuery": {"message": "Busy query"},
-  "busyQueryPlaceholder": {"message": "Example: [aria-busy=\"true\"] or //button[contains(@aria-label, \"Stop\")]"},
-  "networkMatchType": {"message": "URL match"},
-  "matchTypeUrlContains": {"message": "urlContains"},
-  "matchTypePathPrefix": {"message": "pathPrefix"},
-  "matchTypeRegex": {"message": "regex"},
-  "networkValue": {"message": "Value"},
-  "networkValuePlaceholder": {"message": "Example: /backend-api/conversation"},
-  "networkMethod": {"message": "Method"},
-  "networkResourceKind": {"message": "Resource kind"},
-  "resourceKindAny": {"message": "any"},
-  "resourceKindFetchXhr": {"message": "fetch/xhr"},
-  "resourceKindWebsocket": {"message": "websocket"},
-  "resourceKindOther": {"message": "other"},
-  "ruleOriginUser": {"message": "User rule"},
-  "ruleOriginSystem": {"message": "System preset"},
-  "ruleReadonlyNotice": {"message": "This preset is managed by the extension and is read-only."},
-  "hintEmptyQuery": {"message": "Query is empty"},
-  "hintCurrentInterpretation": {"message": "Current interpretation: $TYPE$", "placeholders": {"type": {"content": "$1"}}},
-  "hintSmartBusy": {"message": "Smart busy detection acts as a rule-wide fallback signal."},
-  "hintNetworkSummary": {"message": "Network condition / $MATCH$ / $METHOD$ / $KIND$ / $VALUE$", "placeholders": {"match": {"content": "$1"}, "method": {"content": "$2"}, "kind": {"content": "$3"}, "value": {"content": "$4"}}},
-  "untitledRule": {"message": "Untitled rule"},
-  "presetDebugLocalSandboxName": {"message": "Debug: Local Sandbox"}
+  "appName": {
+    "message": "TabBeacon"
+  },
+  "manifestDescription": {
+    "message": "Show a busy indicator on a page tab favicon when watched page conditions match."
+  },
+  "actionDefaultTitle": {
+    "message": "TabBeacon"
+  },
+  "optionsTitle": {
+    "message": "TabBeacon Settings"
+  },
+  "optionsSubtitle": {
+    "message": "Configure DOM and network conditions to show a busy state on the tab icon."
+  },
+  "save": {
+    "message": "Save"
+  },
+  "saved": {
+    "message": "Saved"
+  },
+  "reset": {
+    "message": "Reset"
+  },
+  "resetConfirmTitle": {
+    "message": "Reset to defaults?"
+  },
+  "resetConfirmMessage": {
+    "message": "This will replace all rules with the default settings. This cannot be undone."
+  },
+  "resetConfirmOk": {
+    "message": "Reset"
+  },
+  "resetConfirmCancel": {
+    "message": "Cancel"
+  },
+  "policyTitle": {
+    "message": "Principles"
+  },
+  "policyLine1": {
+    "message": "A single rule can have multiple conditions."
+  },
+  "policyLine2": {
+    "message": "ANY matches when at least one condition is true. ALL matches when every condition is true."
+  },
+  "policyLine3": {
+    "message": "You can mix DOM and network conditions in the same rule."
+  },
+  "policyLine4": {
+    "message": "Smart busy detection acts as a rule-wide fallback signal."
+  },
+  "debugTitle": {
+    "message": "Debug"
+  },
+  "debugToggle": {
+    "message": "Show debug tools"
+  },
+  "debugModeToggle": {
+    "message": "Enable debug mode (logs to page console)"
+  },
+  "expandDebug": {
+    "message": "Expand debug"
+  },
+  "collapseDebug": {
+    "message": "Collapse debug"
+  },
+  "debugDescription": {
+    "message": "Use this section to install a local sandbox preset without overwriting your own rules."
+  },
+  "debugLoadPreset": {
+    "message": "Install local sandbox preset"
+  },
+  "debugPresetInstalled": {
+    "message": "The local sandbox preset is already installed."
+  },
+  "debugPresetMissing": {
+    "message": "The local sandbox preset is not installed yet."
+  },
+  "networkDiagnosticsTitle": {
+    "message": "Network diagnostics"
+  },
+  "networkDiagnosticsDescription": {
+    "message": "Inspect recent captured requests and see which ones matched your network conditions."
+  },
+  "refreshTabList": {
+    "message": "Refresh tab list"
+  },
+  "refreshDiagnostics": {
+    "message": "Refresh diagnostics"
+  },
+  "clearDiagnostics": {
+    "message": "Clear history"
+  },
+  "diagnosticTargetTab": {
+    "message": "Target tab"
+  },
+  "diagnosticColumnStarted": {
+    "message": "Started"
+  },
+  "diagnosticColumnStatus": {
+    "message": "Status"
+  },
+  "diagnosticColumnRequest": {
+    "message": "Request"
+  },
+  "diagnosticColumnMatchedBy": {
+    "message": "Matched by"
+  },
+  "networkDiagnosticsEmptyState": {
+    "message": "Select a tab and refresh diagnostics to inspect recent captured requests."
+  },
+  "networkDiagnosticsEmptyRows": {
+    "message": "No recent requests captured yet."
+  },
+  "networkDiagnosticsNoTabs": {
+    "message": "No inspectable http/file tabs are open right now."
+  },
+  "networkDiagnosticsNoSelection": {
+    "message": "Select a target tab to inspect diagnostics."
+  },
+  "networkDiagnosticsTabMissing": {
+    "message": "That tab is no longer available. Refresh the tab list and try again."
+  },
+  "networkDiagnosticsError": {
+    "message": "Could not load network diagnostics for the selected tab."
+  },
+  "networkDiagnosticsTabSummary": {
+    "message": "Tab: $TITLE$ / $URL$ / active captured requests: $ACTIVE$ / captured entries: $COUNT$",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      },
+      "url": {
+        "content": "$2"
+      },
+      "active": {
+        "content": "$3"
+      },
+      "count": {
+        "content": "$4"
+      }
+    }
+  },
+  "networkDiagnosticsTabSummaryPending": {
+    "message": "Tab: $TITLE$ / $URL$ / refresh diagnostics to load the latest captured requests.",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      },
+      "url": {
+        "content": "$2"
+      }
+    }
+  },
+  "noInspectableTabs": {
+    "message": "No inspectable tabs"
+  },
+  "untitledTab": {
+    "message": "Untitled tab"
+  },
+  "diagnosticStatusInflight": {
+    "message": "inflight"
+  },
+  "diagnosticStatusCompleted": {
+    "message": "completed"
+  },
+  "diagnosticStatusError": {
+    "message": "error"
+  },
+  "diagnosticFinishedAt": {
+    "message": "Finished: $TIME$",
+    "placeholders": {
+      "time": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticStillInflight": {
+    "message": "Still in flight"
+  },
+  "diagnosticUnknownCondition": {
+    "message": "Unknown rule $RULE$ / condition #$INDEX$",
+    "placeholders": {
+      "rule": {
+        "content": "$1"
+      },
+      "index": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticMissingCondition": {
+    "message": "Condition no longer exists in the current editor state"
+  },
+  "rulesTitle": {
+    "message": "Rules"
+  },
+  "addRule": {
+    "message": "Add rule"
+  },
+  "examplesTitle": {
+    "message": "Examples"
+  },
+  "exampleDomTitle": {
+    "message": "DOM condition"
+  },
+  "exampleNetworkTitle": {
+    "message": "Network condition"
+  },
+  "exampleUrlTitle": {
+    "message": "URL pattern"
+  },
+  "ruleNamePlaceholder": {
+    "message": "Rule name"
+  },
+  "enabled": {
+    "message": "Enabled"
+  },
+  "remove": {
+    "message": "Remove"
+  },
+  "urlPatterns": {
+    "message": "URL patterns"
+  },
+  "urlPatternsPlaceholder": {
+    "message": "Enter one pattern per line"
+  },
+  "matchMode": {
+    "message": "Condition join"
+  },
+  "matchModeAny": {
+    "message": "ANY"
+  },
+  "matchModeAll": {
+    "message": "ALL"
+  },
+  "smartBusyToggle": {
+    "message": "Use smart busy detection"
+  },
+  "conditionsTitle": {
+    "message": "Conditions"
+  },
+  "conditionLabel": {
+    "message": "Condition"
+  },
+  "collapseRule": {
+    "message": "Collapse rule"
+  },
+  "expandRule": {
+    "message": "Expand rule"
+  },
+  "collapseCondition": {
+    "message": "Collapse condition"
+  },
+  "expandCondition": {
+    "message": "Expand condition"
+  },
+  "addCondition": {
+    "message": "Add condition"
+  },
+  "conditionSource": {
+    "message": "Condition source"
+  },
+  "conditionSourceDom": {
+    "message": "dom"
+  },
+  "conditionSourceNetwork": {
+    "message": "network"
+  },
+  "selectorType": {
+    "message": "Selector type"
+  },
+  "selectorTypeAuto": {
+    "message": "auto"
+  },
+  "selectorTypeCss": {
+    "message": "css"
+  },
+  "selectorTypeXpath": {
+    "message": "xpath"
+  },
+  "busyQuery": {
+    "message": "Busy query"
+  },
+  "busyQueryPlaceholder": {
+    "message": "Example: [aria-busy=\"true\"] or //button[contains(@aria-label, \"Stop\")]"
+  },
+  "networkMatchType": {
+    "message": "URL match"
+  },
+  "matchTypeUrlContains": {
+    "message": "urlContains"
+  },
+  "matchTypePathPrefix": {
+    "message": "pathPrefix"
+  },
+  "matchTypeRegex": {
+    "message": "regex"
+  },
+  "networkValue": {
+    "message": "Value"
+  },
+  "networkValuePlaceholder": {
+    "message": "Example: /backend-api/conversation"
+  },
+  "networkMethod": {
+    "message": "Method"
+  },
+  "networkResourceKind": {
+    "message": "Resource kind"
+  },
+  "resourceKindAny": {
+    "message": "any"
+  },
+  "resourceKindFetchXhr": {
+    "message": "fetch/xhr"
+  },
+  "resourceKindWebsocket": {
+    "message": "websocket"
+  },
+  "resourceKindOther": {
+    "message": "other"
+  },
+  "ruleOriginUser": {
+    "message": "User rule"
+  },
+  "ruleOriginSystem": {
+    "message": "System preset"
+  },
+  "ruleReadonlyNotice": {
+    "message": "This preset is managed by the extension and is read-only."
+  },
+  "hintEmptyQuery": {
+    "message": "Query is empty"
+  },
+  "hintCurrentInterpretation": {
+    "message": "Current interpretation: $TYPE$",
+    "placeholders": {
+      "type": {
+        "content": "$1"
+      }
+    }
+  },
+  "hintSmartBusy": {
+    "message": "Smart busy detection acts as a rule-wide fallback signal."
+  },
+  "hintNetworkSummary": {
+    "message": "Network condition / $MATCH$ / $METHOD$ / $KIND$ / $VALUE$",
+    "placeholders": {
+      "match": {
+        "content": "$1"
+      },
+      "method": {
+        "content": "$2"
+      },
+      "kind": {
+        "content": "$3"
+      },
+      "value": {
+        "content": "$4"
+      }
+    }
+  },
+  "untitledRule": {
+    "message": "Untitled rule"
+  },
+  "presetDebugLocalSandboxName": {
+    "message": "Debug: Local Sandbox"
+  },
+  "footerSince": {
+    "message": "Since 2026/04/01"
+  }
 }

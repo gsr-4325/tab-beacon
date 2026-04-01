@@ -4,7 +4,7 @@
 
 TabBeacon は、Web ページ上の状態変化を監視し、タブの favicon に busy 表示を重ねる Chrome / Edge 向け Manifest V3 拡張の実験プロジェクトです。最初の主用途は、ChatGPT などの AI チャットが考え中かどうかを、別タブ作業中でも視覚的に把握しやすくすることです。
 
-現在の manifest version は `0.3.1` です。
+現在の manifest version は `0.3.2` です。
 
 ## 現在の到達点
 
@@ -25,6 +25,8 @@ TabBeacon は、Web ページ上の状態変化を監視し、タブの favicon 
 - ローカル sandbox 用デバッグプリセット
 - `_locales/en` と `_locales/ja` の土台
 - 設定画面フッターのバージョン表示
+- Debug セクションの折りたたみ
+- 設定画面フッターの Since 表示
 
 ## ユーザー確認済みの挙動
 
@@ -60,7 +62,7 @@ TabBeacon は、Web ページ上の状態変化を監視し、タブの favicon 
 ### sandbox のテスト
 
 1. 拡張の詳細で **Allow access to file URLs** を ON にする
-2. 設定画面の Debug tools を開く
+2. 設定画面の **Debug** を開く
 3. **Install local sandbox preset** を押す
 4. `manual-tests/tabbeacon-sandbox.html` を `file://` で開く
 5. `aria-busy 要素を追加` / `削除` や `5秒 busy シナリオ` を試す
@@ -82,7 +84,6 @@ TabBeacon は、Web ページ上の状態変化を監視し、タブの favicon 
   - favicon 復元 fallback の追加
   - `content.js` の UTF-8 hotfix
 - 直近で次に進めるなら、network 条件の診断 UI、ChatGPT 実測、権限の絞り込みの順が妥当
-
 
 ## Web ページの動的要素の分析
 

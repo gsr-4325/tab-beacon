@@ -136,6 +136,7 @@ const DEBUG_LOCAL_SANDBOX_PRESET = {
   slug: DEBUG_PRESET_SLUG,
   origin: SYSTEM_ORIGIN,
   readonly: true,
+  removable: true,
   nameKey: "presetDebugLocalSandboxName",
   enabled: true,
   matches: ["file:///*manual-tests/*"],
@@ -167,7 +168,8 @@ const resetConfirmModal = document.getElementById("resetConfirmModal");
 const resetConfirmOkButton = document.getElementById("resetConfirmOk");
 const resetConfirmCancelButton = document.getElementById("resetConfirmCancel");
 const addRuleButton = document.getElementById("addRule");
-const showDebugToolsCheckbox = document.getElementById("showDebugTools");
+const debugToggleButton = document.getElementById("debugToggle");
+const debugSectionBody = document.getElementById("debugSectionBody");
 const enableDebugModeCheckbox = document.getElementById("enableDebugMode");
 const debugPanel = document.getElementById("debugPanel");
 const installDebugPresetButton = document.getElementById("installDebugPreset");
@@ -203,14 +205,17 @@ async function init() {
   renderRules(normalizedRules);
   bindGlobalActions();
 
-  const showDebugTools = !!uiStateResult[UI_STATE_KEY]?.showDebugTools;
-  showDebugToolsCheckbox.checked = showDebugTools;
-  debugPanel.classList.toggle("hidden", !showDebugTools);
+  const uiState = uiStateResult[UI_STATE_KEY] || {};
+  const debugExpanded = typeof uiState.debugExpanded === "boolean"
+    ? uiState.debugExpanded
+    : !!uiState.showDebugTools;
 
-  enableDebugModeCheckbox.checked = !!uiStateResult[UI_STATE_KEY]?.debugMode;
+  setDebugSectionExpanded(debugExpanded);
+
+  enableDebugModeCheckbox.checked = !!uiState.debugMode;
   updateDebugPresetStatus(normalizedRules);
 
-  if (showDebugTools) {
+  if (debugExpanded) {
     await refreshDiagnosticTabs({ refreshDiagnostics: true });
   } else {
     renderDiagnosticEmptyState("networkDiagnosticsEmptyState");
@@ -230,7 +235,9 @@ function bindGlobalActions() {
   rulesContainer.addEventListener("change", markDirty);
 
   addRuleButton.addEventListener("click", () => {
-    rulesContainer.appendChild(createRuleNode());
+    const node = createRuleNode(createEmptyRule(), { collapsed: false });
+    rulesContainer.prepend(node);
+    node.querySelector(".rule-name")?.focus();
     markDirty();
   });
 
@@ -239,7 +246,7 @@ function bindGlobalActions() {
     await chrome.storage.local.set({ [STORAGE_KEY]: rules });
     renderRules(rules.map(normalizeRuleForEditor));
     setSaveButtonSavedState();
-    if (showDebugToolsCheckbox.checked) {
+    if (isDebugSectionExpanded()) {
       await refreshNetworkDiagnosticsForSelectedTab();
     }
   });
@@ -259,24 +266,24 @@ function bindGlobalActions() {
     renderRules(freshRules.map(normalizeRuleForEditor));
     markClean();
     updateDebugPresetStatus(freshRules);
-    if (showDebugToolsCheckbox.checked) {
+    if (isDebugSectionExpanded()) {
       await refreshNetworkDiagnosticsForSelectedTab();
+    }
+  });
+
+  debugToggleButton.addEventListener("click", async () => {
+    const expanded = !isDebugSectionExpanded();
+    setDebugSectionExpanded(expanded);
+    const uiState = (await chrome.storage.local.get(UI_STATE_KEY))[UI_STATE_KEY] || {};
+    await chrome.storage.local.set({ [UI_STATE_KEY]: { ...uiState, debugExpanded: expanded } });
+    if (expanded) {
+      await refreshDiagnosticTabs({ refreshDiagnostics: true });
     }
   });
 
   enableDebugModeCheckbox.addEventListener("change", async () => {
     const uiState = (await chrome.storage.local.get(UI_STATE_KEY))[UI_STATE_KEY] || {};
     await chrome.storage.local.set({ [UI_STATE_KEY]: { ...uiState, debugMode: enableDebugModeCheckbox.checked } });
-  });
-
-  showDebugToolsCheckbox.addEventListener("change", async () => {
-    const checked = showDebugToolsCheckbox.checked;
-    debugPanel.classList.toggle("hidden", !checked);
-    const uiState = (await chrome.storage.local.get(UI_STATE_KEY))[UI_STATE_KEY] || {};
-    await chrome.storage.local.set({ [UI_STATE_KEY]: { ...uiState, showDebugTools: checked } });
-    if (checked) {
-      await refreshDiagnosticTabs({ refreshDiagnostics: true });
-    }
   });
 
   installDebugPresetButton.addEventListener("click", async () => {
@@ -290,7 +297,7 @@ function bindGlobalActions() {
     renderRules(rules.map(normalizeRuleForEditor));
     updateDebugPresetStatus(rules);
     setSaveButtonSavedState();
-    if (showDebugToolsCheckbox.checked) {
+    if (isDebugSectionExpanded()) {
       await refreshNetworkDiagnosticsForSelectedTab();
     }
   });
@@ -319,9 +326,10 @@ function migrateRules(rules) {
     const filtered = rule.busyWhen.filter(
       (c) => !(c.source === "dom" && c.query === '[aria-busy="true"]' && rule.name === "Gemini")
     );
-    if (filtered.length === rule.busyWhen.length) return rule;
+    const removable = rule.slug === DEBUG_PRESET_SLUG ? true : !!rule.removable;
+    if (filtered.length === rule.busyWhen.length && removable === !!rule.removable) return rule;
     changed = true;
-    return { ...rule, busyWhen: filtered };
+    return { ...rule, busyWhen: filtered, removable };
   });
   if (changed) {
     chrome.storage.local.set({ [STORAGE_KEY]: migrated });
@@ -346,6 +354,7 @@ function normalizeRuleForEditor(rule) {
     slug: rule.slug || generateUserSlug(name || rule.name || t("untitledRule"), id),
     origin,
     readonly: origin === SYSTEM_ORIGIN ? true : !!rule.readonly,
+    removable: !!rule.removable || rule.slug === DEBUG_PRESET_SLUG,
     name,
     nameKey,
     enabled: rule.enabled !== false,
@@ -374,7 +383,8 @@ function renderRules(rules) {
   updateDebugPresetStatus(rules);
 }
 
-function createRuleNode(rule = createEmptyRule()) {
+function createRuleNode(rule = createEmptyRule(), options = {}) {
+  const { collapsed = true } = options;
   const fragment = ruleTemplate.content.cloneNode(true);
   const root = fragment.querySelector(".rule");
   const conditionsContainer = root.querySelector(".conditions-container");
@@ -390,6 +400,7 @@ function createRuleNode(rule = createEmptyRule()) {
   root.dataset.ruleSlug = rule.slug;
   root.dataset.ruleOrigin = rule.origin;
   root.dataset.readonly = String(!!rule.readonly);
+  root.dataset.removable = String(!!rule.removable);
   if (rule.nameKey) {
     root.dataset.ruleNameKey = rule.nameKey;
   }
@@ -423,8 +434,9 @@ function createRuleNode(rule = createEmptyRule()) {
     setRuleCollapsed(root, !root.classList.contains("collapsed"));
   });
 
+  removeRuleButton.disabled = !canRemoveRule(rule);
   removeRuleButton.addEventListener("click", () => {
-    if (rule.readonly) return;
+    if (!canRemoveRule(rule)) return;
     root.remove();
     updateDebugPresetStatus(collectRulesFromDom());
     markDirty();
@@ -433,17 +445,26 @@ function createRuleNode(rule = createEmptyRule()) {
   if (rule.readonly) {
     root.classList.add("readonly-rule");
     nameInput.readOnly = true;
-    disableRuleEditing(root);
+    disableRuleEditing(root, { allowRemove: !!rule.removable });
   }
 
-  setRuleCollapsed(root, true);
+  setRuleCollapsed(root, collapsed);
   return root;
 }
 
-function disableRuleEditing(root) {
-  root.querySelectorAll(".rule-enabled, .rule-matches, .rule-match-mode, .rule-smart-busy, .add-condition, .remove-rule").forEach((el) => {
+function canRemoveRule(rule) {
+  return !rule.readonly || !!rule.removable;
+}
+
+function disableRuleEditing(root, { allowRemove = false } = {}) {
+  root.querySelectorAll(".rule-enabled, .rule-matches, .rule-match-mode, .rule-smart-busy, .add-condition").forEach((el) => {
     el.disabled = true;
   });
+  if (!allowRemove) {
+    root.querySelectorAll(".remove-rule").forEach((el) => {
+      el.disabled = true;
+    });
+  }
 }
 
 function createConditionNode(condition = createEmptyCondition(), readonly = false) {
@@ -562,6 +583,16 @@ function setConditionCollapsed(root, collapsed) {
   }
 }
 
+function setDebugSectionExpanded(expanded) {
+  debugSectionBody.classList.toggle("hidden", !expanded);
+  debugToggleButton.setAttribute("aria-expanded", String(expanded));
+  debugToggleButton.setAttribute("title", expanded ? t("collapseDebug") : t("expandDebug"));
+}
+
+function isDebugSectionExpanded() {
+  return debugToggleButton.getAttribute("aria-expanded") === "true";
+}
+
 function buildConditionSummary(condition) {
   if (condition.source === "network") {
     const value = condition.value || t("hintEmptyQuery");
@@ -578,6 +609,7 @@ function createEmptyRule() {
     slug: generateUserSlug(t("untitledRule"), id),
     origin: USER_ORIGIN,
     readonly: false,
+    removable: true,
     name: "",
     enabled: true,
     matches: [],
@@ -601,7 +633,7 @@ function createEmptyCondition() {
 }
 
 function createDebugPresetRule() {
-  return normalizeRuleForEditor(DEBUG_LOCAL_SANDBOX_PRESET);
+  return normalizeRuleForEditor({ ...DEBUG_LOCAL_SANDBOX_PRESET, removable: true });
 }
 
 function hasSystemPreset(rules, slug) {
@@ -655,6 +687,7 @@ function collectRulesFromDom() {
     const id = root.dataset.ruleId || crypto.randomUUID();
     const origin = root.dataset.ruleOrigin === SYSTEM_ORIGIN ? SYSTEM_ORIGIN : USER_ORIGIN;
     const readonly = root.dataset.readonly === "true";
+    const removable = root.dataset.removable === "true";
     const nameKey = root.dataset.ruleNameKey;
     const rawName = root.querySelector(".rule-name").value.trim();
     const name = origin === SYSTEM_ORIGIN && nameKey ? t(nameKey) : (rawName || t("untitledRule"));
@@ -664,6 +697,7 @@ function collectRulesFromDom() {
       slug: root.dataset.ruleSlug || generateUserSlug(name, id),
       origin,
       readonly,
+      removable,
       ...(nameKey ? { nameKey } : {}),
       name,
       enabled: root.querySelector(".rule-enabled").checked,
@@ -1021,6 +1055,7 @@ function ensureDiagnosticsUi() {
       </div>
     `;
     debugPanel.appendChild(panel);
+    I18N.apply(panel);
   }
 
   refreshDiagnosticTabsButton = document.getElementById("refreshDiagnosticTabs");

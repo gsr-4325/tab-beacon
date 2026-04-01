@@ -53,9 +53,37 @@ body {
   align-items: flex-start;
 }
 
+.hero-copy {
+  display: grid;
+  gap: 12px;
+  flex: 1;
+}
+
+.hero-copy h1 {
+  margin: 0;
+}
+
 .subtitle {
   color: var(--muted);
   max-width: 720px;
+  margin: 0;
+}
+
+.hero-principles {
+  margin: 0;
+  padding-left: 22px;
+  color: var(--muted);
+  display: grid;
+  gap: 8px;
+}
+
+.hero-actions {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  align-self: flex-start;
 }
 
 .card {
@@ -112,23 +140,33 @@ body {
 }
 
 .rule-toggle,
-.condition-toggle {
+.condition-toggle,
+.section-toggle {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
   background: transparent;
   border: 1px solid #31405f;
+  color: var(--text);
+}
+
+.section-toggle {
+  border: 0;
+  padding: 0;
+  cursor: pointer;
 }
 
 .rule-toggle-icon,
-.condition-toggle-icon {
+.condition-toggle-icon,
+.section-toggle-icon {
   display: inline-block;
   transition: transform 0.15s ease;
 }
 
 .rule.collapsed .rule-toggle-icon,
-.condition.collapsed .condition-toggle-icon {
+.condition.collapsed .condition-toggle-icon,
+.section-toggle[aria-expanded="false"] .section-toggle-icon {
   transform: rotate(-90deg);
 }
 
@@ -285,12 +323,17 @@ select:disabled {
   cursor: not-allowed;
 }
 
-.readonly-rule {
+.readonly-rule,
+.readonly-condition {
   border-style: dashed;
 }
 
-.readonly-condition {
-  border-style: dashed;
+.debug-card .section-header {
+  justify-content: flex-start;
+}
+
+#debugSectionBody {
+  margin-top: 14px;
 }
 
 .examples {
@@ -400,9 +443,14 @@ select:disabled {
 @media (max-width: 760px) {
   .hero,
   .section-header,
-  .row {
+  .row,
+  .hero-actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .hero-actions {
+    width: 100%;
   }
 
   .smart-toggle {
