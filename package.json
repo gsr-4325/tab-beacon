@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "playwright-observer": "github:gsr-4325/playwright-observer"
+  }
+}
