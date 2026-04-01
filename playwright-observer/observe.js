@@ -55,6 +55,7 @@ const isNoise = (url, type) =>
 
 // ─── DOM poll function (runs inside browser via page.evaluate) ─────────────────
 // Returns a serializable snapshot of "interesting" DOM state.
+// Searches both light DOM and shadow DOM (open shadow roots).
 const DOM_POLL_FN = () => {
   function isStopLike(el) {
     const combined = [
@@ -79,9 +80,43 @@ const DOM_POLL_FN = () => {
     };
   }
 
-  const busyEls = [...document.querySelectorAll('[aria-busy="true"]')].map(summarise);
+  // Recursively collect elements from light DOM + open shadow roots
+  function collectDeep(root, selector, limit = 200, depth = 0) {
+    if (depth > 8) return [];
+    const results = [];
+    try {
+      for (const el of root.querySelectorAll(selector)) {
+        results.push(el);
+        if (results.length >= limit) return results;
+      }
+      for (const el of root.querySelectorAll('*')) {
+        if (el.shadowRoot) {
+          const deeper = collectDeep(el.shadowRoot, selector, limit - results.length, depth + 1);
+          results.push(...deeper);
+          if (results.length >= limit) break;
+        }
+      }
+    } catch (_) {}
+    return results;
+  }
 
-  const stopBtns = [...document.querySelectorAll('button,[role="button"]')]
+  // Count shadow roots at all depths
+  function countShadowRoots(root, depth = 0) {
+    if (depth > 8) return 0;
+    let count = 0;
+    for (const el of root.querySelectorAll('*')) {
+      if (el.shadowRoot) {
+        count++;
+        count += countShadowRoots(el.shadowRoot, depth + 1);
+      }
+    }
+    return count;
+  }
+
+  const busyEls = collectDeep(document, '[aria-busy="true"]')
+    .map(summarise);
+
+  const stopBtns = collectDeep(document, 'button,[role="button"]')
     .filter(isStopLike)
     .map(el => ({
       ...summarise(el),
@@ -96,7 +131,41 @@ const DOM_POLL_FN = () => {
     className: el.className,
   }));
 
-  return { busyEls, stopBtns, ariaLiveEls, url: location.href };
+  const shadowRootCount = countShadowRoots(document);
+
+  return { busyEls, stopBtns, ariaLiveEls, shadowRootCount, url: location.href };
+};
+
+// ─── Deep button scan (runs inside browser via page.evaluate) ──────────────────
+// Finds ALL buttons/role=button elements across all shadow roots, returning their
+// tag, aria-label, title, data-testid, textContent, and shadow depth.
+const DEEP_BUTTON_SCAN_FN = () => {
+  function scanRoot(root, depth) {
+    const results = [];
+    if (depth > 8) return results;
+    try {
+      for (const el of root.querySelectorAll('button,[role="button"]')) {
+        results.push({
+          depth,
+          tag:      el.tagName,
+          label:    el.getAttribute('aria-label') || '',
+          title:    el.getAttribute('title') || '',
+          testid:   el.getAttribute('data-testid') || '',
+          text:     el.textContent?.trim().slice(0, 60) || '',
+          cls:      (typeof el.className === 'string' ? el.className : '').slice(0, 60),
+          disabled: el.disabled,
+          visible:  el.offsetParent !== null,
+        });
+      }
+      for (const el of root.querySelectorAll('*')) {
+        if (el.shadowRoot) {
+          results.push(...scanRoot(el.shadowRoot, depth + 1));
+        }
+      }
+    } catch (_) {}
+    return results;
+  }
+  return scanRoot(document, 0);
 };
 
 // ─── Automation-masking init script (injected before page loads) ───────────────
@@ -384,6 +453,64 @@ class ChatGPTObserver {
     return report;
   }
 
+  // ── Page switching ────────────────────────────────────────────────────────
+  async listPages() {
+    const pages = this._context.pages();
+    console.log(`${ts()} ${c.cyan}Open pages (${pages.length}):${c.reset}`);
+    pages.forEach((p, i) => {
+      const active = p === this._page ? ` ${c.green}← active${c.reset}` : '';
+      console.log(`  ${c.bold}p${i}${c.reset}  ${p.url()}${active}`);
+    });
+    console.log(`  Type ${c.bold}p<n>${c.reset} (e.g. p2) to switch.`);
+  }
+
+  async switchPage(index) {
+    const pages = this._context.pages();
+    if (index < 0 || index >= pages.length) {
+      console.log(`${ts()} ${c.red}Invalid index ${index}. Use p to list pages.${c.reset}`);
+      return;
+    }
+    const page = pages[index];
+    console.log(`${ts()} ${c.cyan}Switching to:${c.reset} ${page.url()}`);
+    this._page = page;
+    this._prevState = null;
+    await this._attachCDP(page);
+  }
+
+  // ── Deep button scan ──────────────────────────────────────────────────────
+  async deepScan() {
+    if (!this._page) { console.log('No active page'); return; }
+    let buttons;
+    try {
+      buttons = await this._page.evaluate(DEEP_BUTTON_SCAN_FN);
+    } catch (err) {
+      console.log(`${ts()} ${c.red}[deepScan error]${c.reset} ${err.message}`);
+      return;
+    }
+    if (!buttons.length) {
+      console.log(`${ts()} ${c.yellow}[deepScan]${c.reset} ボタンが見つかりません`);
+      return;
+    }
+    console.log(`${ts()} ${c.cyan}[deepScan]${c.reset} ${buttons.length} buttons across all shadow roots:`);
+    for (const b of buttons) {
+      const label   = b.label   ? `aria-label="${b.label}"` : '';
+      const title   = b.title   ? `title="${b.title}"` : '';
+      const testid  = b.testid  ? `testid="${b.testid}"` : '';
+      const text    = b.text    ? `"${b.text}"` : '';
+      const visible = b.visible ? '' : ` ${c.gray}[hidden]${c.reset}`;
+      const dis     = b.disabled ? ` ${c.gray}[disabled]${c.reset}` : '';
+      const parts   = [label, title, testid, text].filter(Boolean).join('  ');
+      console.log(
+        `  ${c.gray}d${b.depth}${c.reset} ${c.bold}${b.tag}${c.reset}  ${parts}${visible}${dis}`
+      );
+    }
+    // Also try Playwright's built-in pierce selector
+    try {
+      const count = await this._page.locator('button[aria-label="Stop response"]').count();
+      console.log(`${ts()} ${c.cyan}[deepScan]${c.reset} Playwright pierce selector "button[aria-label=\\"Stop response\\"]": ${count} found`);
+    } catch (_) {}
+  }
+
   async close() {
     clearInterval(this._pollTimer);
     if (this._cdp)     await this._cdp.detach().catch(() => {});
@@ -412,9 +539,11 @@ ${c.bold}=== TabBeacon Observer ===${c.reset}
 
 DOM 変化・Network はリアルタイムで出力されます。
 
-  ${c.bold}s${c.reset} / snapshot  現在のページ状態をキャプチャ
-  ${c.bold}r${c.reset} / report    observations/ にレポート保存
-  ${c.bold}q${c.reset} / exit      レポート保存して終了
+  ${c.bold}s${c.reset} / snapshot     現在のページ状態をキャプチャ
+  ${c.bold}d${c.reset} / deep         全 shadow DOM のボタンを一覧表示
+  ${c.bold}p${c.reset} / pages        開いているタブを一覧し切り替え
+  ${c.bold}r${c.reset} / report       observations/ にレポート保存
+  ${c.bold}q${c.reset} / exit         レポート保存して終了
 `);
 
   const readline = require('readline');
@@ -424,6 +553,13 @@ DOM 変化・Network はリアルタイムで出力されます。
     const cmd = input.trim().toLowerCase();
     if (['s','snap','snapshot'].includes(cmd)) {
       await observer.snapshot('manual');
+    } else if (['d','deep'].includes(cmd)) {
+      await observer.deepScan();
+    } else if (['p','pages'].includes(cmd)) {
+      await observer.listPages();
+    } else if (/^p\d+$/.test(cmd)) {
+      // e.g. "p2" → switch to page index 2
+      await observer.switchPage(parseInt(cmd.slice(1), 10));
     } else if (['r','report'].includes(cmd)) {
       await observer.report();
     } else if (['q','exit'].includes(cmd)) {
@@ -432,7 +568,7 @@ DOM 変化・Network はリアルタイムで出力されます。
       await observer.close();
       process.exit(0);
     } else if (cmd !== '') {
-      console.log(`Unknown: ${cmd}  (s / r / q)`);
+      console.log(`Unknown: ${cmd}  (s / d / p / r / q)`);
     }
     prompt();
   });
