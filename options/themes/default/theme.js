@@ -1,0 +1,5 @@
+(() => {
+  window.TabBeaconOptionsTheme = {
+    name: "default"
+  };
+})();
