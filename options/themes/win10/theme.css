@@ -1,0 +1,388 @@
+html[data-theme="win10"] {
+  color-scheme: dark;
+  --bg: #000000;
+  --panel: #2f2f32;
+  --panel-border: #47474b;
+  --text: #f3f3f3;
+  --muted: #c3c3c6;
+  --primary: #6d6d72;
+  --danger: #7d5b5b;
+  --badge-bg: #000000;
+  --rules-surface: transparent;
+  --rule-surface: #000000;
+  --conditions-surface: #1f1f22;
+  --condition-surface: #060606;
+  --system-rule-surface: #17171a;
+  --system-conditions-surface: #202024;
+  --system-condition-surface: #090909;
+  --tile-border: #252528;
+  --field-bg: #000000;
+  --field-border: #646468;
+  --button-border: #838388;
+  --button-bg: #6a6a6f;
+  --button-text: #ffffff;
+  --soft-surface: #3a3a3e;
+}
+
+html[data-theme="win10"] body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+html[data-theme="win10"] .page {
+  max-width: 1260px;
+  margin: 0 auto;
+  padding: 14px 14px 24px;
+}
+
+html[data-theme="win10"] .win10-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+html[data-theme="win10"] .win10-metric-card {
+  min-height: 160px;
+  padding: 16px 14px 10px;
+  border: 1px solid var(--tile-border);
+  background: #000000;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+html[data-theme="win10"] .win10-metric-label {
+  color: var(--text);
+  font-size: 0.98rem;
+}
+
+html[data-theme="win10"] .win10-metric-value {
+  color: var(--text);
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+html[data-theme="win10"] .win10-metric-detail {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin-top: auto;
+}
+
+html[data-theme="win10"] .hero,
+html[data-theme="win10"] .card,
+html[data-theme="win10"] .rule,
+html[data-theme="win10"] .condition,
+html[data-theme="win10"] .conditions-panel,
+html[data-theme="win10"] .confirm-modal,
+html[data-theme="win10"] .diagnostics-panel {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+html[data-theme="win10"] .hero,
+html[data-theme="win10"] .card,
+html[data-theme="win10"] .confirm-modal {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+}
+
+html[data-theme="win10"] .hero {
+  padding: 16px;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+html[data-theme="win10"] .win10-product-meta {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+html[data-theme="win10"] .win10-product-name {
+  font-size: 1.85rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+html[data-theme="win10"] .win10-product-subname {
+  color: var(--muted);
+  font-size: 0.98rem;
+}
+
+html[data-theme="win10"] .hero-copy h1 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #d1d1d4;
+}
+
+html[data-theme="win10"] .subtitle {
+  margin: 8px 0 0;
+  max-width: none;
+  color: var(--muted);
+}
+
+html[data-theme="win10"] .win10-principles {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+html[data-theme="win10"] .win10-principles li {
+  padding: 6px 8px;
+  border: 1px solid #38383c;
+  background: #000000;
+  color: #d9d9db;
+}
+
+html[data-theme="win10"] .hero-actions,
+html[data-theme="win10"] .win10-hero-actions {
+  align-self: center;
+  gap: 8px;
+}
+
+html[data-theme="win10"] .card {
+  margin-top: 6px;
+  padding: 0;
+  overflow: hidden;
+}
+
+html[data-theme="win10"] .section-header,
+html[data-theme="win10"] .win10-examples-card > h2 {
+  margin: 0;
+  padding: 14px 14px 12px;
+  min-height: 56px;
+  font-weight: 500;
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+html[data-theme="win10"] .win10-examples-card > h2 {
+  font-size: 1.2rem;
+}
+
+html[data-theme="win10"] .rules,
+html[data-theme="win10"] #debugSectionBody,
+html[data-theme="win10"] .win10-examples-card .examples {
+  padding: 14px;
+}
+
+html[data-theme="win10"] .rules {
+  margin-top: 0;
+  background: transparent;
+  border: 0;
+}
+
+html[data-theme="win10"] .rule {
+  padding: 14px;
+  background: var(--rule-surface);
+  border: 1px solid #2f2f33;
+}
+
+html[data-theme="win10"] .conditions-panel {
+  padding: 14px;
+  background: var(--conditions-surface);
+  border: 1px solid #3d3d42;
+}
+
+html[data-theme="win10"] .condition {
+  padding: 14px;
+  background: var(--condition-surface);
+  border: 1px solid #2f2f33;
+}
+
+html[data-theme="win10"] .readonly-rule {
+  background: var(--system-rule-surface);
+  border-color: #515157;
+}
+
+html[data-theme="win10"] .readonly-rule .conditions-panel {
+  background: var(--system-conditions-surface);
+  border-color: #5a5a60;
+}
+
+html[data-theme="win10"] .readonly-rule .condition {
+  background: var(--system-condition-surface);
+  border-color: #4c4c52;
+}
+
+html[data-theme="win10"] .rule-toggle,
+html[data-theme="win10"] .condition-toggle {
+  border: 1px solid #5e5e63;
+  background: #0d0d0d;
+  color: var(--text);
+}
+
+html[data-theme="win10"] .section-toggle {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  justify-content: flex-start;
+}
+
+html[data-theme="win10"] .rule-origin-badge {
+  background: #000000;
+  border: 1px solid #5f5f64;
+  color: var(--muted);
+}
+
+html[data-theme="win10"] label {
+  color: var(--text);
+}
+
+html[data-theme="win10"] input[type="text"],
+html[data-theme="win10"] input:not([type]),
+html[data-theme="win10"] textarea,
+html[data-theme="win10"] select {
+  border-radius: 0;
+  background: var(--field-bg);
+  color: var(--text);
+  border: 1px solid var(--field-border);
+}
+
+html[data-theme="win10"] input[type="text"]:focus,
+html[data-theme="win10"] input:not([type]):focus,
+html[data-theme="win10"] textarea:focus,
+html[data-theme="win10"] select:focus,
+html[data-theme="win10"] button:focus-visible {
+  outline: 2px solid #f2f2f2;
+  outline-offset: -2px;
+}
+
+html[data-theme="win10"] button {
+  border-radius: 0;
+  border: 1px solid var(--button-border);
+  background: var(--button-bg);
+  color: var(--button-text);
+}
+
+html[data-theme="win10"] button.primary {
+  background: #78787d;
+  border-color: #909095;
+}
+
+html[data-theme="win10"] button.danger {
+  background: var(--danger);
+  border-color: #9b7474;
+}
+
+html[data-theme="win10"] .examples article {
+  padding: 14px;
+  border-radius: 0;
+  border: 1px solid #3c3c40;
+  background: #000000;
+}
+
+html[data-theme="win10"] .examples code,
+html[data-theme="win10"] .diagnostic-url {
+  border-radius: 0;
+  background: #000000;
+  border: 1px solid #35353a;
+  color: var(--text);
+}
+
+html[data-theme="win10"] .theme-debug-control {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 12px;
+  border: 1px solid #5a5a5f;
+  background: #000000;
+}
+
+html[data-theme="win10"] .theme-debug-label {
+  display: grid;
+  gap: 8px;
+}
+
+html[data-theme="win10"] .theme-debug-hint {
+  margin: 0;
+  color: var(--muted);
+}
+
+html[data-theme="win10"] .hint,
+html[data-theme="win10"] .condition-summary,
+html[data-theme="win10"] .rule-readonly-note,
+html[data-theme="win10"] .app-footer,
+html[data-theme="win10"] .diagnostic-request-meta,
+html[data-theme="win10"] .diagnostic-finished-at,
+html[data-theme="win10"] .diagnostics-empty-row td,
+html[data-theme="win10"] .diagnostic-summary {
+  color: var(--muted);
+}
+
+html[data-theme="win10"] .win10-inline-footer {
+  margin-top: 14px;
+  padding: 0;
+  text-align: left;
+}
+
+html[data-theme="win10"] .diagnostics-panel,
+html[data-theme="win10"] .diagnostic-summary,
+html[data-theme="win10"] .diagnostics-table-wrap {
+  border-radius: 0;
+  border-color: #5a5a5f;
+  background: #000000;
+}
+
+html[data-theme="win10"] .diagnostics-panel {
+  padding: 14px;
+}
+
+html[data-theme="win10"] .diagnostics-table {
+  background: #000000;
+}
+
+html[data-theme="win10"] .diagnostics-table th,
+html[data-theme="win10"] .diagnostics-table td {
+  border-bottom: 1px solid #2f2f33;
+}
+
+html[data-theme="win10"] .diagnostics-table th {
+  background: #111113;
+  color: var(--muted);
+}
+
+html[data-theme="win10"] .diagnostic-status {
+  border-color: #5d5d61;
+}
+
+html[data-theme="win10"] .diagnostic-status-inflight {
+  background: rgba(120, 120, 125, 0.24);
+}
+
+html[data-theme="win10"] .diagnostic-status-completed {
+  background: rgba(88, 88, 92, 0.2);
+}
+
+html[data-theme="win10"] .diagnostic-status-error {
+  background: rgba(125, 91, 91, 0.26);
+}
+
+html[data-theme="win10"] .confirm-modal::backdrop {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+@media (max-width: 900px) {
+  html[data-theme="win10"] .hero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  html[data-theme="win10"] .hero-actions,
+  html[data-theme="win10"] .win10-hero-actions {
+    align-self: stretch;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+}
