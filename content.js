@@ -11,6 +11,10 @@ const EVALUATE_DEBOUNCE_MS = 120;
 const EVALUATE_MAX_WAIT_MS = 400;
 const EXT_NAME = "TabBeacon";
 
+const extensionApi = typeof chrome !== "undefined" ? chrome : null;
+const hasStorageApi = !!extensionApi?.storage?.local;
+const hasRuntimeApi = !!extensionApi?.runtime?.id;
+
 const DEFAULT_RULES = [
   {
     id: "default-chat-rule",
@@ -35,6 +39,28 @@ function dbg(...args) {
   if (debugMode) console.log("[TabBeacon:dbg]", ...args);
 }
 
+function logMissingExtensionApi() {
+  console.warn("[TabBeacon] extension APIs are unavailable in this execution context", {
+    hasStorageApi,
+    hasRuntimeApi,
+    href: location.href
+  });
+}
+
+function storageLocalGet(keys) {
+  if (!hasStorageApi) {
+    return Promise.resolve({});
+  }
+  return Promise.resolve(extensionApi.storage.local.get(keys));
+}
+
+function storageLocalSet(items) {
+  if (!hasStorageApi) {
+    return Promise.resolve();
+  }
+  return Promise.resolve(extensionApi.storage.local.set(items));
+}
+
 let state = {
   activeRules: [],
   currentStatus: "idle",
@@ -56,21 +82,24 @@ bootstrap().catch((error) => {
 });
 
 async function bootstrap() {
+  if (!hasStorageApi || !hasRuntimeApi) {
+    logMissingExtensionApi();
+  }
+
   const [rules, uiState] = await Promise.all([
     loadRules(),
-    chrome.storage.local.get(UI_STATE_KEY)
+    storageLocalGet(UI_STATE_KEY)
   ]);
   debugMode = !!uiState[UI_STATE_KEY]?.debugMode;
 
-  // Get extension version and log load message
   if (debugMode) {
     try {
-      const manifest = chrome.runtime.getManifest();
+      const manifest = extensionApi.runtime?.getManifest?.();
       console.log(`✅ [${EXT_NAME} v${manifest.version}] Content script loaded on ${location.href}`);
     } catch (e) {
       console.log(`✅ [${EXT_NAME}] Content script loaded on ${location.href}`);
     }
-    const hasChromeDOM = typeof chrome.dom?.openOrClosedShadowRoot === "function";
+    const hasChromeDOM = typeof extensionApi?.dom?.openOrClosedShadowRoot === "function";
     dbg(`chrome.dom.openOrClosedShadowRoot available: ${hasChromeDOM}`);
   }
 
@@ -99,13 +128,13 @@ async function bootstrap() {
 }
 
 async function loadRules() {
-  const result = await chrome.storage.local.get(STORAGE_KEY);
+  const result = await storageLocalGet(STORAGE_KEY);
   const rules = Array.isArray(result[STORAGE_KEY]) && result[STORAGE_KEY].length
     ? result[STORAGE_KEY]
     : DEFAULT_RULES;
 
   if (!result[STORAGE_KEY]) {
-    await chrome.storage.local.set({ [STORAGE_KEY]: rules });
+    await storageLocalSet({ [STORAGE_KEY]: rules });
   }
   return rules;
 }
@@ -163,7 +192,11 @@ function installRuntimeHooks() {
   if (state.runtimeHooked) return;
   state.runtimeHooked = true;
 
-  chrome.runtime.onMessage.addListener((message) => {
+  if (!hasRuntimeApi || !extensionApi.runtime?.onMessage?.addListener) {
+    return;
+  }
+
+  extensionApi.runtime.onMessage.addListener((message) => {
     if (!message || message.type !== "tab-beacon/network-state") return;
     state.networkSnapshot = message.snapshot || {};
     scheduleReevaluate();
@@ -172,7 +205,8 @@ function installRuntimeHooks() {
 
 async function registerCurrentTabUrl() {
   try {
-    const response = await chrome.runtime.sendMessage({
+    if (!hasRuntimeApi || !extensionApi.runtime?.sendMessage) return;
+    const response = await extensionApi.runtime.sendMessage({
       type: "tab-beacon/register-tab",
       url: location.href
     });
@@ -190,7 +224,6 @@ function installObservers() {
 
   state.observer = new MutationObserver((mutations) => {
     scheduleReevaluate();
-    // When new elements with shadow roots are added, observe those shadow roots too
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
         if (node.nodeType === Node.ELEMENT_NODE) {
@@ -206,7 +239,6 @@ function installObservers() {
     characterData: false
   });
 
-  // Observe shadow roots already present in the initial DOM
   observeShadowRoots(document.body);
 
   window.addEventListener("beforeunload", cleanup, { once: true });
@@ -231,7 +263,11 @@ function observeShadowRoots(root) {
 }
 
 function watchStorageChanges() {
-  chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (!extensionApi?.storage?.onChanged?.addListener) {
+    return;
+  }
+
+  extensionApi.storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== "local") return;
     if (changes[UI_STATE_KEY]) {
       debugMode = !!changes[UI_STATE_KEY].newValue?.debugMode;
@@ -348,15 +384,11 @@ function queryExistsElement(query, selectorType = "auto") {
   return null;
 }
 
-// Returns the shadow root of an element, including closed shadow roots.
-// chrome.dom.openOrClosedShadowRoot is available to MV3 extensions and
-// can pierce closed shadow roots that element.shadowRoot cannot access.
-// Only HTMLElements are supported; SVGElement etc. will throw.
 function getShadowRoot(element) {
   if (!(element instanceof HTMLElement)) return element.shadowRoot ?? null;
-  if (typeof chrome.dom?.openOrClosedShadowRoot === "function") {
+  if (typeof extensionApi?.dom?.openOrClosedShadowRoot === "function") {
     try {
-      return chrome.dom.openOrClosedShadowRoot(element);
+      return extensionApi.dom.openOrClosedShadowRoot(element);
     } catch (_) {}
   }
   return element.shadowRoot ?? null;
@@ -379,7 +411,6 @@ function searchShadowDom(root, selector, _depth = 0) {
     if (shadowRootsChecked === 0) {
       dbg(`searchShadowDom: NO shadow roots found on page`);
     } else {
-      // Collect ALL buttons across all shadow DOM levels for diagnosis
       const allShadowButtons = collectAllShadowButtons(root);
       dbg(`searchShadowDom: checked shadow roots for "${selector}". All shadow buttons (all depths):`, allShadowButtons.slice(0, 15));
     }
@@ -402,7 +433,6 @@ function collectAllShadowButtons(root, _depth = 0) {
   }
   return buttons;
 }
-
 
 function resolveSelectorType(query, selectorType) {
   if (selectorType === "css" || selectorType === "xpath") {
@@ -449,7 +479,6 @@ function detectSmartBusySignals() {
     .some(isStopLike);
   if (lightDomMatch) return true;
 
-  // Also check shadow DOM for stop-like buttons
   const shadowMatch = collectShadowElements(document, "button,[role='button'],a", 120).some(isStopLike);
   if (shadowMatch) return true;
 
