@@ -44,8 +44,8 @@
     }
 
     await loadScript("../i18n.js");
-    await loadScript("../options.js");
-    await loadScript("../options-packaged-sandbox.js");
+    await loadScript("./options-app.js");
+    await loadScript("./options-packaged-sandbox.js");
   }
 
   init().catch((error) => {
