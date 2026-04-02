@@ -1,0 +1,527 @@
+html[data-theme="win11"] {
+  color-scheme: light dark;
+  --wallpaper-1: radial-gradient(circle at 78% 8%, rgba(103, 157, 255, 0.34), transparent 24%), radial-gradient(circle at 14% 86%, rgba(73, 131, 255, 0.26), transparent 28%), linear-gradient(135deg, rgba(26, 97, 255, 0.14), rgba(26, 97, 255, 0));
+  --shell-border: rgba(255, 255, 255, 0.11);
+  --shell-shadow: 0 32px 80px rgba(0, 0, 0, 0.28);
+  --accent: #60a5fa;
+  --accent-strong: #3b82f6;
+  --chip-border: rgba(255, 255, 255, 0.12);
+}
+
+html[data-theme="win11"][data-win11-mode="dark"] {
+  --bg: #07111f;
+  --sidebar-bg: rgba(15, 23, 42, 0.88);
+  --main-bg: rgba(15, 23, 42, 0.82);
+  --panel: rgba(24, 33, 56, 0.9);
+  --panel-2: rgba(20, 27, 46, 0.84);
+  --panel-border: rgba(255, 255, 255, 0.09);
+  --text: #f3f7ff;
+  --muted: #b7c3dc;
+  --button-bg: rgba(255, 255, 255, 0.08);
+  --button-border: rgba(255, 255, 255, 0.1);
+  --field-bg: rgba(255, 255, 255, 0.06);
+  --field-border: rgba(255, 255, 255, 0.12);
+  --metric-bg: rgba(17, 24, 39, 0.86);
+  --nav-hover: rgba(255, 255, 255, 0.07);
+  --nav-active: rgba(255, 255, 255, 0.12);
+  --code-bg: rgba(9, 14, 25, 0.82);
+}
+
+html[data-theme="win11"][data-win11-mode="light"] {
+  --bg: #dce9ff;
+  --sidebar-bg: rgba(247, 250, 255, 0.82);
+  --main-bg: rgba(255, 255, 255, 0.76);
+  --panel: rgba(255, 255, 255, 0.84);
+  --panel-2: rgba(247, 250, 255, 0.8);
+  --panel-border: rgba(139, 161, 196, 0.24);
+  --text: #172033;
+  --muted: #5d6b86;
+  --button-bg: rgba(255, 255, 255, 0.72);
+  --button-border: rgba(125, 145, 179, 0.28);
+  --field-bg: rgba(255, 255, 255, 0.86);
+  --field-border: rgba(130, 150, 184, 0.28);
+  --metric-bg: rgba(255, 255, 255, 0.84);
+  --nav-hover: rgba(60, 94, 157, 0.08);
+  --nav-active: rgba(60, 94, 157, 0.14);
+  --code-bg: rgba(247, 250, 255, 0.92);
+}
+
+html[data-theme="win11"] body {
+  min-height: 100vh;
+  background: var(--wallpaper-1), linear-gradient(180deg, var(--bg), color-mix(in srgb, var(--bg) 74%, #000000 26%));
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+html[data-theme="win11"] .page {
+  max-width: 1360px;
+  padding: 18px;
+}
+
+html[data-theme="win11"] .win11-shell {
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr);
+  gap: 18px;
+  min-height: calc(100vh - 36px);
+}
+
+html[data-theme="win11"] .win11-sidebar,
+html[data-theme="win11"] .win11-hero-card,
+html[data-theme="win11"] .win11-section-card,
+html[data-theme="win11"] .win11-metric-card,
+html[data-theme="win11"] .confirm-modal,
+html[data-theme="win11"] .diagnostics-panel {
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--shell-shadow);
+}
+
+html[data-theme="win11"] .win11-sidebar {
+  border-radius: 28px;
+  background: var(--sidebar-bg);
+  padding: 18px 16px;
+  display: grid;
+  gap: 18px;
+  align-content: start;
+}
+
+html[data-theme="win11"] .win11-sidebar-top {
+  display: grid;
+  gap: 16px;
+}
+
+html[data-theme="win11"] .win11-app-caption {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+html[data-theme="win11"] .win11-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+html[data-theme="win11"] .win11-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.86), rgba(59, 130, 246, 0.92));
+  color: white;
+  font-weight: 700;
+}
+
+html[data-theme="win11"] .win11-profile-name {
+  font-weight: 600;
+}
+
+html[data-theme="win11"] .win11-profile-mail {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+html[data-theme="win11"] .win11-search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 14px;
+  background: var(--field-bg);
+  border: 1px solid var(--field-border);
+  padding: 0 12px;
+}
+
+html[data-theme="win11"] .win11-search-icon {
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+html[data-theme="win11"] .win11-search-box input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 12px 0;
+}
+
+html[data-theme="win11"] .win11-sidebar-nav {
+  display: grid;
+  gap: 6px;
+}
+
+html[data-theme="win11"] .win11-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  box-shadow: none;
+  justify-content: flex-start;
+}
+
+html[data-theme="win11"] .win11-nav-item:hover {
+  background: var(--nav-hover);
+}
+
+html[data-theme="win11"] .win11-nav-item.active {
+  background: var(--nav-active);
+  border-color: var(--panel-border);
+}
+
+html[data-theme="win11"] .win11-nav-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.12);
+}
+
+html[data-theme="win11"] .win11-main {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+}
+
+html[data-theme="win11"] .win11-main-content {
+  display: grid;
+  gap: 18px;
+}
+
+html[data-theme="win11"] .win11-hero-card,
+html[data-theme="win11"] .win11-section-card {
+  background: var(--main-bg);
+  border-radius: 28px;
+}
+
+html[data-theme="win11"] .hero {
+  padding: 22px 24px;
+  align-items: flex-start;
+}
+
+html[data-theme="win11"] .win11-breadcrumbs {
+  color: var(--muted);
+  font-size: 0.98rem;
+  margin-bottom: 8px;
+}
+
+html[data-theme="win11"] .hero-copy h1 {
+  margin: 0;
+  font-size: 2.25rem;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+html[data-theme="win11"] .subtitle {
+  max-width: 760px;
+  color: var(--muted);
+}
+
+html[data-theme="win11"] .win11-principles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+html[data-theme="win11"] .win11-principles li {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--button-bg);
+  border: 1px solid var(--chip-border);
+  color: var(--muted);
+}
+
+html[data-theme="win11"] .hero-actions {
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+html[data-theme="win11"] .win11-mode-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  background: var(--button-bg);
+  border: 1px solid var(--button-border);
+}
+
+html[data-theme="win11"] .win11-mode-button {
+  min-width: 72px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  box-shadow: none;
+}
+
+html[data-theme="win11"] .win11-mode-button.active {
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.95), rgba(59, 130, 246, 0.98));
+  color: white;
+}
+
+html[data-theme="win11"] .win11-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+html[data-theme="win11"] .win11-metric-card {
+  border-radius: 24px;
+  padding: 18px;
+  background: var(--metric-bg);
+  display: grid;
+  gap: 8px;
+}
+
+html[data-theme="win11"] .win11-metric-label {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+html[data-theme="win11"] .win11-metric-value {
+  font-size: 2.1rem;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+html[data-theme="win11"] .win11-metric-detail {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+html[data-theme="win11"] .card {
+  padding: 0;
+  overflow: hidden;
+}
+
+html[data-theme="win11"] .section-header,
+html[data-theme="win11"] .win11-examples-card > h2 {
+  margin: 0;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+html[data-theme="win11"] .rules,
+html[data-theme="win11"] #debugSectionBody,
+html[data-theme="win11"] .win11-examples-card .examples {
+  padding: 18px 20px 20px;
+}
+
+html[data-theme="win11"] .rules {
+  margin-top: 0;
+  background: transparent;
+  border: 0;
+}
+
+html[data-theme="win11"] .rule,
+html[data-theme="win11"] .condition,
+html[data-theme="win11"] .conditions-panel,
+html[data-theme="win11"] .examples article,
+html[data-theme="win11"] .diagnostics-panel,
+html[data-theme="win11"] .confirm-modal {
+  border-radius: 22px;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  box-shadow: none;
+}
+
+html[data-theme="win11"] .rule {
+  padding: 16px;
+}
+
+html[data-theme="win11"] .conditions-panel,
+html[data-theme="win11"] .condition,
+html[data-theme="win11"] .examples article {
+  padding: 16px;
+}
+
+html[data-theme="win11"] .readonly-rule,
+html[data-theme="win11"] .readonly-rule .conditions-panel,
+html[data-theme="win11"] .readonly-rule .condition {
+  background: var(--panel-2);
+}
+
+html[data-theme="win11"] .rule-toggle,
+html[data-theme="win11"] .condition-toggle,
+html[data-theme="win11"] .section-toggle {
+  border-radius: 14px;
+  background: var(--button-bg);
+  border: 1px solid var(--button-border);
+  color: var(--text);
+}
+
+html[data-theme="win11"] .section-toggle {
+  box-shadow: none;
+}
+
+html[data-theme="win11"] .rule-origin-badge {
+  background: var(--button-bg);
+  border: 1px solid var(--button-border);
+  color: var(--muted);
+}
+
+html[data-theme="win11"] label {
+  color: var(--text);
+}
+
+html[data-theme="win11"] input[type="text"],
+html[data-theme="win11"] input:not([type]),
+html[data-theme="win11"] textarea,
+html[data-theme="win11"] select {
+  background: var(--field-bg);
+  border: 1px solid var(--field-border);
+  color: var(--text);
+  border-radius: 14px;
+}
+
+html[data-theme="win11"] input[type="text"]:focus,
+html[data-theme="win11"] input:not([type]):focus,
+html[data-theme="win11"] textarea:focus,
+html[data-theme="win11"] select:focus,
+html[data-theme="win11"] button:focus-visible {
+  outline: 2px solid rgba(96, 165, 250, 0.8);
+  outline-offset: 1px;
+}
+
+html[data-theme="win11"] button {
+  border-radius: 14px;
+  background: var(--button-bg);
+  border: 1px solid var(--button-border);
+  color: var(--text);
+}
+
+html[data-theme="win11"] button.primary {
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.95), rgba(59, 130, 246, 0.98));
+  border-color: transparent;
+  color: white;
+}
+
+html[data-theme="win11"] button.danger {
+  background: linear-gradient(135deg, rgba(244, 114, 182, 0.9), rgba(239, 68, 68, 0.9));
+  border-color: transparent;
+  color: white;
+}
+
+html[data-theme="win11"] .examples article {
+  background: var(--panel);
+}
+
+html[data-theme="win11"] .examples code,
+html[data-theme="win11"] .diagnostic-url {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--code-bg);
+  border: 1px solid var(--panel-border);
+  color: var(--text);
+}
+
+html[data-theme="win11"] .theme-debug-control {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--field-bg);
+  border: 1px solid var(--field-border);
+}
+
+html[data-theme="win11"] .theme-debug-label {
+  display: grid;
+  gap: 8px;
+}
+
+html[data-theme="win11"] .theme-debug-hint,
+html[data-theme="win11"] .hint,
+html[data-theme="win11"] .condition-summary,
+html[data-theme="win11"] .rule-readonly-note,
+html[data-theme="win11"] .app-footer,
+html[data-theme="win11"] .diagnostic-request-meta,
+html[data-theme="win11"] .diagnostic-finished-at,
+html[data-theme="win11"] .diagnostics-empty-row td,
+html[data-theme="win11"] .diagnostic-summary {
+  color: var(--muted);
+}
+
+html[data-theme="win11"] .win11-footer {
+  padding: 0 4px 6px;
+  text-align: left;
+}
+
+html[data-theme="win11"] .diagnostic-summary,
+html[data-theme="win11"] .diagnostics-table-wrap {
+  border-radius: 16px;
+  background: var(--field-bg);
+  border: 1px solid var(--field-border);
+}
+
+html[data-theme="win11"] .diagnostics-table {
+  background: transparent;
+}
+
+html[data-theme="win11"] .diagnostics-table th,
+html[data-theme="win11"] .diagnostics-table td {
+  border-bottom: 1px solid var(--panel-border);
+}
+
+html[data-theme="win11"] .diagnostics-table th {
+  background: transparent;
+  color: var(--muted);
+}
+
+html[data-theme="win11"] .diagnostic-status {
+  border-color: var(--button-border);
+}
+
+html[data-theme="win11"] .diagnostic-status-inflight {
+  background: rgba(96, 165, 250, 0.18);
+}
+
+html[data-theme="win11"] .diagnostic-status-completed {
+  background: rgba(74, 222, 128, 0.16);
+}
+
+html[data-theme="win11"] .diagnostic-status-error {
+  background: rgba(248, 113, 113, 0.16);
+}
+
+html[data-theme="win11"] .confirm-modal::backdrop {
+  background: rgba(7, 17, 31, 0.4);
+}
+
+@media (max-width: 1080px) {
+  html[data-theme="win11"] .win11-shell {
+    grid-template-columns: 1fr;
+  }
+
+  html[data-theme="win11"] .win11-sidebar {
+    border-radius: 24px;
+  }
+}
+
+@media (max-width: 760px) {
+  html[data-theme="win11"] .hero,
+  html[data-theme="win11"] .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  html[data-theme="win11"] .win11-mode-switch {
+    justify-content: space-between;
+  }
+
+  html[data-theme="win11"] .win11-mode-button {
+    flex: 1;
+  }
+}
