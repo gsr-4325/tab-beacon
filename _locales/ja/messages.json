@@ -1,15 +1,15 @@
 {
   "appName": {
-    "message": "TabBeacon"
+    "message": "Tab Beacon"
   },
   "manifestDescription": {
     "message": "監視対象のページ条件に一致したとき、ページのタブ favicon に busy 表示を出します。"
   },
   "actionDefaultTitle": {
-    "message": "TabBeacon"
+    "message": "Tab Beacon"
   },
   "optionsTitle": {
-    "message": "TabBeacon Settings"
+    "message": "Tab Beacon Settings"
   },
   "optionsSubtitle": {
     "message": "DOM 条件と network 条件を設定して、タブアイコンに busy 状態を表示します。"

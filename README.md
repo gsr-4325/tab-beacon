@@ -2,7 +2,7 @@
 
 ## 概要
 
-TabBeacon は、Web ページ上の状態変化を監視し、タブの favicon に busy 表示を重ねる Chrome / Edge 向け Manifest V3 拡張の実験プロジェクトです。最初の主用途は、ChatGPT などの AI チャットが考え中かどうかを、別タブ作業中でも視覚的に把握しやすくすることです。
+Tab Beacon は、Web ページ上の状態変化を監視し、タブの favicon に busy 表示を重ねる Chrome / Edge 向け Manifest V3 拡張の実験プロジェクトです。最初の主用途は、ChatGPT などの AI チャットが考え中かどうかを、別タブ作業中でも視覚的に把握しやすくすることです。
 
 現在の manifest version は `0.3.2` です。
 
@@ -87,7 +87,7 @@ TabBeacon は、Web ページ上の状態変化を監視し、タブの favicon 
 
 ## Web ページの動的要素の分析
 
-`playwright-observer` を使用し、ログをAIAgentに渡して、該当する DOM 要素やネットワークのパターンを割り出させ、それらを TabBeacon のルールに落とし込む。
+`playwright-observer` を使用し、ログをAIAgentに渡して、該当する DOM 要素やネットワークのパターンを割り出させ、それらを Tab Beacon のルールに落とし込む。
 
 ### playwright-observer インストール
 

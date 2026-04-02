@@ -1,15 +1,15 @@
 {
   "appName": {
-    "message": "TabBeacon"
+    "message": "Tab Beacon"
   },
   "manifestDescription": {
     "message": "Show a busy indicator on a page tab favicon when watched page conditions match."
   },
   "actionDefaultTitle": {
-    "message": "TabBeacon"
+    "message": "Tab Beacon"
   },
   "optionsTitle": {
-    "message": "TabBeacon Settings"
+    "message": "Tab Beacon Settings"
   },
   "optionsSubtitle": {
     "message": "Configure DOM and network conditions to show a busy state on the tab icon."
