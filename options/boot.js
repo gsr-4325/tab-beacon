@@ -1,8 +1,35 @@
 (() => {
   const DEFAULT_THEME = "default";
+  const THEME_STORAGE_KEY = "tabBeaconOptionsTheme";
 
   function sanitizeThemeName(value) {
     return /^[a-z0-9-]+$/i.test(value || "") ? value : DEFAULT_THEME;
+  }
+
+  function readStoredTheme() {
+    try {
+      return sanitizeThemeName(window.localStorage.getItem(THEME_STORAGE_KEY));
+    } catch {
+      return DEFAULT_THEME;
+    }
+  }
+
+  function writeStoredTheme(themeName) {
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, sanitizeThemeName(themeName));
+    } catch {
+      // ignore storage access failures
+    }
+  }
+
+  function resolveThemeName() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("theme")) {
+      const themeFromQuery = sanitizeThemeName(params.get("theme"));
+      writeStoredTheme(themeFromQuery);
+      return themeFromQuery;
+    }
+    return readStoredTheme();
   }
 
   function loadStylesheet(href) {
@@ -27,8 +54,16 @@
   }
 
   async function init() {
-    const params = new URLSearchParams(window.location.search);
-    const requestedTheme = sanitizeThemeName(params.get("theme"));
+    const requestedTheme = resolveThemeName();
+
+    window.TabBeaconThemeBootstrap = {
+      DEFAULT_THEME,
+      THEME_STORAGE_KEY,
+      sanitizeThemeName,
+      getStoredTheme: readStoredTheme,
+      setStoredTheme: writeStoredTheme
+    };
+
     document.documentElement.dataset.theme = requestedTheme;
 
     try {
@@ -37,6 +72,7 @@
     } catch (error) {
       console.warn("[Tab Beacon] failed to load requested theme, falling back to default", error);
       if (requestedTheme !== DEFAULT_THEME) {
+        writeStoredTheme(DEFAULT_THEME);
         document.documentElement.dataset.theme = DEFAULT_THEME;
         await loadStylesheet(`./themes/${DEFAULT_THEME}/theme.css`);
         await loadScript(`./themes/${DEFAULT_THEME}/theme.js`);
