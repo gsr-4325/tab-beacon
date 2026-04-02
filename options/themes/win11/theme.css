@@ -1,373 +1,387 @@
 html[data-theme="win11"] {
   color-scheme: light dark;
-  --wallpaper-1: radial-gradient(circle at 78% 8%, rgba(103, 157, 255, 0.34), transparent 24%), radial-gradient(circle at 14% 86%, rgba(73, 131, 255, 0.26), transparent 28%), linear-gradient(135deg, rgba(26, 97, 255, 0.14), rgba(26, 97, 255, 0));
-  --shell-border: rgba(255, 255, 255, 0.11);
-  --shell-shadow: 0 32px 80px rgba(0, 0, 0, 0.28);
-  --accent: #60a5fa;
-  --accent-strong: #3b82f6;
-  --chip-border: rgba(255, 255, 255, 0.12);
+  --wallpaper: radial-gradient(circle at 82% 8%, rgba(96, 165, 250, 0.34), transparent 22%), radial-gradient(circle at 12% 88%, rgba(59, 130, 246, 0.2), transparent 24%), linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0));
 }
 
 html[data-theme="win11"][data-win11-mode="dark"] {
-  --bg: #07111f;
-  --sidebar-bg: rgba(15, 23, 42, 0.88);
-  --main-bg: rgba(15, 23, 42, 0.82);
-  --panel: rgba(24, 33, 56, 0.9);
-  --panel-2: rgba(20, 27, 46, 0.84);
+  --bg: #0a1220;
+  --panel: rgba(25, 35, 58, 0.78);
+  --panel-strong: rgba(28, 39, 64, 0.9);
   --panel-border: rgba(255, 255, 255, 0.09);
-  --text: #f3f7ff;
-  --muted: #b7c3dc;
+  --text: #eef4ff;
+  --muted: #bac7de;
   --button-bg: rgba(255, 255, 255, 0.08);
-  --button-border: rgba(255, 255, 255, 0.1);
-  --field-bg: rgba(255, 255, 255, 0.06);
+  --button-border: rgba(255, 255, 255, 0.11);
+  --field-bg: rgba(255, 255, 255, 0.05);
   --field-border: rgba(255, 255, 255, 0.12);
-  --metric-bg: rgba(17, 24, 39, 0.86);
-  --nav-hover: rgba(255, 255, 255, 0.07);
-  --nav-active: rgba(255, 255, 255, 0.12);
-  --code-bg: rgba(9, 14, 25, 0.82);
+  --switch-off: #5c6373;
+  --switch-on: #48b5f7;
+  --hero-subtle: rgba(255, 255, 255, 0.04);
+  --code-bg: rgba(8, 13, 22, 0.72);
 }
 
 html[data-theme="win11"][data-win11-mode="light"] {
-  --bg: #dce9ff;
-  --sidebar-bg: rgba(247, 250, 255, 0.82);
-  --main-bg: rgba(255, 255, 255, 0.76);
-  --panel: rgba(255, 255, 255, 0.84);
-  --panel-2: rgba(247, 250, 255, 0.8);
-  --panel-border: rgba(139, 161, 196, 0.24);
-  --text: #172033;
-  --muted: #5d6b86;
-  --button-bg: rgba(255, 255, 255, 0.72);
-  --button-border: rgba(125, 145, 179, 0.28);
-  --field-bg: rgba(255, 255, 255, 0.86);
-  --field-border: rgba(130, 150, 184, 0.28);
-  --metric-bg: rgba(255, 255, 255, 0.84);
-  --nav-hover: rgba(60, 94, 157, 0.08);
-  --nav-active: rgba(60, 94, 157, 0.14);
-  --code-bg: rgba(247, 250, 255, 0.92);
+  --bg: #d9e7ff;
+  --panel: rgba(255, 255, 255, 0.72);
+  --panel-strong: rgba(255, 255, 255, 0.9);
+  --panel-border: rgba(129, 152, 190, 0.24);
+  --text: #18233a;
+  --muted: #61708b;
+  --button-bg: rgba(255, 255, 255, 0.85);
+  --button-border: rgba(129, 152, 190, 0.28);
+  --field-bg: rgba(255, 255, 255, 0.92);
+  --field-border: rgba(129, 152, 190, 0.28);
+  --switch-off: #77829a;
+  --switch-on: #48b5f7;
+  --hero-subtle: rgba(255, 255, 255, 0.35);
+  --code-bg: rgba(247, 250, 255, 0.95);
 }
 
 html[data-theme="win11"] body {
   min-height: 100vh;
-  background: var(--wallpaper-1), linear-gradient(180deg, var(--bg), color-mix(in srgb, var(--bg) 74%, #000000 26%));
+  background: var(--wallpaper), linear-gradient(180deg, var(--bg), color-mix(in srgb, var(--bg) 82%, #000 18%));
   color: var(--text);
   font-family: "Segoe UI", system-ui, sans-serif;
 }
 
 html[data-theme="win11"] .page {
-  max-width: 1360px;
-  padding: 18px;
-}
-
-html[data-theme="win11"] .win11-shell {
-  display: grid;
-  grid-template-columns: 290px minmax(0, 1fr);
-  gap: 18px;
-  min-height: calc(100vh - 36px);
-}
-
-html[data-theme="win11"] .win11-sidebar,
-html[data-theme="win11"] .win11-hero-card,
-html[data-theme="win11"] .win11-section-card,
-html[data-theme="win11"] .win11-metric-card,
-html[data-theme="win11"] .confirm-modal,
-html[data-theme="win11"] .diagnostics-panel {
-  backdrop-filter: blur(18px) saturate(130%);
-  -webkit-backdrop-filter: blur(18px) saturate(130%);
-  border: 1px solid var(--panel-border);
-  box-shadow: var(--shell-shadow);
-}
-
-html[data-theme="win11"] .win11-sidebar {
-  border-radius: 28px;
-  background: var(--sidebar-bg);
-  padding: 18px 16px;
-  display: grid;
-  gap: 18px;
-  align-content: start;
-}
-
-html[data-theme="win11"] .win11-sidebar-top {
-  display: grid;
-  gap: 16px;
-}
-
-html[data-theme="win11"] .win11-app-caption {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--muted);
-}
-
-html[data-theme="win11"] .win11-profile-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-html[data-theme="win11"] .win11-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, rgba(96, 165, 250, 0.86), rgba(59, 130, 246, 0.92));
-  color: white;
-  font-weight: 700;
-}
-
-html[data-theme="win11"] .win11-profile-name {
-  font-weight: 600;
-}
-
-html[data-theme="win11"] .win11-profile-mail {
-  color: var(--muted);
-  font-size: 0.92rem;
-}
-
-html[data-theme="win11"] .win11-search-box {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border-radius: 14px;
-  background: var(--field-bg);
-  border: 1px solid var(--field-border);
-  padding: 0 12px;
-}
-
-html[data-theme="win11"] .win11-search-icon {
-  color: var(--muted);
-  font-size: 1rem;
-}
-
-html[data-theme="win11"] .win11-search-box input {
-  width: 100%;
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  padding: 12px 0;
-}
-
-html[data-theme="win11"] .win11-sidebar-nav {
-  display: grid;
-  gap: 6px;
-}
-
-html[data-theme="win11"] .win11-nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text);
-  box-shadow: none;
-  justify-content: flex-start;
-}
-
-html[data-theme="win11"] .win11-nav-item:hover {
-  background: var(--nav-hover);
-}
-
-html[data-theme="win11"] .win11-nav-item.active {
-  background: var(--nav-active);
-  border-color: var(--panel-border);
-}
-
-html[data-theme="win11"] .win11-nav-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.12);
-}
-
-html[data-theme="win11"] .win11-main {
-  display: grid;
-  gap: 18px;
-  align-content: start;
-}
-
-html[data-theme="win11"] .win11-main-content {
-  display: grid;
-  gap: 18px;
-}
-
-html[data-theme="win11"] .win11-hero-card,
-html[data-theme="win11"] .win11-section-card {
-  background: var(--main-bg);
-  border-radius: 28px;
+  max-width: 1120px;
+  padding: 20px 18px 28px;
 }
 
 html[data-theme="win11"] .hero {
-  padding: 22px 24px;
+  margin: 0 0 14px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  gap: 12px;
   align-items: flex-start;
 }
 
-html[data-theme="win11"] .win11-breadcrumbs {
-  color: var(--muted);
-  font-size: 0.98rem;
-  margin-bottom: 8px;
+html[data-theme="win11"] .hero-copy {
+  gap: 8px;
 }
 
 html[data-theme="win11"] .hero-copy h1 {
   margin: 0;
-  font-size: 2.25rem;
+  font-size: 2.15rem;
   line-height: 1.15;
   letter-spacing: -0.03em;
 }
 
 html[data-theme="win11"] .subtitle {
-  max-width: 760px;
-  color: var(--muted);
-}
-
-html[data-theme="win11"] .win11-principles {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  list-style: none;
   margin: 0;
-  padding: 0;
+  color: var(--muted);
+  max-width: 760px;
 }
 
-html[data-theme="win11"] .win11-principles li {
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: var(--button-bg);
-  border: 1px solid var(--chip-border);
-  color: var(--muted);
+html[data-theme="win11"] .win11-hidden-principles {
+  display: none;
 }
 
 html[data-theme="win11"] .hero-actions {
+  display: inline-flex;
   gap: 10px;
-  flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 html[data-theme="win11"] .win11-mode-switch {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px;
+  padding: 4px;
   border-radius: 999px;
   background: var(--button-bg);
   border: 1px solid var(--button-border);
 }
 
-html[data-theme="win11"] .win11-mode-button {
-  min-width: 72px;
+html[data-theme="win11"] .win11-mode-button,
+html[data-theme="win11"] .hero-actions > button {
+  min-width: 74px;
+  height: 40px;
+  padding: 0 16px;
   border-radius: 999px;
-  border: 1px solid transparent;
+  font-weight: 500;
+}
+
+html[data-theme="win11"] .win11-mode-button {
   background: transparent;
+  border: 1px solid transparent;
   color: var(--muted);
   box-shadow: none;
 }
 
 html[data-theme="win11"] .win11-mode-button.active {
-  background: linear-gradient(135deg, rgba(96, 165, 250, 0.95), rgba(59, 130, 246, 0.98));
-  color: white;
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.96), rgba(59, 130, 246, 0.98));
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
 }
 
-html[data-theme="win11"] .win11-metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 14px;
+html[data-theme="win11"] .hero-actions > button {
+  background: var(--button-bg);
+  border: 1px solid var(--button-border);
+  color: var(--text);
 }
 
-html[data-theme="win11"] .win11-metric-card {
-  border-radius: 24px;
-  padding: 18px;
-  background: var(--metric-bg);
-  display: grid;
-  gap: 8px;
+html[data-theme="win11"] .hero-actions > button.primary {
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.96), rgba(59, 130, 246, 0.98));
+  border-color: transparent;
+  color: #ffffff;
 }
 
-html[data-theme="win11"] .win11-metric-label {
-  color: var(--muted);
-  font-size: 0.92rem;
-}
-
-html[data-theme="win11"] .win11-metric-value {
-  font-size: 2.1rem;
-  line-height: 1.1;
-  font-weight: 700;
-}
-
-html[data-theme="win11"] .win11-metric-detail {
-  color: var(--muted);
-  font-size: 0.95rem;
-}
-
-html[data-theme="win11"] .card {
-  padding: 0;
-  overflow: hidden;
-}
-
-html[data-theme="win11"] .section-header,
-html[data-theme="win11"] .win11-examples-card > h2 {
-  margin: 0;
-  padding: 18px 20px 14px;
-  border-bottom: 1px solid var(--panel-border);
-}
-
-html[data-theme="win11"] .rules,
-html[data-theme="win11"] #debugSectionBody,
-html[data-theme="win11"] .win11-examples-card .examples {
-  padding: 18px 20px 20px;
-}
-
-html[data-theme="win11"] .rules {
-  margin-top: 0;
-  background: transparent;
-  border: 0;
-}
-
+html[data-theme="win11"] .card,
 html[data-theme="win11"] .rule,
 html[data-theme="win11"] .condition,
 html[data-theme="win11"] .conditions-panel,
 html[data-theme="win11"] .examples article,
 html[data-theme="win11"] .diagnostics-panel,
 html[data-theme="win11"] .confirm-modal {
-  border-radius: 22px;
+  border-radius: 12px;
+  backdrop-filter: blur(16px) saturate(125%);
+  -webkit-backdrop-filter: blur(16px) saturate(125%);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+}
+
+html[data-theme="win11"] .card,
+html[data-theme="win11"] .confirm-modal {
+  margin-top: 14px;
+  padding: 0;
   background: var(--panel);
   border: 1px solid var(--panel-border);
+  overflow: hidden;
+}
+
+html[data-theme="win11"] .section-header,
+html[data-theme="win11"] .win11-examples-card > h2 {
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  border-bottom: 1px solid var(--panel-border);
+  background: transparent;
+}
+
+html[data-theme="win11"] .section-header > h2,
+html[data-theme="win11"] .win11-examples-card > h2 {
+  margin: 0;
+  padding: 14px 16px;
+  font-size: 1.05rem;
+}
+
+html[data-theme="win11"] #debugToggle {
+  width: 100%;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
   box-shadow: none;
 }
 
+html[data-theme="win11"] .rules,
+html[data-theme="win11"] #debugSectionBody,
+html[data-theme="win11"] .win11-examples-card .examples {
+  padding: 14px 16px 16px;
+}
+
+html[data-theme="win11"] .rules {
+  margin-top: 0;
+  background: transparent;
+  border: 0;
+  gap: 12px;
+}
+
 html[data-theme="win11"] .rule {
+  padding: 0;
+  background: var(--panel-strong);
+  border: 1px solid var(--panel-border);
+  overflow: hidden;
+}
+
+html[data-theme="win11"] .rule.collapsed {
+  margin-bottom: 0;
+}
+
+html[data-theme="win11"] .rule-head {
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--panel-strong) 86%, var(--hero-subtle) 14%);
+  border-bottom: 1px solid var(--panel-border);
+  cursor: pointer;
+}
+
+html[data-theme="win11"] .rule.collapsed .rule-head {
+  border-bottom: 0;
+}
+
+html[data-theme="win11"] .rule-head-start,
+html[data-theme="win11"] .rule-head-actions {
+  gap: 12px;
+}
+
+html[data-theme="win11"] .rule-head-start {
+  flex: 1;
+  min-width: 0;
+}
+
+html[data-theme="win11"] .rule-head-actions {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+html[data-theme="win11"] .rule-title-area {
+  gap: 6px;
+}
+
+html[data-theme="win11"] .rule-name {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+  min-width: 0;
+}
+
+html[data-theme="win11"] .rule-name:focus {
+  outline: none;
+  box-shadow: inset 0 -1px 0 rgba(96, 165, 250, 0.8);
+}
+
+html[data-theme="win11"] .rule-meta {
+  gap: 8px;
+}
+
+html[data-theme="win11"] .rule-origin-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--button-bg);
+  border: 1px solid var(--button-border);
+  color: var(--muted);
+}
+
+html[data-theme="win11"] .rule-readonly-note,
+html[data-theme="win11"] .condition-summary,
+html[data-theme="win11"] .hint,
+html[data-theme="win11"] .diagnostic-summary,
+html[data-theme="win11"] .diagnostic-request-meta,
+html[data-theme="win11"] .diagnostic-finished-at,
+html[data-theme="win11"] .diagnostics-empty-row td,
+html[data-theme="win11"] .app-footer,
+html[data-theme="win11"] .theme-debug-title {
+  color: var(--muted);
+}
+
+html[data-theme="win11"] .rule-body {
   padding: 16px;
+}
+
+html[data-theme="win11"] .win11-enable-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  border: 0;
+}
+
+html[data-theme="win11"] .win11-rule-enable-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  box-shadow: none;
+}
+
+html[data-theme="win11"] .win11-rule-enable-button:hover {
+  background: transparent;
+}
+
+html[data-theme="win11"] .win11-rule-enable-button.disabled {
+  opacity: 0.6;
+}
+
+html[data-theme="win11"] .win11-rule-switch-text {
+  min-width: 22px;
+  text-align: right;
+  font-weight: 600;
+}
+
+html[data-theme="win11"] .win11-switch-track {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--switch-off);
+  transition: background 0.16s ease;
+}
+
+html[data-theme="win11"] .win11-switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #ffffff;
+  transition: transform 0.16s ease;
+}
+
+html[data-theme="win11"] .win11-rule-enable-button.active .win11-switch-track {
+  background: var(--switch-on);
+}
+
+html[data-theme="win11"] .win11-rule-enable-button.active .win11-switch-thumb {
+  transform: translateX(18px);
+}
+
+html[data-theme="win11"] .rule-toggle {
+  padding: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  box-shadow: none;
+}
+
+html[data-theme="win11"] .rule-toggle:hover,
+html[data-theme="win11"] .condition-toggle:hover,
+html[data-theme="win11"] .section-toggle:hover {
+  background: transparent;
+}
+
+html[data-theme="win11"] .conditions-panel,
+html[data-theme="win11"] .condition,
+html[data-theme="win11"] .examples article,
+html[data-theme="win11"] .diagnostics-panel,
+html[data-theme="win11"] .confirm-modal {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
 }
 
 html[data-theme="win11"] .conditions-panel,
 html[data-theme="win11"] .condition,
 html[data-theme="win11"] .examples article {
-  padding: 16px;
+  padding: 14px;
 }
 
 html[data-theme="win11"] .readonly-rule,
 html[data-theme="win11"] .readonly-rule .conditions-panel,
 html[data-theme="win11"] .readonly-rule .condition {
-  background: var(--panel-2);
+  background: color-mix(in srgb, var(--panel) 92%, rgba(255,255,255,0.04) 8%);
 }
 
-html[data-theme="win11"] .rule-toggle,
 html[data-theme="win11"] .condition-toggle,
-html[data-theme="win11"] .section-toggle {
-  border-radius: 14px;
-  background: var(--button-bg);
-  border: 1px solid var(--button-border);
+html[data-theme="win11"] .section-toggle,
+html[data-theme="win11"] .rule-toggle {
   color: var(--text);
-}
-
-html[data-theme="win11"] .section-toggle {
-  box-shadow: none;
-}
-
-html[data-theme="win11"] .rule-origin-badge {
-  background: var(--button-bg);
-  border: 1px solid var(--button-border);
-  color: var(--muted);
 }
 
 html[data-theme="win11"] label {
@@ -378,10 +392,12 @@ html[data-theme="win11"] input[type="text"],
 html[data-theme="win11"] input:not([type]),
 html[data-theme="win11"] textarea,
 html[data-theme="win11"] select {
-  background: var(--field-bg);
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
   border: 1px solid var(--field-border);
+  background: var(--field-bg);
   color: var(--text);
-  border-radius: 14px;
 }
 
 html[data-theme="win11"] input[type="text"]:focus,
@@ -389,27 +405,27 @@ html[data-theme="win11"] input:not([type]):focus,
 html[data-theme="win11"] textarea:focus,
 html[data-theme="win11"] select:focus,
 html[data-theme="win11"] button:focus-visible {
-  outline: 2px solid rgba(96, 165, 250, 0.8);
+  outline: 2px solid rgba(96, 165, 250, 0.72);
   outline-offset: 1px;
 }
 
 html[data-theme="win11"] button {
-  border-radius: 14px;
-  background: var(--button-bg);
+  border-radius: 10px;
   border: 1px solid var(--button-border);
+  background: var(--button-bg);
   color: var(--text);
 }
 
 html[data-theme="win11"] button.primary {
-  background: linear-gradient(135deg, rgba(96, 165, 250, 0.95), rgba(59, 130, 246, 0.98));
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.96), rgba(59, 130, 246, 0.98));
   border-color: transparent;
-  color: white;
+  color: #ffffff;
 }
 
 html[data-theme="win11"] button.danger {
-  background: linear-gradient(135deg, rgba(244, 114, 182, 0.9), rgba(239, 68, 68, 0.9));
+  background: linear-gradient(135deg, rgba(244, 114, 182, 0.88), rgba(239, 68, 68, 0.88));
   border-color: transparent;
-  color: white;
+  color: #ffffff;
 }
 
 html[data-theme="win11"] .examples article {
@@ -421,7 +437,7 @@ html[data-theme="win11"] .diagnostic-url {
   display: inline-block;
   margin-top: 8px;
   padding: 8px 10px;
-  border-radius: 12px;
+  border-radius: 10px;
   background: var(--code-bg);
   border: 1px solid var(--panel-border);
   color: var(--text);
@@ -430,9 +446,9 @@ html[data-theme="win11"] .diagnostic-url {
 html[data-theme="win11"] .theme-debug-control {
   display: grid;
   gap: 8px;
-  margin-bottom: 14px;
-  padding: 14px;
-  border-radius: 16px;
+  margin-bottom: 12px;
+  padding: 12px;
+  border-radius: 10px;
   background: var(--field-bg);
   border: 1px solid var(--field-border);
 }
@@ -442,26 +458,9 @@ html[data-theme="win11"] .theme-debug-label {
   gap: 8px;
 }
 
-html[data-theme="win11"] .theme-debug-hint,
-html[data-theme="win11"] .hint,
-html[data-theme="win11"] .condition-summary,
-html[data-theme="win11"] .rule-readonly-note,
-html[data-theme="win11"] .app-footer,
-html[data-theme="win11"] .diagnostic-request-meta,
-html[data-theme="win11"] .diagnostic-finished-at,
-html[data-theme="win11"] .diagnostics-empty-row td,
-html[data-theme="win11"] .diagnostic-summary {
-  color: var(--muted);
-}
-
-html[data-theme="win11"] .win11-footer {
-  padding: 0 4px 6px;
-  text-align: left;
-}
-
 html[data-theme="win11"] .diagnostic-summary,
 html[data-theme="win11"] .diagnostics-table-wrap {
-  border-radius: 16px;
+  border-radius: 10px;
   background: var(--field-bg);
   border: 1px solid var(--field-border);
 }
@@ -485,11 +484,11 @@ html[data-theme="win11"] .diagnostic-status {
 }
 
 html[data-theme="win11"] .diagnostic-status-inflight {
-  background: rgba(96, 165, 250, 0.18);
+  background: rgba(72, 181, 247, 0.18);
 }
 
 html[data-theme="win11"] .diagnostic-status-completed {
-  background: rgba(74, 222, 128, 0.16);
+  background: rgba(74, 222, 128, 0.15);
 }
 
 html[data-theme="win11"] .diagnostic-status-error {
@@ -497,31 +496,38 @@ html[data-theme="win11"] .diagnostic-status-error {
 }
 
 html[data-theme="win11"] .confirm-modal::backdrop {
-  background: rgba(7, 17, 31, 0.4);
+  background: rgba(10, 18, 32, 0.45);
 }
 
-@media (max-width: 1080px) {
-  html[data-theme="win11"] .win11-shell {
-    grid-template-columns: 1fr;
-  }
-
-  html[data-theme="win11"] .win11-sidebar {
-    border-radius: 24px;
-  }
+html[data-theme="win11"] .win11-footer {
+  padding: 10px 4px 0;
+  text-align: left;
 }
 
 @media (max-width: 760px) {
   html[data-theme="win11"] .hero,
-  html[data-theme="win11"] .hero-actions {
+  html[data-theme="win11"] .hero-actions,
+  html[data-theme="win11"] .rule-head,
+  html[data-theme="win11"] .rule-head-start,
+  html[data-theme="win11"] .rule-head-actions {
     flex-direction: column;
     align-items: stretch;
   }
 
-  html[data-theme="win11"] .win11-mode-switch {
-    justify-content: space-between;
+  html[data-theme="win11"] .hero-actions {
+    width: 100%;
   }
 
-  html[data-theme="win11"] .win11-mode-button {
-    flex: 1;
+  html[data-theme="win11"] .win11-mode-switch {
+    justify-content: stretch;
+  }
+
+  html[data-theme="win11"] .win11-mode-button,
+  html[data-theme="win11"] .hero-actions > button {
+    width: 100%;
+  }
+
+  html[data-theme="win11"] .rule-head-actions {
+    margin-left: 0;
   }
 }

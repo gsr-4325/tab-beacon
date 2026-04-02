@@ -9,8 +9,8 @@
   ];
   const COLOR_MODES = ["dark", "auto", "light"];
 
-  let metricMap = null;
-  let metricsBound = false;
+  let rulesObserver = null;
+  let systemModeBound = false;
 
   function message(key, fallback) {
     try {
@@ -57,22 +57,28 @@
     document.documentElement.dataset.win11Mode = resolved;
 
     document.querySelectorAll("[data-win11-mode-button]").forEach((button) => {
-      const isActive = button.dataset.win11ModeButton === preference;
-      button.classList.toggle("active", isActive);
-      button.setAttribute("aria-pressed", String(isActive));
+      const active = button.dataset.win11ModeButton === preference;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
     });
   }
 
   function bindSystemPreferenceListener() {
+    if (systemModeBound) return;
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = () => {
-      if (getStoredMode() === "auto") applyMode("auto");
+      if (getStoredMode() === "auto") {
+        applyMode("auto");
+      }
     };
+
     if (typeof mediaQuery.addEventListener === "function") {
       mediaQuery.addEventListener("change", handleChange);
     } else if (typeof mediaQuery.addListener === "function") {
       mediaQuery.addListener(handleChange);
     }
+
+    systemModeBound = true;
   }
 
   function ensureThemeSelector() {
@@ -110,15 +116,8 @@
       window.location.reload();
     });
 
-    const hint = document.createElement("p");
-    hint.className = "hint theme-debug-hint";
-    hint.textContent = message(
-      "optionsThemeSelectorHint",
-      "Temporary theme switcher for comparing settings page concepts."
-    );
-
     label.append(title, select);
-    wrapper.append(label, hint);
+    wrapper.append(label);
     debugSectionBody.prepend(wrapper);
   }
 
@@ -128,11 +127,7 @@
     button.className = "win11-mode-button";
     button.dataset.win11ModeButton = mode;
     button.textContent = message(
-      mode === "dark"
-        ? "win11ModeDark"
-        : mode === "light"
-          ? "win11ModeLight"
-          : "win11ModeAuto",
+      mode === "dark" ? "win11ModeDark" : mode === "light" ? "win11ModeLight" : "win11ModeAuto",
       mode.charAt(0).toUpperCase() + mode.slice(1)
     );
     button.addEventListener("click", () => {
@@ -142,25 +137,119 @@
     return button;
   }
 
-  function createMetricCard(id, labelText) {
-    const card = document.createElement("article");
-    card.className = "win11-metric-card";
-    card.dataset.metricId = id;
+  function ensureModeSwitch(heroActions) {
+    if (!heroActions || heroActions.querySelector(".win11-mode-switch")) return;
 
-    const label = document.createElement("div");
-    label.className = "win11-metric-label";
-    label.textContent = labelText;
+    const switcher = document.createElement("div");
+    switcher.className = "win11-mode-switch";
+    COLOR_MODES.forEach((mode) => switcher.appendChild(createModeButton(mode)));
+    heroActions.prepend(switcher);
+  }
 
-    const value = document.createElement("div");
-    value.className = "win11-metric-value";
-    value.textContent = "0";
+  function shouldIgnoreHeaderToggle(target) {
+    return !!target.closest("input, textarea, select, button, a, label");
+  }
 
-    const detail = document.createElement("div");
-    detail.className = "win11-metric-detail";
-    detail.textContent = "—";
+  function createRuleToggleButton(checkbox) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "win11-rule-enable-button";
+    button.innerHTML = `
+      <span class="win11-rule-switch-text">Off</span>
+      <span class="win11-switch-track"><span class="win11-switch-thumb"></span></span>
+    `;
 
-    card.append(label, value, detail);
-    return { card, value, detail };
+    const sync = () => {
+      const enabled = !!checkbox.checked;
+      button.classList.toggle("active", enabled);
+      button.classList.toggle("disabled", !!checkbox.disabled);
+      button.querySelector(".win11-rule-switch-text").textContent = enabled ? message("win11SwitchOn", "On") : message("win11SwitchOff", "Off");
+      button.setAttribute("aria-pressed", String(enabled));
+      button.disabled = !!checkbox.disabled;
+    };
+
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (checkbox.disabled) return;
+      checkbox.checked = !checkbox.checked;
+      checkbox.dispatchEvent(new Event("input", { bubbles: true }));
+      checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+      sync();
+    });
+
+    checkbox.addEventListener("change", sync);
+    checkbox.addEventListener("input", sync);
+    sync();
+    return button;
+  }
+
+  function enhanceRuleCard(rule) {
+    if (!rule || rule.dataset.win11EnhancedRule === "true") return;
+
+    const head = rule.querySelector(".rule-head");
+    const actions = rule.querySelector(".rule-head-actions");
+    const enableLabel = actions?.querySelector(".inline");
+    const checkbox = rule.querySelector(".rule-enabled");
+    const ruleToggle = rule.querySelector(".rule-toggle");
+    const removeButton = rule.querySelector(".remove-rule");
+
+    if (!head || !actions || !checkbox || !ruleToggle) return;
+
+    if (enableLabel) {
+      enableLabel.classList.add("win11-enable-label");
+      enableLabel.setAttribute("aria-hidden", "true");
+    }
+
+    if (!actions.querySelector(".win11-rule-enable-button")) {
+      const customToggle = createRuleToggleButton(checkbox);
+      if (removeButton) {
+        actions.insertBefore(customToggle, removeButton);
+      } else {
+        actions.appendChild(customToggle);
+      }
+    }
+
+    if (actions.lastElementChild !== ruleToggle) {
+      actions.appendChild(ruleToggle);
+    }
+
+    head.addEventListener("click", (event) => {
+      if (shouldIgnoreHeaderToggle(event.target)) return;
+      ruleToggle.click();
+    });
+
+    rule.dataset.win11EnhancedRule = "true";
+  }
+
+  function enhanceAllRules() {
+    document.querySelectorAll("#rulesContainer .rule").forEach(enhanceRuleCard);
+  }
+
+  function observeRules() {
+    const rulesContainer = document.getElementById("rulesContainer");
+    if (!rulesContainer || rulesObserver) return;
+
+    rulesObserver = new MutationObserver(() => {
+      window.requestAnimationFrame(() => {
+        enhanceAllRules();
+      });
+    });
+
+    rulesObserver.observe(rulesContainer, { childList: true, subtree: true });
+  }
+
+  function ensureDebugHeaderBehavior() {
+    const header = document.querySelector(".debug-card .section-header");
+    const toggle = document.getElementById("debugToggle");
+    if (!header || !toggle || header.dataset.win11Clickable === "true") return;
+
+    header.addEventListener("click", (event) => {
+      if (shouldIgnoreHeaderToggle(event.target)) return;
+      toggle.click();
+    });
+
+    header.dataset.win11Clickable = "true";
   }
 
   function ensureLayout() {
@@ -168,182 +257,57 @@
 
     const page = document.querySelector(".page");
     const hero = page?.querySelector(".hero");
-    const cards = Array.from(page?.querySelectorAll(":scope > .card") || []);
-    const rulesCard = cards.find((card) => card.querySelector("#rulesContainer"));
-    const debugCard = cards.find((card) => card.classList.contains("debug-card"));
-    const examplesCard = cards.find((card) => card.querySelector(".examples"));
+    const heroCopy = hero?.querySelector(".hero-copy");
+    const heroActions = hero?.querySelector(".hero-actions");
+    const title = heroCopy?.querySelector("h1");
+    const subtitle = heroCopy?.querySelector(".subtitle");
+    const principles = heroCopy?.querySelector(".hero-principles");
+    const rulesCard = Array.from(page?.querySelectorAll(":scope > .card") || []).find((card) => card.querySelector("#rulesContainer"));
+    const debugCard = page?.querySelector(".debug-card");
+    const examplesCard = Array.from(page?.querySelectorAll(":scope > .card") || []).find((card) => card.querySelector(".examples"));
     const footer = document.querySelector(".app-footer");
 
     if (!page || !hero || !rulesCard) return false;
 
-    const shell = document.createElement("div");
-    shell.className = "win11-shell";
-
-    const sidebar = document.createElement("aside");
-    sidebar.className = "win11-sidebar";
-    sidebar.innerHTML = `
-      <div class="win11-sidebar-top">
-        <div class="win11-app-caption">${message("win11SettingsCaption", "Settings")}</div>
-        <div class="win11-profile-card">
-          <div class="win11-avatar">TB</div>
-          <div>
-            <div class="win11-profile-name">Tab Beacon</div>
-            <div class="win11-profile-mail">busy-signal@local</div>
-          </div>
-        </div>
-        <label class="win11-search-box">
-          <span class="win11-search-icon">⌕</span>
-          <input type="text" value="Find a setting" readonly aria-label="Find a setting" />
-        </label>
-      </div>
-      <nav class="win11-sidebar-nav" aria-label="Settings navigation">
-        <button type="button" class="win11-nav-item"><span class="win11-nav-dot"></span><span>${message("win11NavSystem", "System")}</span></button>
-        <button type="button" class="win11-nav-item"><span class="win11-nav-dot"></span><span>${message("win11NavBluetooth", "Bluetooth & devices")}</span></button>
-        <button type="button" class="win11-nav-item"><span class="win11-nav-dot"></span><span>${message("win11NavNetwork", "Network & internet")}</span></button>
-        <button type="button" class="win11-nav-item active"><span class="win11-nav-dot"></span><span>${message("win11NavPersonalization", "Personalization")}</span></button>
-        <button type="button" class="win11-nav-item"><span class="win11-nav-dot"></span><span>${message("win11NavApps", "Apps")}</span></button>
-        <button type="button" class="win11-nav-item"><span class="win11-nav-dot"></span><span>${message("win11NavAccounts", "Accounts")}</span></button>
-      </nav>
-    `;
-
-    const main = document.createElement("section");
-    main.className = "win11-main";
-
-    const content = document.createElement("div");
-    content.className = "win11-main-content";
-
-    const heroCopy = hero.querySelector(".hero-copy");
-    const heroActions = hero.querySelector(".hero-actions");
-    const title = heroCopy?.querySelector("h1");
-    const subtitle = heroCopy?.querySelector(".subtitle");
-    const principles = heroCopy?.querySelector(".hero-principles");
-
-    if (heroCopy && !heroCopy.querySelector(".win11-breadcrumbs")) {
-      const breadcrumbs = document.createElement("div");
-      breadcrumbs.className = "win11-breadcrumbs";
-      breadcrumbs.textContent = `${message("win11CrumbPersonalization", "Personalization")} › ${message("win11CrumbTaskbar", "Taskbar")}`;
-      heroCopy.insertBefore(breadcrumbs, heroCopy.firstChild);
-    }
-
-    if (title) title.textContent = message("win11HeroTitle", "Tab Beacon");
-    if (subtitle) subtitle.textContent = message("win11HeroSubtitle", "Control how your busy-signal rules look and behave across watched tabs.");
-    if (principles) principles.classList.add("win11-principles");
-
-    if (heroActions && !heroActions.querySelector(".win11-mode-switch")) {
-      const switcher = document.createElement("div");
-      switcher.className = "win11-mode-switch";
-      COLOR_MODES.forEach((mode) => switcher.appendChild(createModeButton(mode)));
-      heroActions.prepend(switcher);
-    }
-
-    const metrics = document.createElement("section");
-    metrics.className = "win11-metrics-grid";
-    metricMap = new Map();
-    [
-      ["rules", message("win11MetricRules", "Installed rules")],
-      ["enabled", message("win11MetricEnabled", "Enabled rules")],
-      ["conditions", message("win11MetricConditions", "Conditions")],
-      ["patterns", message("win11MetricPatterns", "URL patterns")]
-    ].forEach(([id, labelText]) => {
-      const metric = createMetricCard(id, labelText);
-      metrics.appendChild(metric.card);
-      metricMap.set(id, metric);
-    });
-
-    page.innerHTML = "";
-    shell.append(sidebar, main);
-    main.append(hero, metrics, content);
-    content.append(rulesCard);
-    if (debugCard) content.append(debugCard);
-    if (examplesCard) content.append(examplesCard);
-    if (footer) content.append(footer);
-    page.appendChild(shell);
-
-    hero.classList.add("win11-hero-card");
+    page.classList.add("win11-page");
+    hero.classList.add("win11-hero");
     rulesCard.classList.add("win11-section-card", "win11-rules-card");
     if (debugCard) debugCard.classList.add("win11-section-card", "win11-debug-card");
     if (examplesCard) examplesCard.classList.add("win11-section-card", "win11-examples-card");
     if (footer) footer.classList.add("win11-footer");
 
+    if (title) {
+      title.textContent = message("appName", "Tab Beacon");
+    }
+
+    if (subtitle) {
+      subtitle.textContent = message("win11HeroSubtitle", "Configure your tab busy rules with a compact Windows 11 style layout.");
+    }
+
+    if (principles) {
+      principles.classList.add("win11-hidden-principles");
+    }
+
+    ensureModeSwitch(heroActions);
+
     document.body.dataset.win11Enhanced = "true";
     return true;
-  }
-
-  function collectRules() {
-    return Array.from(document.querySelectorAll("#rulesContainer .rule"));
-  }
-
-  function countEnabledRules(rules) {
-    return rules.filter((rule) => rule.querySelector(".rule-enabled")?.checked).length;
-  }
-
-  function countConditions(rules) {
-    return rules.reduce((total, rule) => total + rule.querySelectorAll(".condition").length, 0);
-  }
-
-  function countUrlPatterns(rules) {
-    return rules.reduce((total, rule) => {
-      const value = rule.querySelector(".rule-matches")?.value || "";
-      return total + value.split("\n").map((line) => line.trim()).filter(Boolean).length;
-    }, 0);
-  }
-
-  function countSmartBusyRules(rules) {
-    return rules.filter((rule) => rule.querySelector(".rule-smart-busy")?.checked).length;
-  }
-
-  function setMetric(id, value, detail) {
-    const metric = metricMap?.get(id);
-    if (!metric) return;
-    metric.value.textContent = String(value);
-    metric.detail.textContent = detail;
-  }
-
-  function updateMetrics() {
-    if (!metricMap) return;
-    const rules = collectRules();
-    const totalRules = rules.length;
-    const enabledRules = countEnabledRules(rules);
-    const conditions = countConditions(rules);
-    const patterns = countUrlPatterns(rules);
-    const smartBusyRules = countSmartBusyRules(rules);
-
-    setMetric("rules", totalRules, totalRules === 1 ? "1 rule installed" : `${totalRules} rules installed`);
-    setMetric("enabled", enabledRules, enabledRules === 1 ? "1 rule enabled" : `${enabledRules} rules enabled`);
-    setMetric("conditions", conditions, smartBusyRules === 1 ? "1 smart busy rule" : `${smartBusyRules} smart busy rules`);
-    setMetric("patterns", patterns, patterns === 1 ? "1 URL pattern" : `${patterns} URL patterns`);
-  }
-
-  function bindMetricUpdates() {
-    if (metricsBound) return;
-    const rulesContainer = document.getElementById("rulesContainer");
-    if (!rulesContainer) return;
-
-    rulesContainer.addEventListener("input", updateMetrics);
-    rulesContainer.addEventListener("change", updateMetrics);
-
-    const observer = new MutationObserver(() => {
-      window.requestAnimationFrame(updateMetrics);
-    });
-    observer.observe(rulesContainer, { childList: true, subtree: true });
-
-    metricsBound = true;
   }
 
   function activate() {
     if (!ensureLayout()) return;
     ensureThemeSelector();
-    bindMetricUpdates();
-    updateMetrics();
+    enhanceAllRules();
+    observeRules();
+    ensureDebugHeaderBehavior();
     applyMode(getStoredMode());
-    window.setTimeout(updateMetrics, 120);
     window.TabBeaconOptionsTheme = {
       name: CURRENT_THEME,
-      refresh: updateMetrics,
       setMode: (mode) => {
         setStoredMode(mode);
         applyMode(mode);
-      }
+      },
+      refresh: enhanceAllRules
     };
   }
 
