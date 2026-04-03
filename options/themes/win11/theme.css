@@ -18,6 +18,12 @@ html[data-theme="win11"][data-win11-mode="dark"] {
   --switch-on: #48b5f7;
   --hero-subtle: rgba(255, 255, 255, 0.04);
   --code-bg: rgba(8, 13, 22, 0.72);
+  --user-rule-bg: rgba(28, 39, 64, 0.94);
+  --user-rule-head: rgba(35, 48, 77, 0.95);
+  --system-rule-bg: rgba(43, 39, 68, 0.96);
+  --system-rule-head: rgba(55, 47, 86, 0.98);
+  --select-option-bg: #1f2a42;
+  --select-option-text: #eef4ff;
 }
 
 html[data-theme="win11"][data-win11-mode="light"] {
@@ -35,6 +41,12 @@ html[data-theme="win11"][data-win11-mode="light"] {
   --switch-on: #48b5f7;
   --hero-subtle: rgba(255, 255, 255, 0.35);
   --code-bg: rgba(247, 250, 255, 0.95);
+  --user-rule-bg: rgba(255, 255, 255, 0.95);
+  --user-rule-head: rgba(243, 247, 255, 0.98);
+  --system-rule-bg: rgba(245, 240, 255, 0.98);
+  --system-rule-head: rgba(236, 228, 255, 0.98);
+  --select-option-bg: #ffffff;
+  --select-option-text: #18233a;
 }
 
 html[data-theme="win11"] body {
@@ -82,7 +94,7 @@ html[data-theme="win11"] .win11-hidden-principles {
 
 html[data-theme="win11"] .hero-actions {
   display: inline-flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
@@ -91,25 +103,25 @@ html[data-theme="win11"] .hero-actions {
 html[data-theme="win11"] .win11-mode-switch {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px;
+  gap: 8px;
+  padding: 0;
   border-radius: 999px;
-  background: var(--button-bg);
-  border: 1px solid var(--button-border);
+  background: transparent;
+  border: 0;
 }
 
 html[data-theme="win11"] .win11-mode-button,
 html[data-theme="win11"] .hero-actions > button {
-  min-width: 74px;
-  height: 40px;
-  padding: 0 16px;
+  min-width: 76px;
+  height: 38px;
+  padding: 0 14px;
   border-radius: 999px;
   font-weight: 500;
 }
 
 html[data-theme="win11"] .win11-mode-button {
-  background: transparent;
-  border: 1px solid transparent;
+  background: var(--button-bg);
+  border: 1px solid var(--button-border);
   color: var(--muted);
   box-shadow: none;
 }
@@ -139,7 +151,7 @@ html[data-theme="win11"] .conditions-panel,
 html[data-theme="win11"] .examples article,
 html[data-theme="win11"] .diagnostics-panel,
 html[data-theme="win11"] .confirm-modal {
-  border-radius: 12px;
+  border-radius: 8px;
   backdrop-filter: blur(16px) saturate(125%);
   -webkit-backdrop-filter: blur(16px) saturate(125%);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
@@ -157,23 +169,36 @@ html[data-theme="win11"] .confirm-modal {
 html[data-theme="win11"] .section-header,
 html[data-theme="win11"] .win11-examples-card > h2 {
   margin: 0;
-  padding: 0;
   min-height: 0;
   border-bottom: 1px solid var(--panel-border);
   background: transparent;
 }
 
+html[data-theme="win11"] .section-header {
+  padding: 12px 14px;
+  gap: 12px;
+}
+
 html[data-theme="win11"] .section-header > h2,
 html[data-theme="win11"] .win11-examples-card > h2 {
   margin: 0;
-  padding: 14px 16px;
+  padding: 0;
   font-size: 1.05rem;
+}
+
+html[data-theme="win11"] .win11-rules-card .section-header {
+  align-items: center;
+}
+
+html[data-theme="win11"] #addRule {
+  margin-left: auto;
 }
 
 html[data-theme="win11"] #debugToggle {
   width: 100%;
-  justify-content: space-between;
-  padding: 14px 16px;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -181,10 +206,24 @@ html[data-theme="win11"] #debugToggle {
   box-shadow: none;
 }
 
+html[data-theme="win11"] #debugToggle .section-toggle-icon {
+  margin-left: auto;
+  order: 2;
+  transition: transform 0.15s ease;
+}
+
+html[data-theme="win11"] #debugToggle[aria-expanded="true"] .section-toggle-icon {
+  transform: rotate(0deg);
+}
+
+html[data-theme="win11"] #debugToggle[aria-expanded="false"] .section-toggle-icon {
+  transform: rotate(-90deg);
+}
+
 html[data-theme="win11"] .rules,
 html[data-theme="win11"] #debugSectionBody,
 html[data-theme="win11"] .win11-examples-card .examples {
-  padding: 14px 16px 16px;
+  padding: 14px;
 }
 
 html[data-theme="win11"] .rules {
@@ -196,9 +235,13 @@ html[data-theme="win11"] .rules {
 
 html[data-theme="win11"] .rule {
   padding: 0;
-  background: var(--panel-strong);
+  background: var(--user-rule-bg);
   border: 1px solid var(--panel-border);
   overflow: hidden;
+}
+
+html[data-theme="win11"] .rule[data-rule-origin="system"] {
+  background: var(--system-rule-bg);
 }
 
 html[data-theme="win11"] .rule.collapsed {
@@ -206,10 +249,14 @@ html[data-theme="win11"] .rule.collapsed {
 }
 
 html[data-theme="win11"] .rule-head {
-  padding: 12px 16px;
-  background: color-mix(in srgb, var(--panel-strong) 86%, var(--hero-subtle) 14%);
+  padding: 12px 14px;
+  background: var(--user-rule-head);
   border-bottom: 1px solid var(--panel-border);
   cursor: pointer;
+}
+
+html[data-theme="win11"] .rule[data-rule-origin="system"] .rule-head {
+  background: var(--system-rule-head);
 }
 
 html[data-theme="win11"] .rule.collapsed .rule-head {
@@ -218,7 +265,7 @@ html[data-theme="win11"] .rule.collapsed .rule-head {
 
 html[data-theme="win11"] .rule-head-start,
 html[data-theme="win11"] .rule-head-actions {
-  gap: 12px;
+  gap: 10px;
 }
 
 html[data-theme="win11"] .rule-head-start {
@@ -255,11 +302,7 @@ html[data-theme="win11"] .rule-meta {
 }
 
 html[data-theme="win11"] .rule-origin-badge {
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--button-bg);
-  border: 1px solid var(--button-border);
-  color: var(--muted);
+  display: none;
 }
 
 html[data-theme="win11"] .rule-readonly-note,
@@ -275,7 +318,7 @@ html[data-theme="win11"] .theme-debug-title {
 }
 
 html[data-theme="win11"] .rule-body {
-  padding: 16px;
+  padding: 14px;
 }
 
 html[data-theme="win11"] .win11-enable-label {
@@ -301,7 +344,8 @@ html[data-theme="win11"] .win11-rule-enable-button {
   box-shadow: none;
 }
 
-html[data-theme="win11"] .win11-rule-enable-button:hover {
+html[data-theme="win11"] .win11-rule-enable-button:hover,
+html[data-theme="win11"] .win11-remove-icon-button:hover {
   background: transparent;
 }
 
@@ -344,7 +388,7 @@ html[data-theme="win11"] .win11-rule-enable-button.active .win11-switch-thumb {
 }
 
 html[data-theme="win11"] .rule-toggle {
-  padding: 6px;
+  padding: 4px;
   border: 0;
   background: transparent;
   color: var(--muted);
@@ -372,16 +416,34 @@ html[data-theme="win11"] .examples article {
   padding: 14px;
 }
 
-html[data-theme="win11"] .readonly-rule,
 html[data-theme="win11"] .readonly-rule .conditions-panel,
 html[data-theme="win11"] .readonly-rule .condition {
   background: color-mix(in srgb, var(--panel) 92%, rgba(255,255,255,0.04) 8%);
 }
 
-html[data-theme="win11"] .condition-toggle,
-html[data-theme="win11"] .section-toggle,
-html[data-theme="win11"] .rule-toggle {
+html[data-theme="win11"] .condition-header {
+  gap: 10px;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+html[data-theme="win11"] .condition-toggle {
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--text);
+  box-shadow: none;
+  border-radius: 0;
+}
+
+html[data-theme="win11"] .condition-title-text,
+html[data-theme="win11"] .condition-index {
+  font-weight: 600;
+}
+
+html[data-theme="win11"] .condition-body {
+  margin-top: 12px;
 }
 
 html[data-theme="win11"] label {
@@ -394,10 +456,15 @@ html[data-theme="win11"] textarea,
 html[data-theme="win11"] select {
   width: 100%;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: 8px;
   border: 1px solid var(--field-border);
   background: var(--field-bg);
   color: var(--text);
+}
+
+html[data-theme="win11"] select option {
+  color: var(--select-option-text);
+  background: var(--select-option-bg);
 }
 
 html[data-theme="win11"] input[type="text"]:focus,
@@ -410,7 +477,7 @@ html[data-theme="win11"] button:focus-visible {
 }
 
 html[data-theme="win11"] button {
-  border-radius: 10px;
+  border-radius: 8px;
   border: 1px solid var(--button-border);
   background: var(--button-bg);
   color: var(--text);
@@ -428,6 +495,19 @@ html[data-theme="win11"] button.danger {
   color: #ffffff;
 }
 
+html[data-theme="win11"] .win11-remove-icon-button {
+  min-width: 28px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  box-shadow: none;
+}
+
 html[data-theme="win11"] .examples article {
   background: var(--panel);
 }
@@ -437,7 +517,7 @@ html[data-theme="win11"] .diagnostic-url {
   display: inline-block;
   margin-top: 8px;
   padding: 8px 10px;
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--code-bg);
   border: 1px solid var(--panel-border);
   color: var(--text);
@@ -448,7 +528,7 @@ html[data-theme="win11"] .theme-debug-control {
   gap: 8px;
   margin-bottom: 12px;
   padding: 12px;
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--field-bg);
   border: 1px solid var(--field-border);
 }
@@ -460,7 +540,7 @@ html[data-theme="win11"] .theme-debug-label {
 
 html[data-theme="win11"] .diagnostic-summary,
 html[data-theme="win11"] .diagnostics-table-wrap {
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--field-bg);
   border: 1px solid var(--field-border);
 }
@@ -509,7 +589,8 @@ html[data-theme="win11"] .win11-footer {
   html[data-theme="win11"] .hero-actions,
   html[data-theme="win11"] .rule-head,
   html[data-theme="win11"] .rule-head-start,
-  html[data-theme="win11"] .rule-head-actions {
+  html[data-theme="win11"] .rule-head-actions,
+  html[data-theme="win11"] .section-header {
     flex-direction: column;
     align-items: stretch;
   }
@@ -527,7 +608,8 @@ html[data-theme="win11"] .win11-footer {
     width: 100%;
   }
 
-  html[data-theme="win11"] .rule-head-actions {
+  html[data-theme="win11"] .rule-head-actions,
+  html[data-theme="win11"] #addRule {
     margin-left: 0;
   }
 }

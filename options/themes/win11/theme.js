@@ -150,6 +150,15 @@
     return !!target.closest("input, textarea, select, button, a, label");
   }
 
+  function decorateRemoveButton(button) {
+    if (!button || button.dataset.win11RemoveEnhanced === "true") return;
+    button.classList.add("win11-remove-icon-button");
+    button.textContent = "×";
+    button.title = message("remove", "Remove");
+    button.setAttribute("aria-label", message("remove", "Remove"));
+    button.dataset.win11RemoveEnhanced = "true";
+  }
+
   function createRuleToggleButton(checkbox) {
     const button = document.createElement("button");
     button.type = "button";
@@ -184,6 +193,13 @@
     return button;
   }
 
+  function enhanceConditionCard(condition) {
+    if (!condition || condition.dataset.win11EnhancedCondition === "true") return;
+    const removeButton = condition.querySelector(".remove-condition");
+    decorateRemoveButton(removeButton);
+    condition.dataset.win11EnhancedCondition = "true";
+  }
+
   function enhanceRuleCard(rule) {
     if (!rule || rule.dataset.win11EnhancedRule === "true") return;
 
@@ -200,6 +216,8 @@
       enableLabel.classList.add("win11-enable-label");
       enableLabel.setAttribute("aria-hidden", "true");
     }
+
+    decorateRemoveButton(removeButton);
 
     if (!actions.querySelector(".win11-rule-enable-button")) {
       const customToggle = createRuleToggleButton(checkbox);
@@ -223,7 +241,10 @@
   }
 
   function enhanceAllRules() {
-    document.querySelectorAll("#rulesContainer .rule").forEach(enhanceRuleCard);
+    document.querySelectorAll("#rulesContainer .rule").forEach((rule) => {
+      enhanceRuleCard(rule);
+      rule.querySelectorAll(".condition").forEach(enhanceConditionCard);
+    });
   }
 
   function observeRules() {
