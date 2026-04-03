@@ -153,7 +153,7 @@
   function decorateRemoveButton(button) {
     if (!button || button.dataset.win11RemoveEnhanced === "true") return;
     button.classList.add("win11-remove-icon-button");
-    button.textContent = "×";
+    button.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8M12 4L4 12"/></svg>';
     button.title = message("remove", "Remove");
     button.setAttribute("aria-label", message("remove", "Remove"));
     button.dataset.win11RemoveEnhanced = "true";
@@ -196,7 +196,18 @@
   function enhanceConditionCard(condition) {
     if (!condition || condition.dataset.win11EnhancedCondition === "true") return;
     const removeButton = condition.querySelector(".remove-condition");
+    const header = condition.querySelector(".condition-header");
+    const toggle = condition.querySelector(".condition-toggle");
+
     decorateRemoveButton(removeButton);
+
+    if (header && toggle) {
+      header.addEventListener("click", (event) => {
+        if (shouldIgnoreHeaderToggle(event.target)) return;
+        toggle.click();
+      });
+    }
+
     condition.dataset.win11EnhancedCondition = "true";
   }
 
