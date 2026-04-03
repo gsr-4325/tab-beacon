@@ -107,11 +107,11 @@ html[data-theme="win11"] .hero-actions {
 html[data-theme="win11"] .win11-mode-switch {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 0;
+  gap: 4px;
+  padding: 3px;
   border-radius: 999px;
-  background: transparent;
-  border: 0;
+  background: var(--button-bg);
+  border: 1px solid var(--button-border);
 }
 
 html[data-theme="win11"] .win11-mode-button,
@@ -124,8 +124,8 @@ html[data-theme="win11"] .hero-actions > button {
 }
 
 html[data-theme="win11"] .win11-mode-button {
-  background: var(--button-bg);
-  border: 1px solid var(--button-border);
+  background: transparent;
+  border: 1px solid transparent;
   color: var(--muted);
   box-shadow: none;
 }
@@ -416,6 +416,31 @@ html[data-theme="win11"] .confirm-modal {
   border: 1px solid var(--panel-border);
 }
 
+html[data-theme="win11"] .conditions-panel {
+  padding: 0;
+  overflow: hidden;
+}
+
+html[data-theme="win11"] .conditions-panel > .section-header {
+  padding: 10px 12px;
+  align-items: center;
+}
+
+html[data-theme="win11"] .conditions-panel > .section-header > h3 {
+  margin: 0;
+  line-height: 1.2;
+}
+
+html[data-theme="win11"] .conditions-panel > .section-header .add-condition {
+  margin-left: auto;
+}
+
+html[data-theme="win11"] .conditions-container {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
 html[data-theme="win11"] .rule[data-rule-origin="system"] .conditions-panel {
   background: var(--system-panel-bg);
 }
@@ -424,7 +449,6 @@ html[data-theme="win11"] .rule[data-rule-origin="system"] .condition {
   background: var(--system-condition-bg);
 }
 
-html[data-theme="win11"] .conditions-panel,
 html[data-theme="win11"] .condition,
 html[data-theme="win11"] .examples article {
   padding: 14px;
