@@ -698,12 +698,18 @@ html[data-theme="win11"] .win11-help-dialog-content code {
   border: 1px solid var(--panel-border);
 }
 
-html[data-theme="win11"] .win11-hover-button:hover,
-html[data-theme="win11"] button.primary.win11-hover-button:hover {
+html[data-theme="win11"] .win11-hover-button {
+  transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease, filter 0.14s ease;
+}
+
+html[data-theme="win11"] .win11-hover-button:hover:not(:disabled),
+html[data-theme="win11"] button.primary.win11-hover-button:hover:not(:disabled) {
+  filter: brightness(1.04);
   background: color-mix(in srgb, var(--button-bg) 82%, var(--hover-button) 18%);
 }
 
-html[data-theme="win11"] button.primary.win11-hover-button:hover {
+html[data-theme="win11"] button.primary.win11-hover-button:hover:not(:disabled) {
+  filter: brightness(1.03);
   background: linear-gradient(135deg, rgba(108, 174, 255, 0.98), rgba(69, 141, 250, 1));
 }
 

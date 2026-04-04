@@ -359,9 +359,9 @@
     [
       "#addRule",
       ".add-condition",
-      "#debugLoadPreset",
-      "#debugOpenPackagedSandbox",
-      "#refreshTabList",
+      "#installDebugPreset",
+      "#openPackagedSandbox",
+      "#refreshDiagnosticTabs",
       "#refreshDiagnostics",
       "#clearDiagnostics"
     ].forEach((selector) => {
