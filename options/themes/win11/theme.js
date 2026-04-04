@@ -20,6 +20,105 @@
     }
   }
 
+  function uiLanguage() {
+    try {
+      return chrome.i18n.getUILanguage() || navigator.language || "en";
+    } catch {
+      return navigator.language || "en";
+    }
+  }
+
+  function isJapanese() {
+    return /^ja\b/i.test(uiLanguage());
+  }
+
+  function localizedHelpContent(kind) {
+    const ja = {
+      urlPatterns: `
+        <p>このルールを評価する対象 URL を、1 行に 1 つずつ入力します。</p>
+        <h3>ワイルドカード <code>*</code> の意味</h3>
+        <p><code>*</code> は「任意の文字列」を意味します。ホスト名の一部、パスの末尾、その両方に使えます。</p>
+        <h3>スキーマは含めてください</h3>
+        <p><code>https://</code> や <code>http://</code> など、URL の先頭から書いてください。</p>
+        <h3>入力例</h3>
+        <ul>
+          <li><code>https://chatgpt.com/*</code></li>
+          <li><code>https://claude.ai/*</code></li>
+          <li><code>https://example.com/projects/*</code></li>
+        </ul>
+        <p>ここで指定したパターンのどれかに一致したタブだけが、このルールの評価対象になります。</p>
+      `,
+      conditions: `
+        <p>Conditions では、ページが busy かどうかを判定する条件を組み合わせます。</p>
+        <h3>DOM condition</h3>
+        <p>ページ上の要素の状態を見ます。読み込み中のボタンや busy 属性の変化を拾うときに向いています。</p>
+        <ul>
+          <li><code>[aria-busy="true"]</code></li>
+          <li><code>//button[contains(@aria-label, "Stop")]</code></li>
+        </ul>
+        <h3>Network condition</h3>
+        <p>通信の発生状況を見ます。API リクエストやストリーミングが busy の目印になるページに向いています。</p>
+        <ul>
+          <li><code>urlContains: /backend-api/</code></li>
+          <li><code>pathPrefix: /backend-api/conversation</code></li>
+        </ul>
+        <p>DOM と Network は同じルールの中で混在できます。</p>
+      `,
+      matchMode: `
+        <p>1 つのルールに複数条件があるとき、それらをどう結合するかを選びます。</p>
+        <ul>
+          <li><strong>ANY</strong>: どれか 1 つでも true なら、そのルールは一致します。</li>
+          <li><strong>ALL</strong>: すべての条件が true のときだけ、そのルールは一致します。</li>
+        </ul>
+        <p>代替シグナルを並べたいなら <strong>ANY</strong>、すべてのチェックが揃う必要があるなら <strong>ALL</strong> が向いています。</p>
+      `
+    };
+
+    const en = {
+      urlPatterns: `
+        <p>Enter the URLs this rule should watch, one pattern per line.</p>
+        <h3>What <code>*</code> means</h3>
+        <p><code>*</code> means “match any sequence of characters”. You can use it for part of the hostname, the path, or both.</p>
+        <h3>Include the scheme</h3>
+        <p>Write the pattern from the beginning of the URL, including the scheme such as <code>https://</code> or <code>http://</code>.</p>
+        <h3>Examples</h3>
+        <ul>
+          <li><code>https://chatgpt.com/*</code></li>
+          <li><code>https://claude.ai/*</code></li>
+          <li><code>https://example.com/projects/*</code></li>
+        </ul>
+        <p>Only tabs whose URL matches at least one of these patterns are evaluated by this rule.</p>
+      `,
+      conditions: `
+        <p>Conditions describe what Tab Beacon should treat as a busy signal.</p>
+        <h3>DOM condition</h3>
+        <p>Use this when the page exposes a visible DOM signal, such as a loading button or an <code>aria-busy</code> attribute.</p>
+        <ul>
+          <li><code>[aria-busy="true"]</code></li>
+          <li><code>//button[contains(@aria-label, "Stop")]</code></li>
+        </ul>
+        <h3>Network condition</h3>
+        <p>Use this when a request pattern is the clearest signal, such as API traffic or streaming endpoints.</p>
+        <ul>
+          <li><code>urlContains: /backend-api/</code></li>
+          <li><code>pathPrefix: /backend-api/conversation</code></li>
+        </ul>
+        <p>You can mix DOM and network conditions inside the same rule.</p>
+      `,
+      matchMode: `
+        <p>Choose how multiple conditions inside one rule are combined.</p>
+        <ul>
+          <li><strong>ANY</strong>: the rule matches when at least one condition is true.</li>
+          <li><strong>ALL</strong>: the rule matches only when every condition is true.</li>
+        </ul>
+        <p>Use <strong>ANY</strong> when several alternative signals can indicate busy. Use <strong>ALL</strong> when every check must agree before the rule should match.</p>
+      `
+    };
+
+    const catalog = isJapanese() ? ja : en;
+    return catalog[kind] || "";
+  }
+
   function setStoredTheme(themeName) {
     try {
       window.localStorage.setItem(THEME_STORAGE_KEY, themeName);
@@ -48,6 +147,12 @@
     } catch {
       // ignore storage access failures
     }
+  }
+
+  function toggleMode() {
+    const next = getStoredMode() === "dark" ? "light" : "dark";
+    setStoredMode(next);
+    applyMode(next);
   }
 
   function applyMode(mode) {
@@ -139,13 +244,9 @@
       <div class="win11-help-dialog-header">
         <h2 class="win11-help-dialog-title"></h2>
       </div>
-      <textarea class="win11-help-dialog-text" readonly></textarea>
-      <div class="win11-help-dialog-actions">
-        <button type="button" class="win11-help-dialog-close">${message("resetConfirmCancel", "Close")}</button>
-      </div>
+      <div class="win11-help-dialog-content" role="document"></div>
     `;
 
-    dialog.querySelector(".win11-help-dialog-close").addEventListener("click", () => dialog.close());
     dialog.addEventListener("click", (event) => {
       if (event.target === dialog) dialog.close();
     });
@@ -155,18 +256,16 @@
     return dialog;
   }
 
-  function openHelpDialog(titleText, bodyText) {
+  function openHelpDialog(titleText, bodyHtml) {
     const dialog = ensureHelpDialog();
     dialog.querySelector(".win11-help-dialog-title").textContent = titleText;
-    const textarea = dialog.querySelector(".win11-help-dialog-text");
-    textarea.value = bodyText;
+    dialog.querySelector(".win11-help-dialog-content").innerHTML = bodyHtml;
     if (dialog.open) dialog.close();
     if (typeof dialog.showModal === "function") {
       dialog.showModal();
     } else {
       dialog.setAttribute("open", "open");
     }
-    textarea.focus();
   }
 
   function createModeButton(mode) {
@@ -177,10 +276,6 @@
     button.title = message(mode === "dark" ? "win11ModeDarkTooltip" : "win11ModeLightTooltip", mode === "dark" ? "Dark mode" : "Light mode");
     button.setAttribute("aria-label", button.title);
     button.innerHTML = mode === "dark" ? moonIconSvg() : sunIconSvg();
-    button.addEventListener("click", () => {
-      setStoredMode(mode);
-      applyMode(mode);
-    });
     return button;
   }
 
@@ -189,8 +284,19 @@
 
     const switcher = document.createElement("div");
     switcher.className = "win11-mode-switch";
-    switcher.setAttribute("role", "group");
-    switcher.setAttribute("aria-label", "Display mode");
+    switcher.setAttribute("role", "button");
+    switcher.setAttribute("tabindex", "0");
+    switcher.setAttribute("aria-label", isJapanese() ? "ダーク / ライトの切り替え" : "Toggle dark and light mode");
+    switcher.addEventListener("click", (event) => {
+      event.preventDefault();
+      toggleMode();
+    });
+    switcher.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        toggleMode();
+      }
+    });
     COLOR_MODES.forEach((mode) => switcher.appendChild(createModeButton(mode)));
     heroActions.prepend(switcher);
   }
@@ -208,46 +314,46 @@
     button.dataset.win11RemoveEnhanced = "true";
   }
 
-  function createHelpButton(labelKey, textKey, fallbackLabel, fallbackText) {
+  function createHelpButton(helpKind, titleText) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "win11-help-button";
     button.innerHTML = helpIconSvg();
-    button.setAttribute("aria-label", message(labelKey, fallbackLabel));
-    button.dataset.helpLabel = message(labelKey, fallbackLabel);
-    button.dataset.helpText = message(textKey, fallbackText);
+    button.setAttribute("aria-label", titleText);
     button.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      openHelpDialog(button.dataset.helpLabel, button.dataset.helpText);
+      openHelpDialog(titleText, localizedHelpContent(helpKind));
     });
     return button;
   }
 
+  function attachInlineHelp(labelSpan, helpKind, titleText) {
+    const label = labelSpan?.closest("label");
+    if (!label || label.querySelector(`.win11-inline-label-row[data-help="${helpKind}"]`)) return;
+
+    const row = document.createElement("span");
+    row.className = "win11-inline-label-row";
+    row.dataset.help = helpKind;
+    const button = createHelpButton(helpKind, titleText);
+    label.insertBefore(row, label.firstChild);
+    row.append(labelSpan, button);
+  }
+
   function ensureRuleHelp(root) {
     const urlLabelText = root.querySelector('label > span[data-i18n="urlPatterns"]');
-    if (urlLabelText && !root.querySelector('.win11-help-button[data-help="url-patterns"]')) {
-      const button = createHelpButton(
-        "urlPatternsHelpLabel",
-        "urlPatternsHelpTooltip",
-        "Help for URL patterns",
-        "Enter one URL pattern per line.\nExamples:\nhttps://chatgpt.com/*\nhttps://claude.ai/*\nOnly tabs whose URL matches one of these patterns are evaluated by this rule."
-      );
-      button.dataset.help = "url-patterns";
-      const row = document.createElement("div");
-      row.className = "win11-inline-label-row";
-      urlLabelText.parentElement.insertBefore(row, urlLabelText);
-      row.append(urlLabelText, button);
+    if (urlLabelText) {
+      attachInlineHelp(urlLabelText, "urlPatterns", message("urlPatterns", "URL patterns"));
+    }
+
+    const matchModeLabelText = root.querySelector('label > span[data-i18n="matchMode"]');
+    if (matchModeLabelText) {
+      attachInlineHelp(matchModeLabelText, "matchMode", message("matchMode", "Condition join"));
     }
 
     const conditionsHeading = root.querySelector('.conditions-panel > .section-header > h3');
     if (conditionsHeading && !conditionsHeading.querySelector('.win11-help-button[data-help="conditions"]')) {
-      const button = createHelpButton(
-        "conditionsHelpLabel",
-        "conditionsHelpTooltip",
-        "Help for conditions",
-        "Conditions can mix DOM and network checks.\nDOM example: [aria-busy=\"true\"] or //button[contains(@aria-label, \"Stop\")]\nNetwork example: urlContains: /backend-api/ or pathPrefix: /backend-api/conversation\nCondition join ANY matches when one condition is true. ALL matches only when every condition is true."
-      );
+      const button = createHelpButton("conditions", message("conditionsTitle", "Conditions"));
       button.dataset.help = "conditions";
       conditionsHeading.appendChild(button);
     }
