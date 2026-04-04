@@ -374,6 +374,30 @@
   "presetDebugLocalSandboxName": {
     "message": "Debug: Local Sandbox"
   },
+  "win11ModeDark": {
+    "message": "ダーク"
+  },
+  "win11ModeLight": {
+    "message": "ライト"
+  },
+  "win11ModeDarkTooltip": {
+    "message": "ダークモード"
+  },
+  "win11ModeLightTooltip": {
+    "message": "ライトモード"
+  },
+  "urlPatternsHelpLabel": {
+    "message": "URL パターンのヘルプ"
+  },
+  "urlPatternsHelpTooltip": {
+    "message": "1行に1つずつ URL パターンを入力します。\n例:\nhttps://chatgpt.com/*\nhttps://claude.ai/*\nここに一致したタブだけが、このルールの評価対象になります。"
+  },
+  "conditionsHelpLabel": {
+    "message": "条件のヘルプ"
+  },
+  "conditionsHelpTooltip": {
+    "message": "Conditions には DOM 条件と network 条件を混在できます。\nDOM 例: [aria-busy=\"true\"] または //button[contains(@aria-label, \"Stop\")]\nNetwork 例: urlContains: /backend-api/ または pathPrefix: /backend-api/conversation\nCondition join の ANY はどれか1つが真なら一致、ALL はすべて真なら一致です。"
+  },
   "footerSince": {
     "message": "Since 2026/04/01"
   }

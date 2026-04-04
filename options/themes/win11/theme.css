@@ -1,15 +1,15 @@
 html[data-theme="win11"] {
   color-scheme: light dark;
-  --wallpaper: radial-gradient(circle at 82% 8%, rgba(96, 165, 250, 0.34), transparent 22%), radial-gradient(circle at 12% 88%, rgba(59, 130, 246, 0.2), transparent 24%), linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0));
+  --wallpaper: radial-gradient(circle at 78% 8%, rgba(43, 98, 255, 0.38), transparent 20%), radial-gradient(circle at 14% 86%, rgba(20, 74, 214, 0.26), transparent 24%), linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0));
 }
 
 html[data-theme="win11"][data-win11-mode="dark"] {
-  --bg: #0a1220;
-  --panel: rgba(25, 35, 58, 0.78);
-  --panel-strong: rgba(28, 39, 64, 0.9);
-  --panel-border: rgba(255, 255, 255, 0.09);
+  --bg: #010611;
+  --panel: rgba(14, 22, 42, 0.82);
+  --panel-strong: rgba(16, 26, 50, 0.92);
+  --panel-border: rgba(255, 255, 255, 0.08);
   --text: #eef4ff;
-  --muted: #bac7de;
+  --muted: #b8c6e0;
   --button-bg: rgba(255, 255, 255, 0.08);
   --button-border: rgba(255, 255, 255, 0.11);
   --field-bg: rgba(255, 255, 255, 0.05);
@@ -17,19 +17,19 @@ html[data-theme="win11"][data-win11-mode="dark"] {
   --switch-off: #5c6373;
   --switch-on: #48b5f7;
   --hero-subtle: rgba(255, 255, 255, 0.04);
-  --code-bg: rgba(8, 13, 22, 0.72);
-  --user-rule-bg: rgba(28, 39, 64, 0.94);
-  --user-rule-head: rgba(35, 48, 77, 0.95);
-  --system-rule-bg: rgba(41, 44, 51, 0.96);
-  --system-rule-head: rgba(52, 56, 64, 0.98);
-  --system-panel-bg: rgba(37, 40, 47, 0.94);
-  --system-condition-bg: rgba(33, 36, 42, 0.92);
-  --select-option-bg: #1f2a42;
+  --code-bg: rgba(6, 11, 23, 0.78);
+  --user-rule-bg: rgba(18, 28, 54, 0.95);
+  --user-rule-head: rgba(24, 37, 70, 0.98);
+  --system-rule-bg: rgba(35, 39, 47, 0.96);
+  --system-rule-head: rgba(46, 51, 60, 0.98);
+  --system-panel-bg: rgba(32, 36, 43, 0.95);
+  --system-condition-bg: rgba(28, 31, 37, 0.93);
+  --select-option-bg: #15243f;
   --select-option-text: #eef4ff;
 }
 
 html[data-theme="win11"][data-win11-mode="light"] {
-  --bg: #d9e7ff;
+  --bg: #d7e6ff;
   --panel: rgba(255, 255, 255, 0.72);
   --panel-strong: rgba(255, 255, 255, 0.9);
   --panel-border: rgba(129, 152, 190, 0.24);
@@ -55,7 +55,7 @@ html[data-theme="win11"][data-win11-mode="light"] {
 
 html[data-theme="win11"] body {
   min-height: 100vh;
-  background: var(--wallpaper), linear-gradient(180deg, var(--bg), color-mix(in srgb, var(--bg) 82%, #000 18%));
+  background: var(--wallpaper), linear-gradient(180deg, var(--bg), color-mix(in srgb, var(--bg) 88%, #000 12%));
   color: var(--text);
   font-family: "Segoe UI", system-ui, sans-serif;
 }
@@ -92,8 +92,9 @@ html[data-theme="win11"] .subtitle {
   max-width: 760px;
 }
 
-html[data-theme="win11"] .win11-hidden-principles {
-  display: none;
+html[data-theme="win11"] .win11-hidden-principles,
+html[data-theme="win11"] .win11-hidden-section {
+  display: none !important;
 }
 
 html[data-theme="win11"] .hero-actions {
@@ -124,16 +125,42 @@ html[data-theme="win11"] .hero-actions > button {
 }
 
 html[data-theme="win11"] .win11-mode-button {
+  min-width: 38px;
+  width: 38px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   border: 1px solid transparent;
   color: var(--muted);
   box-shadow: none;
 }
 
+html[data-theme="win11"] .win11-mode-button:hover {
+  color: var(--text);
+}
+
 html[data-theme="win11"] .win11-mode-button.active {
   background: linear-gradient(135deg, rgba(96, 165, 250, 0.96), rgba(59, 130, 246, 0.98));
   border-color: rgba(255, 255, 255, 0.18);
   color: #ffffff;
+}
+
+html[data-theme="win11"] .win11-mode-button svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  pointer-events: none;
+}
+
+html[data-theme="win11"] .win11-mode-button svg circle:first-child {
+  fill: currentColor;
+  stroke: none;
 }
 
 html[data-theme="win11"] .hero-actions > button {
@@ -152,7 +179,6 @@ html[data-theme="win11"] .card,
 html[data-theme="win11"] .rule,
 html[data-theme="win11"] .condition,
 html[data-theme="win11"] .conditions-panel,
-html[data-theme="win11"] .examples article,
 html[data-theme="win11"] .diagnostics-panel,
 html[data-theme="win11"] .confirm-modal {
   border-radius: 8px;
@@ -170,28 +196,21 @@ html[data-theme="win11"] .confirm-modal {
   overflow: hidden;
 }
 
-html[data-theme="win11"] .section-header,
-html[data-theme="win11"] .win11-examples-card > h2 {
+html[data-theme="win11"] .section-header {
   margin: 0;
   min-height: 0;
+  padding: 12px 14px;
+  gap: 12px;
   border-bottom: 1px solid var(--panel-border);
   background: transparent;
 }
 
-html[data-theme="win11"] .section-header {
-  padding: 12px 14px;
-  gap: 12px;
-}
-
 html[data-theme="win11"] .section-header > h2,
-html[data-theme="win11"] .win11-examples-card > h2 {
+html[data-theme="win11"] .conditions-panel > .section-header > h3 {
   margin: 0;
   padding: 0;
   font-size: 1.05rem;
-}
-
-html[data-theme="win11"] .win11-rules-card .section-header {
-  align-items: center;
+  line-height: 1.2;
 }
 
 html[data-theme="win11"] #addRule {
@@ -202,12 +221,14 @@ html[data-theme="win11"] #debugToggle {
   width: 100%;
   justify-content: flex-start;
   gap: 8px;
-  padding: 12px 14px;
+  padding: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
   color: var(--text);
   box-shadow: none;
+  font-size: 1.05rem;
+  font-weight: 600;
 }
 
 html[data-theme="win11"] #debugToggle .section-toggle-icon {
@@ -216,17 +237,27 @@ html[data-theme="win11"] #debugToggle .section-toggle-icon {
   transition: transform 0.15s ease;
 }
 
-html[data-theme="win11"] #debugToggle[aria-expanded="true"] .section-toggle-icon {
+html[data-theme="win11"] #debugToggle[aria-expanded="true"] .section-toggle-icon,
+html[data-theme="win11"] .rule-toggle[aria-expanded="true"] .rule-toggle-icon,
+html[data-theme="win11"] .condition-toggle[aria-expanded="true"] .condition-toggle-icon {
   transform: rotate(0deg);
 }
 
-html[data-theme="win11"] #debugToggle[aria-expanded="false"] .section-toggle-icon {
+html[data-theme="win11"] #debugToggle[aria-expanded="false"] .section-toggle-icon,
+html[data-theme="win11"] .rule-toggle[aria-expanded="false"] .rule-toggle-icon,
+html[data-theme="win11"] .condition-toggle[aria-expanded="false"] .condition-toggle-icon {
   transform: rotate(-90deg);
 }
 
+html[data-theme="win11"] .rule-toggle-icon,
+html[data-theme="win11"] .condition-toggle-icon,
+html[data-theme="win11"] .section-toggle-icon {
+  display: inline-flex;
+  transition: transform 0.15s ease;
+}
+
 html[data-theme="win11"] .rules,
-html[data-theme="win11"] #debugSectionBody,
-html[data-theme="win11"] .win11-examples-card .examples {
+html[data-theme="win11"] #debugSectionBody {
   padding: 14px;
 }
 
@@ -246,10 +277,6 @@ html[data-theme="win11"] .rule {
 
 html[data-theme="win11"] .rule[data-rule-origin="system"] {
   background: var(--system-rule-bg);
-}
-
-html[data-theme="win11"] .rule.collapsed {
-  margin-bottom: 0;
 }
 
 html[data-theme="win11"] .rule-head {
@@ -299,11 +326,6 @@ html[data-theme="win11"] .rule-name {
   min-width: 0;
 }
 
-html[data-theme="win11"] .rule-name:focus {
-  outline: none;
-  box-shadow: inset 0 -1px 0 rgba(96, 165, 250, 0.8);
-}
-
 html[data-theme="win11"] .rule-meta {
   gap: 8px;
 }
@@ -351,10 +373,6 @@ html[data-theme="win11"] .win11-rule-enable-button {
   box-shadow: none;
 }
 
-html[data-theme="win11"] .win11-rule-enable-button:hover {
-  background: transparent;
-}
-
 html[data-theme="win11"] .win11-rule-enable-button.disabled {
   opacity: 0.6;
 }
@@ -393,7 +411,8 @@ html[data-theme="win11"] .win11-rule-enable-button.active .win11-switch-thumb {
   transform: translateX(18px);
 }
 
-html[data-theme="win11"] .rule-toggle {
+html[data-theme="win11"] .rule-toggle,
+html[data-theme="win11"] .condition-toggle {
   padding: 4px;
   border: 0;
   background: transparent;
@@ -401,15 +420,8 @@ html[data-theme="win11"] .rule-toggle {
   box-shadow: none;
 }
 
-html[data-theme="win11"] .rule-toggle:hover,
-html[data-theme="win11"] .condition-toggle:hover,
-html[data-theme="win11"] .section-toggle:hover {
-  background: transparent;
-}
-
 html[data-theme="win11"] .conditions-panel,
 html[data-theme="win11"] .condition,
-html[data-theme="win11"] .examples article,
 html[data-theme="win11"] .diagnostics-panel,
 html[data-theme="win11"] .confirm-modal {
   background: var(--panel);
@@ -422,13 +434,14 @@ html[data-theme="win11"] .conditions-panel {
 }
 
 html[data-theme="win11"] .conditions-panel > .section-header {
-  padding: 10px 12px;
+  padding: 8px 12px;
   align-items: center;
 }
 
 html[data-theme="win11"] .conditions-panel > .section-header > h3 {
-  margin: 0;
-  line-height: 1.2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 html[data-theme="win11"] .conditions-panel > .section-header .add-condition {
@@ -449,14 +462,8 @@ html[data-theme="win11"] .rule[data-rule-origin="system"] .condition {
   background: var(--system-condition-bg);
 }
 
-html[data-theme="win11"] .condition,
-html[data-theme="win11"] .examples article {
+html[data-theme="win11"] .condition {
   padding: 14px;
-}
-
-html[data-theme="win11"] .readonly-rule .conditions-panel,
-html[data-theme="win11"] .readonly-rule .condition {
-  background: color-mix(in srgb, var(--system-panel-bg) 92%, rgba(255,255,255,0.04) 8%);
 }
 
 html[data-theme="win11"] .condition-header {
@@ -487,6 +494,10 @@ html[data-theme="win11"] .condition-body {
 
 html[data-theme="win11"] label {
   color: var(--text);
+}
+
+html[data-theme="win11"] label > span[data-i18n="urlPatterns"] {
+  margin-right: 6px;
 }
 
 html[data-theme="win11"] input[type="text"],
@@ -528,13 +539,8 @@ html[data-theme="win11"] button.primary {
   color: #ffffff;
 }
 
-html[data-theme="win11"] button.danger {
-  background: linear-gradient(135deg, rgba(244, 114, 182, 0.88), rgba(239, 68, 68, 0.88));
-  border-color: transparent;
-  color: #ffffff;
-}
-
-html[data-theme="win11"] .win11-remove-icon-button {
+html[data-theme="win11"] .win11-remove-icon-button,
+html[data-theme="win11"] .win11-help-button {
   min-width: 28px;
   width: 28px;
   height: 28px;
@@ -548,33 +554,21 @@ html[data-theme="win11"] .win11-remove-icon-button {
   box-shadow: none;
 }
 
-html[data-theme="win11"] .win11-remove-icon-button:hover {
+html[data-theme="win11"] .win11-remove-icon-button:hover,
+html[data-theme="win11"] .win11-help-button:hover {
   color: var(--text);
 }
 
-html[data-theme="win11"] .win11-remove-icon-button svg {
+html[data-theme="win11"] .win11-remove-icon-button svg,
+html[data-theme="win11"] .win11-help-button svg {
   width: 14px;
   height: 14px;
   stroke: currentColor;
   stroke-width: 1.8;
   stroke-linecap: round;
+  stroke-linejoin: round;
   fill: none;
   pointer-events: none;
-}
-
-html[data-theme="win11"] .examples article {
-  background: var(--panel);
-}
-
-html[data-theme="win11"] .examples code,
-html[data-theme="win11"] .diagnostic-url {
-  display: inline-block;
-  margin-top: 8px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: var(--code-bg);
-  border: 1px solid var(--panel-border);
-  color: var(--text);
 }
 
 html[data-theme="win11"] .theme-debug-control {
@@ -630,7 +624,7 @@ html[data-theme="win11"] .diagnostic-status-error {
 }
 
 html[data-theme="win11"] .confirm-modal::backdrop {
-  background: rgba(10, 18, 32, 0.45);
+  background: rgba(3, 8, 20, 0.58);
 }
 
 html[data-theme="win11"] .win11-footer {
@@ -650,15 +644,6 @@ html[data-theme="win11"] .win11-footer {
   }
 
   html[data-theme="win11"] .hero-actions {
-    width: 100%;
-  }
-
-  html[data-theme="win11"] .win11-mode-switch {
-    justify-content: stretch;
-  }
-
-  html[data-theme="win11"] .win11-mode-button,
-  html[data-theme="win11"] .hero-actions > button {
     width: 100%;
   }
 

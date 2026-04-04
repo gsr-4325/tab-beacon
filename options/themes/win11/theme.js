@@ -7,10 +7,9 @@
     { value: "plain", labelKey: "optionsThemePlain", fallback: "Plain" },
     { value: "win11", labelKey: "optionsThemeWin11", fallback: "Win11" }
   ];
-  const COLOR_MODES = ["dark", "auto", "light"];
+  const COLOR_MODES = ["dark", "light"];
 
   let rulesObserver = null;
-  let systemModeBound = false;
 
   function message(key, fallback) {
     try {
@@ -28,57 +27,37 @@
     }
   }
 
-  function getStoredMode() {
-    try {
-      const value = window.localStorage.getItem(MODE_STORAGE_KEY);
-      return COLOR_MODES.includes(value) ? value : "auto";
-    } catch {
-      return "auto";
-    }
-  }
-
-  function setStoredMode(mode) {
-    try {
-      window.localStorage.setItem(MODE_STORAGE_KEY, COLOR_MODES.includes(mode) ? mode : "auto");
-    } catch {
-      // ignore storage access failures
-    }
-  }
-
   function resolveMode(mode) {
     if (mode === "dark" || mode === "light") return mode;
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   }
 
+  function getStoredMode() {
+    try {
+      const value = window.localStorage.getItem(MODE_STORAGE_KEY);
+      return resolveMode(value);
+    } catch {
+      return resolveMode("auto");
+    }
+  }
+
+  function setStoredMode(mode) {
+    try {
+      window.localStorage.setItem(MODE_STORAGE_KEY, COLOR_MODES.includes(mode) ? mode : resolveMode("auto"));
+    } catch {
+      // ignore storage access failures
+    }
+  }
+
   function applyMode(mode) {
-    const preference = COLOR_MODES.includes(mode) ? mode : "auto";
-    const resolved = resolveMode(preference);
-    document.documentElement.dataset.win11ModePreference = preference;
+    const resolved = resolveMode(mode);
     document.documentElement.dataset.win11Mode = resolved;
 
     document.querySelectorAll("[data-win11-mode-button]").forEach((button) => {
-      const active = button.dataset.win11ModeButton === preference;
+      const active = button.dataset.win11ModeButton === resolved;
       button.classList.toggle("active", active);
       button.setAttribute("aria-pressed", String(active));
     });
-  }
-
-  function bindSystemPreferenceListener() {
-    if (systemModeBound) return;
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = () => {
-      if (getStoredMode() === "auto") {
-        applyMode("auto");
-      }
-    };
-
-    if (typeof mediaQuery.addEventListener === "function") {
-      mediaQuery.addEventListener("change", handleChange);
-    } else if (typeof mediaQuery.addListener === "function") {
-      mediaQuery.addListener(handleChange);
-    }
-
-    systemModeBound = true;
   }
 
   function ensureThemeSelector() {
@@ -121,15 +100,43 @@
     debugSectionBody.prepend(wrapper);
   }
 
+  function moonIconSvg() {
+    return `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M14.6 3.8a8.8 8.8 0 1 0 5.6 15.6 8.2 8.2 0 0 1-3.5.7A8.8 8.8 0 0 1 14.6 3.8Z"></path>
+        <path d="M18.8 7.3l.5 1.2 1.2.5-1.2.5-.5 1.2-.5-1.2-1.2-.5 1.2-.5.5-1.2Z"></path>
+        <path d="M6.9 11.7l.4 1 .9.4-.9.4-.4 1-.4-1-.9-.4.9-.4.4-1Z"></path>
+      </svg>
+    `;
+  }
+
+  function sunIconSvg() {
+    return `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="4.4"></circle>
+        <path d="M12 2.6v2.2M12 19.2v2.2M21.4 12h-2.2M4.8 12H2.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6M18.8 18.8l-1.6-1.6M6.8 6.8 5.2 5.2"></path>
+      </svg>
+    `;
+  }
+
+  function helpIconSvg() {
+    return `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M9.4 9.2a2.7 2.7 0 1 1 4.8 1.7c-.6.7-1.4 1.1-1.9 1.7-.3.4-.4.7-.4 1.4"></path>
+        <circle cx="12" cy="17.2" r=".9"></circle>
+      </svg>
+    `;
+  }
+
   function createModeButton(mode) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "win11-mode-button";
     button.dataset.win11ModeButton = mode;
-    button.textContent = message(
-      mode === "dark" ? "win11ModeDark" : mode === "light" ? "win11ModeLight" : "win11ModeAuto",
-      mode.charAt(0).toUpperCase() + mode.slice(1)
-    );
+    button.title = message(mode === "dark" ? "win11ModeDarkTooltip" : "win11ModeLightTooltip", mode === "dark" ? "Dark mode" : "Light mode");
+    button.setAttribute("aria-label", button.title);
+    button.innerHTML = mode === "dark" ? moonIconSvg() : sunIconSvg();
     button.addEventListener("click", () => {
       setStoredMode(mode);
       applyMode(mode);
@@ -142,6 +149,8 @@
 
     const switcher = document.createElement("div");
     switcher.className = "win11-mode-switch";
+    switcher.setAttribute("role", "group");
+    switcher.setAttribute("aria-label", "Display mode");
     COLOR_MODES.forEach((mode) => switcher.appendChild(createModeButton(mode)));
     heroActions.prepend(switcher);
   }
@@ -157,6 +166,46 @@
     button.title = message("remove", "Remove");
     button.setAttribute("aria-label", message("remove", "Remove"));
     button.dataset.win11RemoveEnhanced = "true";
+  }
+
+  function createHelpButton(labelKey, textKey, fallbackLabel, fallbackText) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "win11-help-button";
+    button.innerHTML = helpIconSvg();
+    button.title = message(textKey, fallbackText);
+    button.setAttribute("aria-label", message(labelKey, fallbackLabel));
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+    return button;
+  }
+
+  function ensureRuleHelp(root) {
+    const urlLabelText = root.querySelector('label > span[data-i18n="urlPatterns"]');
+    if (urlLabelText && !urlLabelText.parentElement.querySelector('.win11-help-button[data-help="url-patterns"]')) {
+      const button = createHelpButton(
+        "urlPatternsHelpLabel",
+        "urlPatternsHelpTooltip",
+        "Help for URL patterns",
+        "Enter one URL pattern per line.\nExamples:\nhttps://chatgpt.com/*\nhttps://claude.ai/*\nOnly tabs whose URL matches one of these patterns are evaluated by this rule."
+      );
+      button.dataset.help = "url-patterns";
+      urlLabelText.insertAdjacentElement("afterend", button);
+    }
+
+    const conditionsHeading = root.querySelector('.conditions-panel > .section-header > h3');
+    if (conditionsHeading && !conditionsHeading.querySelector('.win11-help-button[data-help="conditions"]')) {
+      const button = createHelpButton(
+        "conditionsHelpLabel",
+        "conditionsHelpTooltip",
+        "Help for conditions",
+        "Conditions can mix DOM and network checks.\nDOM example: [aria-busy=\"true\"] or //button[contains(@aria-label, \"Stop\")]\nNetwork example: urlContains: /backend-api/ or pathPrefix: /backend-api/conversation\nCondition join ANY matches when one condition is true. ALL matches only when every condition is true."
+      );
+      button.dataset.help = "conditions";
+      conditionsHeading.appendChild(button);
+    }
   }
 
   function createRuleToggleButton(checkbox) {
@@ -229,6 +278,7 @@
     }
 
     decorateRemoveButton(removeButton);
+    ensureRuleHelp(rule);
 
     if (!actions.querySelector(".win11-rule-enable-button")) {
       const customToggle = createRuleToggleButton(checkbox);
@@ -271,10 +321,19 @@
     rulesObserver.observe(rulesContainer, { childList: true, subtree: true });
   }
 
+  function syncDebugToggleIcon() {
+    const icon = document.querySelector('#debugToggle .section-toggle-icon');
+    if (icon) {
+      icon.textContent = '▾';
+    }
+  }
+
   function ensureDebugHeaderBehavior() {
     const header = document.querySelector(".debug-card .section-header");
     const toggle = document.getElementById("debugToggle");
     if (!header || !toggle || header.dataset.win11Clickable === "true") return;
+
+    syncDebugToggleIcon();
 
     header.addEventListener("click", (event) => {
       if (shouldIgnoreHeaderToggle(event.target)) return;
@@ -294,19 +353,21 @@
     const title = heroCopy?.querySelector("h1");
     const subtitle = heroCopy?.querySelector(".subtitle");
     const principles = heroCopy?.querySelector(".hero-principles");
-    const rulesCard = Array.from(page?.querySelectorAll(":scope > .card") || []).find((card) => card.querySelector("#rulesContainer"));
     const debugCard = page?.querySelector(".debug-card");
     const examplesCard = Array.from(page?.querySelectorAll(":scope > .card") || []).find((card) => card.querySelector(".examples"));
     const footer = document.querySelector(".app-footer");
 
-    if (!page || !hero || !rulesCard) return false;
+    if (!page || !hero) return false;
 
     page.classList.add("win11-page");
     hero.classList.add("win11-hero");
-    rulesCard.classList.add("win11-section-card", "win11-rules-card");
     if (debugCard) debugCard.classList.add("win11-section-card", "win11-debug-card");
-    if (examplesCard) examplesCard.classList.add("win11-section-card", "win11-examples-card");
     if (footer) footer.classList.add("win11-footer");
+
+    if (examplesCard) {
+      examplesCard.classList.add("win11-hidden-section");
+      examplesCard.remove();
+    }
 
     if (title) {
       title.textContent = message("appName", "Tab Beacon");
@@ -321,6 +382,7 @@
     }
 
     ensureModeSwitch(heroActions);
+    syncDebugToggleIcon();
 
     document.body.dataset.win11Enhanced = "true";
     return true;
@@ -344,7 +406,6 @@
   }
 
   function init() {
-    bindSystemPreferenceListener();
     if (document.readyState === "complete") {
       activate();
     } else {
