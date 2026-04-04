@@ -2,6 +2,6 @@ notes/
 
 .claude/
 
-*.del
+*.del*
 
 node_modules/

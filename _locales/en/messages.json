@@ -374,6 +374,30 @@
   "presetDebugLocalSandboxName": {
     "message": "Debug: Local Sandbox"
   },
+  "win11ModeDark": {
+    "message": "Dark"
+  },
+  "win11ModeLight": {
+    "message": "Light"
+  },
+  "win11ModeDarkTooltip": {
+    "message": "Dark mode"
+  },
+  "win11ModeLightTooltip": {
+    "message": "Light mode"
+  },
+  "urlPatternsHelpLabel": {
+    "message": "Help for URL patterns"
+  },
+  "urlPatternsHelpTooltip": {
+    "message": "Enter one URL pattern per line.\nExamples:\nhttps://chatgpt.com/*\nhttps://claude.ai/*\nOnly tabs whose URL matches one of these patterns are evaluated by this rule."
+  },
+  "conditionsHelpLabel": {
+    "message": "Help for conditions"
+  },
+  "conditionsHelpTooltip": {
+    "message": "Conditions can mix DOM and network checks.\nDOM example: [aria-busy=\"true\"] or //button[contains(@aria-label, \"Stop\")]\nNetwork example: urlContains: /backend-api/ or pathPrefix: /backend-api/conversation\nCondition join ANY matches when one condition is true. ALL matches only when every condition is true."
+  },
   "footerSince": {
     "message": "Since 2026/04/01"
   }
