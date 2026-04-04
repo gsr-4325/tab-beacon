@@ -1,104 +1,104 @@
 # README
 
-## 概要
+## Overview
 
-Tab Beacon は、Web ページ上の状態変化を監視し、タブの favicon に busy 表示を重ねる Chrome / Edge 向け Manifest V3 拡張の実験プロジェクトです。最初の主用途は、ChatGPT などの AI チャットが考え中かどうかを、別タブ作業中でも視覚的に把握しやすくすることです。
+Tab Beacon is an experimental Manifest V3 extension for Chrome and Edge that watches state changes on web pages and overlays a busy indicator on the tab favicon. Its first main use case is making it easier to see whether AI chats such as ChatGPT are still thinking, even while you are working in other tabs.
 
-現在の manifest version は `0.3.2` です。
+The current manifest version is `0.3.2`.
 
-## 現在の到達点
+## Current capabilities
 
-- DOM 条件と network 条件を 1 ルール内で混在可能
-- selectorType は `auto / css / xpath`
-- `auto` 指定時は CSS / XPath を自動判定
-- ルール単位で `ANY / ALL` 条件結合
-- 複数ルールが同一 URL にマッチした場合は OR 評価
+- DOM conditions and network conditions can be mixed within a single rule
+- `selectorType` supports `auto / css / xpath`
+- With `auto`, CSS and XPath are detected automatically
+- Conditions inside a rule can be combined with `ANY / ALL`
+- If multiple rules match the same URL, they are evaluated with OR semantics
 - Smart busy detection
   - `aria-busy="true"`
-  - Stop / Cancel / Interrupt / 停止 / 中断 系の UI 文言
-- favicon busy overlay アニメーション
-- 元 favicon が無いページでも fallback icon を復元可能
-- options page からルール編集
-- 条件カードの折りたたみ
-- ルールカードの折りたたみ（デフォルトで閉じる）
-- `user / system preset` の区別
-- ローカル sandbox 用デバッグプリセット
-- `_locales/en` と `_locales/ja` の土台
-- 設定画面フッターのバージョン表示
-- Debug セクションの折りたたみ
-- 設定画面フッターの Since 表示
+  - UI text such as Stop / Cancel / Interrupt / 停止 / 中断
+- Animated busy overlay on the favicon
+- Fallback icon restore even on pages that do not provide an original favicon
+- Rule editing from the options page
+- Collapsible condition cards
+- Collapsible rule cards, collapsed by default
+- Distinction between `user` and `system preset`
+- Debug preset for the local sandbox
+- Base locale files for `_locales/en` and `_locales/ja`
+- Version display in the options page footer
+- Collapsible Debug section
+- Since display in the options page footer
 
-## ユーザー確認済みの挙動
+## Behavior already confirmed by the user
 
-次は会話中に実際に確認できたものです。
+These behaviors were confirmed directly during the conversation.
 
-- `aria-busy` 要素の追加で busy overlay が始まる
-- `aria-busy` 要素の削除で busy overlay が止まる
-- sandbox 上で favicon の busy / idle 反映が正しく動く
-- Rules セクションの視覚的差異は意図どおり
-- `content.js` の UTF-8 問題は main に hotfix 済み
+- Adding an `aria-busy` element starts the busy overlay
+- Removing an `aria-busy` element stops the busy overlay
+- Busy and idle favicon updates work correctly in the sandbox
+- The visual differentiation in the Rules section behaves as intended
+- The UTF-8 issue in `content.js` has already been hotfixed on `main`
 
-## 主要ファイル
+## Main files
 
-- `manifest.json` : Manifest V3 定義
-- `background.js` : タブ単位 / ルール単位の network 監視の最小実装
-- `content.js` : DOM 監視、Smart busy detection、favicon 更新
-- `options.html` / `options.js` / `options.css` : 設定画面
-- `i18n.js` : options UI の i18n 補助
-- `_locales/en/messages.json` / `_locales/ja/messages.json` : locale 文字列
-- `manual-tests/tabbeacon-sandbox.html` : ローカル手動テストページ
-- `ROADMAP.md` : 実装進捗と未着手タスク
+- `manifest.json`: Manifest V3 definition
+- `background.js`: minimal per-tab and per-rule network monitoring implementation
+- `content.js`: DOM monitoring, smart busy detection, and favicon updates
+- `options.html` / `options.js` / `options.css`: options UI
+- `i18n.js`: i18n helper for the options UI
+- `_locales/en/messages.json` / `_locales/ja/messages.json`: locale strings
+- `manual-tests/tabbeacon-sandbox.html`: local manual test page
+- `ROADMAP.md`: implementation progress and remaining tasks
 
-## ローカルで試す
+## Try it locally
 
-### 拡張の読み込み
+### Load the extension
 
-1. Chrome なら `chrome://extensions`、Edge なら `edge://extensions` を開く
-2. 右上のデベロッパーモードを ON
-3. 「パッケージ化されていない拡張機能を読み込む」を選ぶ
-4. このリポジトリのルートを読み込む
-5. 設定画面を開く
+1. Open `chrome://extensions` in Chrome or `edge://extensions` in Edge
+2. Turn on Developer mode
+3. Choose **Load unpacked**
+4. Load the root of this repository
+5. Open the options page
 
-### sandbox のテスト
+### Test the sandbox
 
-1. 拡張の詳細で **Allow access to file URLs** を ON にする
-2. 設定画面の **Debug** を開く
-3. **Install local sandbox preset** を押す
-4. `manual-tests/tabbeacon-sandbox.html` を `file://` で開く
-5. `aria-busy 要素を追加` / `削除` や `5秒 busy シナリオ` を試す
+1. In the extension details page, enable **Allow access to file URLs**
+2. Open **Debug** in the options page
+3. Click **Install local sandbox preset**
+4. Open `manual-tests/tabbeacon-sandbox.html` with `file://`
+5. Try adding and removing `aria-busy` elements, or run the 5-second busy scenario
 
-## まだ割り切っている点
+## Current trade-offs
 
-- `content_scripts` と `host_permissions` はまだ `"<all_urls>"`
-- Smart busy detection はヒューリスティックで、サイト別の厳密最適化はまだ未着手
-- network 監視は最小土台で、クールダウンや除外戦略は未実装
-- content / background 側のユーザー向け文言の i18n はまだ途中
-- import / export、要素ピッカー、診断 UI は未実装
-- ライセンスは未設定
+- `content_scripts` and `host_permissions` still use `"<all_urls>"`
+- Smart busy detection is still heuristic-based and has not yet been optimized strictly per site
+- Network monitoring is still a minimal foundation, with cooldowns and exclusion strategies not yet implemented
+- i18n for user-facing strings in `content` and `background` is still incomplete
+- Import / export, an element picker, and diagnostics UI are not yet implemented
+- No license has been chosen yet
 
-## 次の AI への引き継ぎメモ
+## Handoff notes for the next AI
 
-- まず `ROADMAP.md` を見て、完了済みと未完了を確認する
-- issue は main の実装より古いことがあるので、着手前に現状コードと直近コミットを照合する
-- 最近の安定化で重要だったのは次の 2 点
-  - favicon 復元 fallback の追加
-  - `content.js` の UTF-8 hotfix
-- 直近で次に進めるなら、network 条件の診断 UI、ChatGPT 実測、権限の絞り込みの順が妥当
+- Start by checking `ROADMAP.md` to see what is complete and what is not
+- Issues may be older than the current implementation on `main`, so compare them against the current code and recent commits before starting work
+- Two important recent stabilization changes were:
+  - adding favicon restore fallback
+  - the UTF-8 hotfix in `content.js`
+- The most reasonable next order of work is diagnostics UI for network conditions, real-world ChatGPT measurement, then permission tightening
 
-## Web ページの動的要素の分析
+## Analyzing dynamic elements on web pages
 
-`playwright-observer` を使用し、ログをAIAgentに渡して、該当する DOM 要素やネットワークのパターンを割り出させ、それらを Tab Beacon のルールに落とし込む。
+Use `playwright-observer`, pass the logs to an AI agent, identify the relevant DOM elements and network patterns, and convert them into Tab Beacon rules.
 
-### playwright-observer インストール
+### Install playwright-observer
 
-tab-beacon のローカルリポジトリのディレクトリで
+In your local `tab-beacon` repository directory:
 
-```
+```bash
 npm install github:gsr-4325/playwright-observer
 ```
 
-使い方は [paywright-observer のページ](https://github.com/gsr-4325/playwright-observer) を参照。
+See the [playwright-observer repository](https://github.com/gsr-4325/playwright-observer) for usage details.
 
-## ライセンス
+## License
 
-未設定
+Not set
