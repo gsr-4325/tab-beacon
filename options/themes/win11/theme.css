@@ -1,12 +1,16 @@
 html[data-theme="win11"] {
   color-scheme: light dark;
-  --wallpaper: radial-gradient(circle at 78% 8%, rgba(43, 98, 255, 0.38), transparent 20%), radial-gradient(circle at 14% 86%, rgba(20, 74, 214, 0.26), transparent 24%), linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0));
+  --wallpaper:
+    radial-gradient(circle at 80% 10%, rgba(52, 108, 255, 0.08), transparent 62%),
+    radial-gradient(circle at 14% 86%, rgba(36, 84, 214, 0.06), transparent 66%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), rgba(255, 255, 255, 0));
 }
 
 html[data-theme="win11"][data-win11-mode="dark"] {
   --bg: #010611;
-  --panel: rgba(14, 22, 42, 0.82);
-  --panel-strong: rgba(16, 26, 50, 0.92);
+  --section-card-bg: rgba(10, 18, 34, 0.56);
+  --panel: rgba(14, 22, 42, 0.78);
+  --panel-strong: rgba(16, 26, 50, 0.9);
   --panel-border: rgba(255, 255, 255, 0.08);
   --text: #eef4ff;
   --muted: #b8c6e0;
@@ -30,7 +34,8 @@ html[data-theme="win11"][data-win11-mode="dark"] {
 
 html[data-theme="win11"][data-win11-mode="light"] {
   --bg: #d7e6ff;
-  --panel: rgba(255, 255, 255, 0.72);
+  --section-card-bg: rgba(255, 255, 255, 0.62);
+  --panel: rgba(255, 255, 255, 0.78);
   --panel-strong: rgba(255, 255, 255, 0.9);
   --panel-border: rgba(129, 152, 190, 0.24);
   --text: #18233a;
@@ -55,7 +60,7 @@ html[data-theme="win11"][data-win11-mode="light"] {
 
 html[data-theme="win11"] body {
   min-height: 100vh;
-  background: var(--wallpaper), linear-gradient(180deg, var(--bg), color-mix(in srgb, var(--bg) 88%, #000 12%));
+  background: var(--wallpaper), linear-gradient(180deg, var(--bg), color-mix(in srgb, var(--bg) 92%, #000 8%));
   color: var(--text);
   font-family: "Segoe UI", system-ui, sans-serif;
 }
@@ -108,8 +113,9 @@ html[data-theme="win11"] .hero-actions {
 html[data-theme="win11"] .win11-mode-switch {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px;
+  gap: 2px;
+  height: 40px;
+  padding: 2px;
   border-radius: 999px;
   background: var(--button-bg);
   border: 1px solid var(--button-border);
@@ -117,16 +123,17 @@ html[data-theme="win11"] .win11-mode-switch {
 
 html[data-theme="win11"] .win11-mode-button,
 html[data-theme="win11"] .hero-actions > button {
+  height: 40px;
   min-width: 76px;
-  height: 38px;
   padding: 0 14px;
   border-radius: 999px;
   font-weight: 500;
 }
 
 html[data-theme="win11"] .win11-mode-button {
-  min-width: 38px;
-  width: 38px;
+  min-width: 34px;
+  width: 34px;
+  height: 34px;
   padding: 0;
   display: inline-flex;
   align-items: center;
@@ -187,7 +194,14 @@ html[data-theme="win11"] .confirm-modal {
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
 }
 
-html[data-theme="win11"] .card,
+html[data-theme="win11"] .card {
+  margin-top: 14px;
+  padding: 0;
+  background: var(--section-card-bg);
+  border: 1px solid var(--panel-border);
+  overflow: hidden;
+}
+
 html[data-theme="win11"] .confirm-modal {
   margin-top: 14px;
   padding: 0;
@@ -438,7 +452,8 @@ html[data-theme="win11"] .conditions-panel > .section-header {
   align-items: center;
 }
 
-html[data-theme="win11"] .conditions-panel > .section-header > h3 {
+html[data-theme="win11"] .conditions-panel > .section-header > h3,
+html[data-theme="win11"] .win11-inline-label-row {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -494,10 +509,6 @@ html[data-theme="win11"] .condition-body {
 
 html[data-theme="win11"] label {
   color: var(--text);
-}
-
-html[data-theme="win11"] label > span[data-i18n="urlPatterns"] {
-  margin-right: 6px;
 }
 
 html[data-theme="win11"] input[type="text"],
@@ -623,8 +634,36 @@ html[data-theme="win11"] .diagnostic-status-error {
   background: rgba(248, 113, 113, 0.16);
 }
 
+html[data-theme="win11"] .win11-help-dialog {
+  width: min(640px, calc(100vw - 32px));
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+
+html[data-theme="win11"] .win11-help-dialog::backdrop,
 html[data-theme="win11"] .confirm-modal::backdrop {
   background: rgba(3, 8, 20, 0.58);
+}
+
+html[data-theme="win11"] .win11-help-dialog-title {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+}
+
+html[data-theme="win11"] .win11-help-dialog-text {
+  min-height: 180px;
+  resize: vertical;
+  white-space: pre-wrap;
+}
+
+html[data-theme="win11"] .win11-help-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
 }
 
 html[data-theme="win11"] .win11-footer {

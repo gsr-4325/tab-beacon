@@ -10,6 +10,7 @@
   const COLOR_MODES = ["dark", "light"];
 
   let rulesObserver = null;
+  let helpDialog = null;
 
   function message(key, fallback) {
     try {
@@ -129,6 +130,45 @@
     `;
   }
 
+  function ensureHelpDialog() {
+    if (helpDialog) return helpDialog;
+
+    const dialog = document.createElement("dialog");
+    dialog.className = "win11-help-dialog";
+    dialog.innerHTML = `
+      <div class="win11-help-dialog-header">
+        <h2 class="win11-help-dialog-title"></h2>
+      </div>
+      <textarea class="win11-help-dialog-text" readonly></textarea>
+      <div class="win11-help-dialog-actions">
+        <button type="button" class="win11-help-dialog-close">${message("resetConfirmCancel", "Close")}</button>
+      </div>
+    `;
+
+    dialog.querySelector(".win11-help-dialog-close").addEventListener("click", () => dialog.close());
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+
+    document.body.appendChild(dialog);
+    helpDialog = dialog;
+    return dialog;
+  }
+
+  function openHelpDialog(titleText, bodyText) {
+    const dialog = ensureHelpDialog();
+    dialog.querySelector(".win11-help-dialog-title").textContent = titleText;
+    const textarea = dialog.querySelector(".win11-help-dialog-text");
+    textarea.value = bodyText;
+    if (dialog.open) dialog.close();
+    if (typeof dialog.showModal === "function") {
+      dialog.showModal();
+    } else {
+      dialog.setAttribute("open", "open");
+    }
+    textarea.focus();
+  }
+
   function createModeButton(mode) {
     const button = document.createElement("button");
     button.type = "button";
@@ -173,18 +213,20 @@
     button.type = "button";
     button.className = "win11-help-button";
     button.innerHTML = helpIconSvg();
-    button.title = message(textKey, fallbackText);
     button.setAttribute("aria-label", message(labelKey, fallbackLabel));
+    button.dataset.helpLabel = message(labelKey, fallbackLabel);
+    button.dataset.helpText = message(textKey, fallbackText);
     button.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
+      openHelpDialog(button.dataset.helpLabel, button.dataset.helpText);
     });
     return button;
   }
 
   function ensureRuleHelp(root) {
     const urlLabelText = root.querySelector('label > span[data-i18n="urlPatterns"]');
-    if (urlLabelText && !urlLabelText.parentElement.querySelector('.win11-help-button[data-help="url-patterns"]')) {
+    if (urlLabelText && !root.querySelector('.win11-help-button[data-help="url-patterns"]')) {
       const button = createHelpButton(
         "urlPatternsHelpLabel",
         "urlPatternsHelpTooltip",
@@ -192,7 +234,10 @@
         "Enter one URL pattern per line.\nExamples:\nhttps://chatgpt.com/*\nhttps://claude.ai/*\nOnly tabs whose URL matches one of these patterns are evaluated by this rule."
       );
       button.dataset.help = "url-patterns";
-      urlLabelText.insertAdjacentElement("afterend", button);
+      const row = document.createElement("div");
+      row.className = "win11-inline-label-row";
+      urlLabelText.parentElement.insertBefore(row, urlLabelText);
+      row.append(urlLabelText, button);
     }
 
     const conditionsHeading = root.querySelector('.conditions-panel > .section-header > h3');
@@ -383,6 +428,7 @@
 
     ensureModeSwitch(heroActions);
     syncDebugToggleIcon();
+    ensureHelpDialog();
 
     document.body.dataset.win11Enhanced = "true";
     return true;
