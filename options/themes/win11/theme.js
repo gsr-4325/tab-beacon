@@ -71,6 +71,14 @@
           <li><strong>ALL</strong>: すべての条件が true のときだけ、そのルールは一致します。</li>
         </ul>
         <p>代替シグナルを並べたいなら <strong>ANY</strong>、すべてのチェックが揃う必要があるなら <strong>ALL</strong> が向いています。</p>
+      `,
+      smartBusy: `
+        <p>これにチェックを入れると、明示的な Conditions に加えて、拡張側の smart busy detection もそのルールの補助シグナルとして使います。</p>
+        <ul>
+          <li>Conditions だけでは拾い切れない busy 状態を補完したいときに向いています。</li>
+          <li>逆に、完全に手動で条件を管理したい場合はオフにしてください。</li>
+        </ul>
+        <p>つまり、smart busy detection は「ルール全体の追加ヒント」として働きます。</p>
       `
     };
 
@@ -112,6 +120,14 @@
           <li><strong>ALL</strong>: the rule matches only when every condition is true.</li>
         </ul>
         <p>Use <strong>ANY</strong> when several alternative signals can indicate busy. Use <strong>ALL</strong> when every check must agree before the rule should match.</p>
+      `,
+      smartBusy: `
+        <p>When this is enabled, Tab Beacon also uses the built-in smart busy detection as an additional signal for the rule.</p>
+        <ul>
+          <li>Enable it when your explicit conditions are useful but still miss some busy states.</li>
+          <li>Disable it when you want the rule to depend only on the conditions you configured manually.</li>
+        </ul>
+        <p>In other words, smart busy detection acts as a rule-wide fallback hint.</p>
       `
     };
 
@@ -340,6 +356,22 @@
     row.append(labelSpan, button);
   }
 
+  function markHoverButtons(root = document) {
+    [
+      "#addRule",
+      ".add-condition",
+      "#debugLoadPreset",
+      "#debugOpenPackagedSandbox",
+      "#refreshTabList",
+      "#refreshDiagnostics",
+      "#clearDiagnostics"
+    ].forEach((selector) => {
+      root.querySelectorAll(selector).forEach((element) => {
+        element.classList.add("win11-hover-button");
+      });
+    });
+  }
+
   function ensureRuleHelp(root) {
     const urlLabelText = root.querySelector('label > span[data-i18n="urlPatterns"]');
     if (urlLabelText) {
@@ -349,6 +381,11 @@
     const matchModeLabelText = root.querySelector('label > span[data-i18n="matchMode"]');
     if (matchModeLabelText) {
       attachInlineHelp(matchModeLabelText, "matchMode", message("matchMode", "Condition join"));
+    }
+
+    const smartBusyLabelText = root.querySelector('label.inline > span[data-i18n="smartBusyToggle"]');
+    if (smartBusyLabelText) {
+      attachInlineHelp(smartBusyLabelText, "smartBusy", message("smartBusyToggle", "Use smart busy detection"));
     }
 
     const conditionsHeading = root.querySelector('.conditions-panel > .section-header > h3');
@@ -430,6 +467,7 @@
 
     decorateRemoveButton(removeButton);
     ensureRuleHelp(rule);
+    markHoverButtons(rule);
 
     if (!actions.querySelector(".win11-rule-enable-button")) {
       const customToggle = createRuleToggleButton(checkbox);
@@ -457,6 +495,7 @@
       enhanceRuleCard(rule);
       rule.querySelectorAll(".condition").forEach(enhanceConditionCard);
     });
+    markHoverButtons(document);
   }
 
   function observeRules() {
@@ -535,6 +574,7 @@
     ensureModeSwitch(heroActions);
     syncDebugToggleIcon();
     ensureHelpDialog();
+    markHoverButtons(document);
 
     document.body.dataset.win11Enhanced = "true";
     return true;

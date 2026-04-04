@@ -30,6 +30,8 @@ html[data-theme="win11"][data-win11-mode="dark"] {
   --system-condition-bg: rgba(28, 31, 37, 0.93);
   --select-option-bg: #15243f;
   --select-option-text: #eef4ff;
+  --hover-surface: rgba(255, 255, 255, 0.045);
+  --hover-button: rgba(255, 255, 255, 0.065);
 }
 
 html[data-theme="win11"][data-win11-mode="light"] {
@@ -56,6 +58,8 @@ html[data-theme="win11"][data-win11-mode="light"] {
   --system-condition-bg: rgba(245, 246, 249, 0.98);
   --select-option-bg: #ffffff;
   --select-option-text: #18233a;
+  --hover-surface: rgba(24, 35, 58, 0.06);
+  --hover-button: rgba(24, 35, 58, 0.08);
 }
 
 html[data-theme="win11"] body {
@@ -303,10 +307,21 @@ html[data-theme="win11"] .rule-head {
   background: var(--user-rule-head);
   border-bottom: 1px solid var(--panel-border);
   cursor: pointer;
+  transition: background-color 0.14s ease;
 }
 
 html[data-theme="win11"] .rule[data-rule-origin="system"] .rule-head {
   background: var(--system-rule-head);
+}
+
+html[data-theme="win11"] .rule-head:hover,
+html[data-theme="win11"] .debug-card .section-header:hover,
+html[data-theme="win11"] .condition-header:hover {
+  background: color-mix(in srgb, var(--hover-surface) 100%, transparent);
+}
+
+html[data-theme="win11"] .rule[data-rule-origin="system"] .rule-head:hover {
+  background: color-mix(in srgb, var(--system-rule-head) 92%, var(--hover-surface) 8%);
 }
 
 html[data-theme="win11"] .rule.collapsed .rule-head {
@@ -492,6 +507,7 @@ html[data-theme="win11"] .condition-header {
   padding-bottom: 10px;
   border-bottom: 1px solid var(--panel-border);
   cursor: pointer;
+  transition: background-color 0.14s ease;
 }
 
 html[data-theme="win11"] .condition-toggle {
@@ -619,11 +635,6 @@ html[data-theme="win11"] .diagnostics-table td {
   border-bottom: 1px solid var(--panel-border);
 }
 
-html[data-theme="win11"] .diagnostics-table th {
-  background: transparent;
-  color: var(--muted);
-}
-
 html[data-theme="win11"] .diagnostic-status {
   border-color: var(--button-border);
 }
@@ -685,6 +696,10 @@ html[data-theme="win11"] .win11-help-dialog-content code {
   border-radius: 6px;
   background: var(--code-bg);
   border: 1px solid var(--panel-border);
+}
+
+html[data-theme="win11"] .win11-hover-button:hover {
+  background: color-mix(in srgb, var(--button-bg) 82%, var(--hover-button) 18%);
 }
 
 html[data-theme="win11"] .win11-footer {
