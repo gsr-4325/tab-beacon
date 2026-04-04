@@ -1,14 +1,24 @@
 (() => {
-  const DEFAULT_THEME = "default";
+  const DEFAULT_THEME = "win11";
   const THEME_STORAGE_KEY = "tabBeaconOptionsTheme";
+  const AVAILABLE_THEMES = new Set(["win11", "vanilla"]);
+  const LEGACY_THEME_ALIASES = {
+    default: "vanilla",
+    plain: "win11"
+  };
 
-  function sanitizeThemeName(value) {
-    return /^[a-z0-9-]+$/i.test(value || "") ? value : DEFAULT_THEME;
+  function normalizeThemeName(value) {
+    const candidate = (value || "").trim();
+    const mapped = LEGACY_THEME_ALIASES[candidate] || candidate;
+    if (!/^[a-z0-9-]+$/i.test(mapped)) {
+      return DEFAULT_THEME;
+    }
+    return AVAILABLE_THEMES.has(mapped) ? mapped : DEFAULT_THEME;
   }
 
   function readStoredTheme() {
     try {
-      return sanitizeThemeName(window.localStorage.getItem(THEME_STORAGE_KEY));
+      return normalizeThemeName(window.localStorage.getItem(THEME_STORAGE_KEY));
     } catch {
       return DEFAULT_THEME;
     }
@@ -16,7 +26,7 @@
 
   function writeStoredTheme(themeName) {
     try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, sanitizeThemeName(themeName));
+      window.localStorage.setItem(THEME_STORAGE_KEY, normalizeThemeName(themeName));
     } catch {
       // ignore storage access failures
     }
@@ -25,11 +35,14 @@
   function resolveThemeName() {
     const params = new URLSearchParams(window.location.search);
     if (params.has("theme")) {
-      const themeFromQuery = sanitizeThemeName(params.get("theme"));
+      const themeFromQuery = normalizeThemeName(params.get("theme"));
       writeStoredTheme(themeFromQuery);
       return themeFromQuery;
     }
-    return readStoredTheme();
+
+    const storedTheme = readStoredTheme();
+    writeStoredTheme(storedTheme);
+    return storedTheme;
   }
 
   function loadStylesheet(href) {
@@ -59,7 +72,7 @@
     window.TabBeaconThemeBootstrap = {
       DEFAULT_THEME,
       THEME_STORAGE_KEY,
-      sanitizeThemeName,
+      normalizeThemeName,
       getStoredTheme: readStoredTheme,
       setStoredTheme: writeStoredTheme
     };

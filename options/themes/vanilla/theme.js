@@ -1,9 +1,9 @@
 (() => {
   const THEME_STORAGE_KEY = window.TabBeaconThemeBootstrap?.THEME_STORAGE_KEY || "tabBeaconOptionsTheme";
-  const CURRENT_THEME = "default";
+  const CURRENT_THEME = "vanilla";
   const AVAILABLE_THEMES = [
-    { value: "default", labelKey: "optionsThemeDefault", fallback: "Default" },
-    { value: "plain", labelKey: "optionsThemePlain", fallback: "Plain" }
+    { value: "win11", labelKey: "optionsThemeWin11", fallback: "Windows 11" },
+    { value: "vanilla", labelKey: "optionsThemeVanilla", fallback: "Vanilla" }
   ];
 
   function message(key, fallback) {

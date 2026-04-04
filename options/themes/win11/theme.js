@@ -3,9 +3,8 @@
   const MODE_STORAGE_KEY = "tabBeaconWin11ColorMode";
   const CURRENT_THEME = "win11";
   const AVAILABLE_THEMES = [
-    { value: "default", labelKey: "optionsThemeDefault", fallback: "Default" },
-    { value: "plain", labelKey: "optionsThemePlain", fallback: "Plain" },
-    { value: "win11", labelKey: "optionsThemeWin11", fallback: "Win11" }
+    { value: "win11", labelKey: "optionsThemeWin11", fallback: "Windows 11" },
+    { value: "vanilla", labelKey: "optionsThemeVanilla", fallback: "Vanilla" }
   ];
   const COLOR_MODES = ["dark", "light"];
 
