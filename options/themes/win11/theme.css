@@ -498,13 +498,13 @@ html[data-theme="win11"] .rule[data-rule-origin="system"] .condition {
 }
 
 html[data-theme="win11"] .condition {
-  padding: 14px;
+  padding: 0;
 }
 
 html[data-theme="win11"] .condition-header {
   gap: 10px;
   align-items: center;
-  padding-bottom: 10px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--panel-border);
   cursor: pointer;
   transition: background-color 0.14s ease;
@@ -525,7 +525,7 @@ html[data-theme="win11"] .condition-index {
 }
 
 html[data-theme="win11"] .condition-body {
-  margin-top: 12px;
+  margin: 12px 14px 14px;
 }
 
 html[data-theme="win11"] label {
@@ -698,8 +698,13 @@ html[data-theme="win11"] .win11-help-dialog-content code {
   border: 1px solid var(--panel-border);
 }
 
-html[data-theme="win11"] .win11-hover-button:hover {
+html[data-theme="win11"] .win11-hover-button:hover,
+html[data-theme="win11"] button.primary.win11-hover-button:hover {
   background: color-mix(in srgb, var(--button-bg) 82%, var(--hover-button) 18%);
+}
+
+html[data-theme="win11"] button.primary.win11-hover-button:hover {
+  background: linear-gradient(135deg, rgba(108, 174, 255, 0.98), rgba(69, 141, 250, 1));
 }
 
 html[data-theme="win11"] .win11-footer {
