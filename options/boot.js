@@ -2,34 +2,23 @@
   const DEFAULT_THEME = "win11";
   const THEME_STORAGE_KEY = "tabBeaconOptionsTheme";
   const AVAILABLE_THEMES = new Set(["win11", "vanilla"]);
-  const LEGACY_THEME_ALIASES = {
-    default: "vanilla",
-    plain: "win11"
-  };
+  const LEGACY_THEME_ALIASES = { default: "vanilla", plain: "win11" };
 
   function normalizeThemeName(value) {
     const candidate = (value || "").trim();
     const mapped = LEGACY_THEME_ALIASES[candidate] || candidate;
-    if (!/^[a-z0-9-]+$/i.test(mapped)) {
-      return DEFAULT_THEME;
-    }
+    if (!/^[a-z0-9-]+$/i.test(mapped)) return DEFAULT_THEME;
     return AVAILABLE_THEMES.has(mapped) ? mapped : DEFAULT_THEME;
   }
 
   function readStoredTheme() {
-    try {
-      return normalizeThemeName(window.localStorage.getItem(THEME_STORAGE_KEY));
-    } catch {
-      return DEFAULT_THEME;
-    }
+    try { return normalizeThemeName(window.localStorage.getItem(THEME_STORAGE_KEY)); }
+    catch { return DEFAULT_THEME; }
   }
 
   function writeStoredTheme(themeName) {
-    try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, normalizeThemeName(themeName));
-    } catch {
-      // ignore storage access failures
-    }
+    try { window.localStorage.setItem(THEME_STORAGE_KEY, normalizeThemeName(themeName)); }
+    catch {}
   }
 
   function resolveThemeName() {
@@ -39,7 +28,6 @@
       writeStoredTheme(themeFromQuery);
       return themeFromQuery;
     }
-
     const storedTheme = readStoredTheme();
     writeStoredTheme(storedTheme);
     return storedTheme;
@@ -94,6 +82,7 @@
 
     await loadScript("../i18n.js");
     await loadScript("./options-app.js");
+    await loadScript("./rule-behavior.js");
     await loadScript("./options-packaged-sandbox.js");
   }
 
