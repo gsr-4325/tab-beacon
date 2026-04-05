@@ -25,7 +25,7 @@ html[data-theme="win11"][data-win11-mode="dark"] {
   --user-rule-bg: rgba(18, 28, 54, 0.95);
   --user-rule-head: rgba(24, 37, 70, 0.98);
   --system-rule-bg: rgba(35, 39, 47, 0.96);
-  --system-rule-head: rgba(46, 51, 60, 0.98);
+  --system-rule-head: rgba(6, 8, 14, 0.98);
   --system-panel-bg: rgba(32, 36, 43, 0.95);
   --system-condition-bg: rgba(28, 31, 37, 0.93);
   --select-option-bg: #15243f;
@@ -270,8 +270,6 @@ html[data-theme="win11"] #debugToggle {
 }
 
 html[data-theme="win11"] #debugToggle .section-toggle-icon {
-  margin-left: auto;
-  order: 2;
   transition: transform 0.15s ease;
 }
 
@@ -318,6 +316,8 @@ html[data-theme="win11"] .rule[data-rule-origin="system"] {
 }
 
 html[data-theme="win11"] .rule-head {
+  display: flex;
+  align-items: center;
   padding: 12px 14px;
   background: var(--user-rule-head);
   border-bottom: 1px solid var(--panel-border);
@@ -330,7 +330,7 @@ html[data-theme="win11"] .rule[data-rule-origin="system"] .rule-head {
 }
 
 html[data-theme="win11"] .rule-head:hover,
-html[data-theme="win11"] .debug-card .section-header:hover,
+html[data-theme="win11"] .debug-card .section-header:not(.diagnostics-header):hover,
 html[data-theme="win11"] .condition-header:hover {
   background: color-mix(in srgb, var(--hover-surface) 100%, transparent);
 }
@@ -349,6 +349,9 @@ html[data-theme="win11"] .rule-head-actions {
 }
 
 html[data-theme="win11"] .rule-head-start {
+  display: flex;
+  align-items: center;
+  align-self: center;
   flex: 1;
   min-width: 0;
 }
@@ -356,12 +359,18 @@ html[data-theme="win11"] .rule-head-start {
 html[data-theme="win11"] .rule-head-actions {
   flex-shrink: 0;
   margin-left: auto;
+  align-self: center;
 }
 
 html[data-theme="win11"] .rule-title-area {
-  gap: 6px;
+  align-self: center;
+  gap: 0;
   flex: 0 1 clamp(160px, 25%, 240px);
   max-width: clamp(160px, 25%, 240px);
+}
+
+html[data-theme="win11"] .rule[data-rule-origin="system"] .rule-title-area {
+  gap: 6px;
 }
 
 html[data-theme="win11"] .rule-name {
@@ -460,7 +469,17 @@ html[data-theme="win11"] .win11-rule-enable-button.active .win11-switch-thumb {
   transform: translateX(18px);
 }
 
-html[data-theme="win11"] .rule-toggle,
+html[data-theme="win11"] .rule-toggle {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  box-shadow: none;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
 html[data-theme="win11"] .condition-toggle {
   padding: 4px;
   border: 0;
@@ -482,7 +501,8 @@ html[data-theme="win11"] .conditions-panel {
   overflow: hidden;
 }
 
-html[data-theme="win11"] .conditions-panel > .section-header {
+html[data-theme="win11"] .conditions-panel > .section-header,
+html[data-theme="win11"] .diagnostics-header {
   padding: 8px 12px;
   align-items: center;
 }
@@ -553,6 +573,11 @@ html[data-theme="win11"] select {
   border: 1px solid var(--field-border);
   background: var(--field-bg);
   color: var(--text);
+}
+
+html[data-theme="win11"] select {
+  padding-right: 12px;
+  background-position: right 8px center;
 }
 
 html[data-theme="win11"] select option {
@@ -707,6 +732,107 @@ html[data-theme="win11"] .win11-help-dialog-content code {
   border-radius: 6px;
   background: var(--code-bg);
   border: 1px solid var(--panel-border);
+}
+
+html[data-theme="win11"] .diagnostics-title-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+html[data-theme="win11"] .diagnostics-help-button {
+  min-width: 28px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  box-shadow: none;
+  flex-shrink: 0;
+}
+
+html[data-theme="win11"] .diagnostics-help-button:hover:not(:disabled) {
+  color: var(--text);
+  background: transparent;
+}
+
+html[data-theme="win11"] .diagnostics-help-button svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  pointer-events: none;
+}
+
+html[data-theme="win11"] .diagnostics-help-dialog {
+  width: min(640px, calc(100vw - 32px));
+  padding: 18px 20px;
+  border-radius: 12px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+
+html[data-theme="win11"] .diagnostics-help-dialog::backdrop {
+  background: rgba(3, 8, 20, 0.58);
+}
+
+html[data-theme="win11"] .diagnostics-help-dialog-title {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+}
+
+html[data-theme="win11"] .diagnostics-help-dialog-text {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+html[data-theme="win11"] .smart-toggle-group {
+  gap: 10px;
+}
+
+html[data-theme="win11"] .smart-toggle-group input[type="checkbox"] {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+html[data-theme="win11"] .smart-busy-help-button {
+  min-width: 28px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  box-shadow: none;
+}
+
+html[data-theme="win11"] .smart-busy-help-button:hover:not(:disabled) {
+  background: transparent;
+  color: var(--text);
+}
+
+html[data-theme="win11"] .smart-busy-help-button svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  pointer-events: none;
 }
 
 html[data-theme="win11"] .action-button,

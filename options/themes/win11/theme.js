@@ -382,9 +382,14 @@
       attachInlineHelp(matchModeLabelText, "matchMode", message("matchMode", "Condition join"));
     }
 
-    const smartBusyLabelText = root.querySelector('label.inline > span[data-i18n="smartBusyToggle"]');
-    if (smartBusyLabelText) {
-      attachInlineHelp(smartBusyLabelText, "smartBusy", message("smartBusyToggle", "Use smart busy detection"));
+    const smartBusyHelpButton = root.querySelector(".smart-busy-help-button");
+    if (smartBusyHelpButton && !smartBusyHelpButton.dataset.win11HelpBound) {
+      smartBusyHelpButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openHelpDialog(message("smartBusyToggle", "Use smart busy detection"), localizedHelpContent("smartBusy"));
+      });
+      smartBusyHelpButton.dataset.win11HelpBound = "true";
     }
 
     const conditionsHeading = root.querySelector('.conditions-panel > .section-header > h3');
@@ -477,8 +482,10 @@
       }
     }
 
-    if (actions.lastElementChild !== ruleToggle) {
-      actions.appendChild(ruleToggle);
+    // Keep the toggle icon on the left (in rule-head-start)
+    const ruleHeadStart = rule.querySelector(".rule-head-start");
+    if (ruleHeadStart && ruleHeadStart.firstElementChild !== ruleToggle) {
+      ruleHeadStart.insertBefore(ruleToggle, ruleHeadStart.firstElementChild);
     }
 
     head.addEventListener("click", (event) => {

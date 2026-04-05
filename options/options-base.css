@@ -402,8 +402,49 @@ select:disabled {
   font-size: 0.95rem;
 }
 
-.smart-toggle {
+.smart-toggle-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   margin-top: 30px;
+}
+
+.smart-toggle-group input[type="checkbox"] {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.smart-busy-help-button {
+  min-width: 22px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  box-shadow: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.smart-busy-help-button:hover:not(:disabled) {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.smart-busy-help-button svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  pointer-events: none;
 }
 
 .rule-controls {

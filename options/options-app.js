@@ -159,6 +159,16 @@ const DEBUG_LOCAL_SANDBOX_PRESET = {
   iconMode: "overlaySpinner"
 };
 
+function helpIconSvg() {
+  return `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="9"></circle>
+      <path d="M9.4 9.2a2.7 2.7 0 1 1 4.8 1.7c-.6.7-1.4 1.1-1.9 1.7-.3.4-.4.7-.4 1.4"></path>
+      <circle cx="12" cy="17.2" r=".9"></circle>
+    </svg>
+  `;
+}
+
 const rulesContainer = document.getElementById("rulesContainer");
 const ruleTemplate = document.getElementById("ruleTemplate");
 const conditionTemplate = document.getElementById("conditionTemplate");
@@ -415,6 +425,16 @@ function createRuleNode(rule = createEmptyRule(), options = {}) {
   root.querySelector(".rule-matches").value = (rule.matches || []).join("\n");
   root.querySelector(".rule-match-mode").value = rule.matchMode || "any";
   root.querySelector(".rule-smart-busy").checked = !!rule.useSmartBusySignals;
+
+  // Set up smart busy help button
+  const smartBusyHelpButton = root.querySelector(".smart-busy-help-button");
+  if (smartBusyHelpButton) {
+    smartBusyHelpButton.innerHTML = helpIconSvg();
+    smartBusyHelpButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+  }
 
   originBadge.textContent = rule.origin === SYSTEM_ORIGIN ? t("ruleOriginSystem") : t("ruleOriginUser");
   readonlyNote.classList.toggle("hidden", !rule.readonly);
@@ -1022,9 +1042,11 @@ function ensureDiagnosticsUi() {
     panel.className = "diagnostics-panel";
     panel.innerHTML = `
       <div class="section-header diagnostics-header">
-        <div>
+        <div class="diagnostics-title-group">
           <h3 data-i18n="networkDiagnosticsTitle">Network diagnostics</h3>
-          <p class="hint" data-i18n="networkDiagnosticsDescription">Inspect which matched requests are driving the network busy state.</p>
+          <button id="networkDiagnosticsHelp" type="button" class="diagnostics-help-button" aria-label="Help for network diagnostics" title="Help for network diagnostics">
+            ${helpIconSvg()}
+          </button>
         </div>
         <div class="row diagnostics-actions">
           <button id="refreshDiagnosticTabs" type="button" data-i18n="refreshTabList">Refresh tab list</button>
@@ -1069,6 +1091,16 @@ function ensureDiagnosticsUi() {
   diagnosticTabSelect = document.getElementById("diagnosticTabSelect");
   diagnosticSummary = document.getElementById("diagnosticSummary");
   diagnosticsBody = document.getElementById("diagnosticsBody");
+
+  // Wire up help button
+  const networkDiagnosticsHelpButton = document.getElementById("networkDiagnosticsHelp");
+  if (networkDiagnosticsHelpButton) {
+    networkDiagnosticsHelpButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      showNetworkDiagnosticsHelp();
+    });
+  }
 }
 
 function injectDiagnosticsStyles() {
@@ -1094,6 +1126,7 @@ function injectDiagnosticsStyles() {
     .diagnostics-actions {
       flex-wrap: wrap;
       justify-content: flex-end;
+      margin-left: auto;
     }
 
     .diagnostics-target-row {
@@ -1195,6 +1228,70 @@ function injectDiagnosticsStyles() {
       background: rgba(239, 68, 68, 0.18);
     }
 
+    .diagnostics-title-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .diagnostics-help-button {
+      min-width: 22px;
+      width: 22px;
+      height: 22px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--muted);
+      box-shadow: none;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .diagnostics-help-button:hover:not(:disabled) {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .diagnostics-help-button svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      pointer-events: none;
+    }
+
+    .diagnostics-help-dialog {
+      width: min(420px, calc(100vw - 32px));
+      padding: 22px 24px;
+      border-radius: 14px;
+      border: 1px solid rgba(53, 72, 110, 0.45);
+      background: #10182a;
+      color: var(--text);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+    }
+
+    .diagnostics-help-dialog::backdrop {
+      background: rgba(0, 0, 0, 0.6);
+    }
+
+    .diagnostics-help-dialog-title {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .diagnostics-help-dialog-text {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
     @media (max-width: 900px) {
       .diagnostics-header {
         flex-direction: column;
@@ -1207,6 +1304,44 @@ function injectDiagnosticsStyles() {
     }
   `;
   document.head.appendChild(style);
+}
+
+function ensureNetworkDiagnosticsHelpDialog() {
+  const HELP_DIALOG_ID = "networkDiagnosticsHelpDialog";
+  let dialog = document.getElementById(HELP_DIALOG_ID);
+  if (dialog) return dialog;
+
+  dialog = document.createElement("dialog");
+  dialog.id = HELP_DIALOG_ID;
+  dialog.className = "diagnostics-help-dialog";
+  dialog.innerHTML = `
+    <h2 class="diagnostics-help-dialog-title"></h2>
+    <p class="diagnostics-help-dialog-text"></p>
+  `;
+
+  dialog.addEventListener("click", (event) => {
+    if (event.target === dialog) {
+      dialog.close();
+    }
+  });
+
+  document.body.appendChild(dialog);
+  return dialog;
+}
+
+function showNetworkDiagnosticsHelp() {
+  const dialog = ensureNetworkDiagnosticsHelpDialog();
+  dialog.querySelector(".diagnostics-help-dialog-title").textContent = t("networkDiagnosticsTitle", "Network diagnostics");
+  dialog.querySelector(".diagnostics-help-dialog-text").textContent = t(
+    "networkDiagnosticsDescription",
+    "Inspect recent captured requests and see which ones matched your network conditions."
+  );
+
+  if (dialog.open) {
+    dialog.close();
+  } else {
+    dialog.showModal();
+  }
 }
 
 function generateUserSlug(name, id) {

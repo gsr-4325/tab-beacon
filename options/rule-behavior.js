@@ -242,7 +242,7 @@
       .behavior-number-input {
         width: 5.5rem;
         min-width: 5.5rem;
-        padding: 10px 12px;
+        padding: 10px 6px;
         border-radius: 10px;
         border: 1px solid #31405f;
         background: #0d1426;
@@ -252,7 +252,7 @@
 
       .behavior-number-input::-webkit-inner-spin-button,
       .behavior-number-input::-webkit-outer-spin-button {
-        margin-left: 1ch;
+        margin-left: 4px;
       }
 
       .behavior-help-dialog {
