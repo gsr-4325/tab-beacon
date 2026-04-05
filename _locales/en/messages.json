@@ -405,12 +405,15 @@
     "message": "Behavior"
   },
   "busyEndGracePeriod": {
-    "message": "Busy end grace period"
+    "message": "End grace period"
   },
   "busyEndGraceHint": {
     "message": "Keep the busy indicator for a short time after all conditions become false."
   },
   "secondsUnit": {
     "message": "seconds"
+  },
+  "endGracePeriodHelpLabel": {
+    "message": "Help for end grace period"
   }
 }
