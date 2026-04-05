@@ -1,0 +1,131 @@
+(function(){
+if(window.__tabBeaconLoaded)return;
+window.__tabBeaconLoaded=true;
+const STORAGE_KEY="tabBeaconRules";
+const UI_STATE_KEY="tabBeaconUiState";
+const EXT_ICON_LINK_ID="tabbeacon-generated-favicon";
+const FRAME_COUNT=8;
+const FRAME_INTERVAL_MS=250;
+const EVALUATE_DEBOUNCE_MS=120;
+const EVALUATE_MAX_WAIT_MS=400;
+const EXT_NAME="TabBeacon";
+const extensionApi=typeof chrome!=="undefined"?chrome:null;
+const hasStorageApi=!!extensionApi?.storage?.local;
+const hasRuntimeApi=!!extensionApi?.runtime?.id;
+const DEFAULT_RULES=[{id:"default-chat-rule",name:"ChatGPT",enabled:true,matches:["https://chatgpt.com/*","https://chat.openai.com/*"],matchMode:"any",busyWhen:[{source:"dom",selectorType:"auto",query:'[aria-busy="true"]'}],useSmartBusySignals:true,busyEndGraceMs:10_000,iconMode:"overlaySpinner"}];
+let debugMode=false;
+const state={activeRules:[],currentStatus:"idle",originalIcons:[],animationTimer:null,animationFrames:null,animationFrameIndex:0,baseIconDataUrl:null,observer:null,reevaluateTimer:null,reevaluateMaxWaitTimer:null,historyHooked:false,runtimeHooked:false,networkSnapshot:{},ruleActivity:new Map()};
+const dbg=(...args)=>{if(debugMode)console.log("[TabBeacon:dbg]",...args);};
+function logMissingExtensionApi(){console.warn("[TabBeacon] extension APIs are unavailable in this execution context",{hasStorageApi,hasRuntimeApi,href:location.href});}
+function storageLocalGet(keys){return hasStorageApi?Promise.resolve(extensionApi.storage.local.get(keys)):Promise.resolve({});}
+function storageLocalSet(items){return hasStorageApi?Promise.resolve(extensionApi.storage.local.set(items)):Promise.resolve();}
+bootstrap().catch((error)=>console.error("[TabBeacon] bootstrap failed",error));
+async function bootstrap(){
+if(!hasStorageApi||!hasRuntimeApi)logMissingExtensionApi();
+const[rules,uiState]=await Promise.all([loadRules(),storageLocalGet(UI_STATE_KEY)]);
+debugMode=!!uiState[UI_STATE_KEY]?.debugMode;
+if(debugMode){
+try{const manifest=extensionApi.runtime?.getManifest?.();console.log(`✅ [${EXT_NAME} v${manifest.version}] Content script loaded on ${location.href}`);}catch{console.log(`✅ [${EXT_NAME}] Content script loaded on ${location.href}`);}
+dbg(`chrome.dom.openOrClosedShadowRoot available: ${typeof extensionApi?.dom?.openOrClosedShadowRoot==="function"}`);
+}
+const matchingRules=rules.map(normalizeRule).filter((rule)=>rule.enabled&&rule.matches.some((pattern)=>wildcardMatch(pattern,location.href)));
+dbg("bootstrap",{url:location.href,totalRules:rules.length,matchingRules:matchingRules.length});
+if(!matchingRules.length)return;
+state.activeRules=matchingRules;
+state.ruleActivity=new Map();
+state.originalIcons=captureOriginalIcons();
+state.baseIconDataUrl=await resolveBaseIconDataUrl(state.originalIcons);
+installRuntimeHooks();
+await registerCurrentTabUrl();
+syncBusyStateWithRules({allowGrace:false});
+installObservers();
+installHistoryHooks();
+watchStorageChanges();
+}
+async function loadRules(){
+const result=await storageLocalGet(STORAGE_KEY);
+return Array.isArray(result[STORAGE_KEY])&&result[STORAGE_KEY].length?result[STORAGE_KEY]:DEFAULT_RULES;
+}
+function normalizeBusyEndGraceMs(value,fallbackMs=10_000){const n=Number(value);return Number.isFinite(n)?Math.max(0,Math.min(300_000,Math.round(n))):fallbackMs;}
+function normalizeRule(rule,index=0){
+const normalized={id:rule.id||`rule-${index}`,enabled:rule.enabled!==false,matches:Array.isArray(rule.matches)?rule.matches:[],matchMode:rule.matchMode==="all"?"all":"any",busyWhen:[],useSmartBusySignals:rule.useSmartBusySignals!==false,busyEndGraceMs:normalizeBusyEndGraceMs(rule.busyEndGraceMs),iconMode:rule.iconMode||"overlaySpinner"};
+if(Array.isArray(rule.busyWhen)&&rule.busyWhen.length)normalized.busyWhen=rule.busyWhen;
+else if(typeof rule.busyQuery==="string"&&rule.busyQuery.trim())normalized.busyWhen=[{source:"dom",selectorType:rule.selectorType||"auto",query:rule.busyQuery.trim()}];
+normalized.busyWhen=normalized.busyWhen.map((condition)=>({source:condition.source==="network"?"network":"dom",selectorType:condition.selectorType||"auto",query:typeof condition.query==="string"?condition.query.trim():"",matchType:condition.matchType||"urlContains",value:typeof condition.value==="string"?condition.value.trim():"",method:condition.method||"ANY",resourceKind:condition.resourceKind||"any"})).filter((condition)=>condition.source==="network"?condition.value:condition.query);
+return normalized;
+}
+function wildcardMatch(pattern,href){return new RegExp(`^${pattern.replace(/[.+^${}()|[\]\\]/g,"\\$&").replace(/\*/g,".*")}$`).test(href);}
+function ensureRuleActivityState(ruleId){let entry=state.ruleActivity.get(ruleId);if(!entry){entry={effectiveBusy:false,idleTimer:null};state.ruleActivity.set(ruleId,entry);}return entry;}
+function cancelRuleIdleTimer(ruleId,entry=state.ruleActivity.get(ruleId)){if(!entry?.idleTimer)return;clearTimeout(entry.idleTimer);entry.idleTimer=null;}
+function cancelAllRuleIdleTimers(){for(const[ruleId,entry]of state.ruleActivity.entries())cancelRuleIdleTimer(ruleId,entry);}
+function hasEffectiveBusyRule(){for(const entry of state.ruleActivity.values())if(entry.effectiveBusy)return true;return false;}
+function updateRuleActivity(rule,rawBusy,{allowGrace=true}={}){
+const entry=ensureRuleActivityState(rule.id);
+if(rawBusy){cancelRuleIdleTimer(rule.id,entry);entry.effectiveBusy=true;return;}
+if(!entry.effectiveBusy)return;
+const graceMs=allowGrace?normalizeBusyEndGraceMs(rule.busyEndGraceMs):0;
+if(graceMs<=0){cancelRuleIdleTimer(rule.id,entry);entry.effectiveBusy=false;return;}
+if(entry.idleTimer)return;
+dbg(`rule [${rule.id}] busy → idle pending (${graceMs}ms)`);
+entry.idleTimer=window.setTimeout(()=>{
+const latest=ensureRuleActivityState(rule.id);latest.idleTimer=null;
+if(evaluateRuleBusy(rule)){dbg(`rule [${rule.id}] idle grace canceled because it matched again`);latest.effectiveBusy=true;applyStatus("busy");return;}
+dbg(`rule [${rule.id}] busy → idle`);latest.effectiveBusy=false;applyStatus(hasEffectiveBusyRule()?"busy":"idle");
+},graceMs);
+}
+function syncBusyStateWithRules({allowGrace=true}={}){if(!state.activeRules.length){applyStatus("idle");return false;}for(const rule of state.activeRules)updateRuleActivity(rule,evaluateRuleBusy(rule),{allowGrace});const busy=hasEffectiveBusyRule();applyStatus(busy?"busy":"idle");return busy;}
+function installRuntimeHooks(){if(state.runtimeHooked)return;state.runtimeHooked=true;if(!hasRuntimeApi||!extensionApi.runtime?.onMessage?.addListener)return;extensionApi.runtime.onMessage.addListener((message)=>{if(!message||message.type!=="tab-beacon/network-state")return;state.networkSnapshot=message.snapshot||{};scheduleReevaluate();});}
+async function registerCurrentTabUrl(){try{if(!hasRuntimeApi||!extensionApi.runtime?.sendMessage)return;const response=await extensionApi.runtime.sendMessage({type:"tab-beacon/register-tab",url:location.href});state.networkSnapshot=response?.snapshot||{};}catch(error){console.warn("[TabBeacon] failed to register tab URL",error);}}
+function installObservers(){if(!document.body){window.addEventListener("DOMContentLoaded",installObservers,{once:true});return;}state.observer=new MutationObserver((mutations)=>{scheduleReevaluate();for(const mutation of mutations){for(const node of mutation.addedNodes){if(node.nodeType===Node.ELEMENT_NODE)observeShadowRoots(node);}}});state.observer.observe(document.body,{childList:true,subtree:true,attributes:true,characterData:false});observeShadowRoots(document.body);window.addEventListener("beforeunload",cleanup,{once:true});}
+function observeShadowRoots(root){const iter=document.createTreeWalker(root,NodeFilter.SHOW_ELEMENT);let node=iter.nextNode();while(node){const shadow=getShadowRoot(node);if(shadow){state.observer.observe(shadow,{childList:true,subtree:true,attributes:true,characterData:false});observeShadowRoots(shadow);}node=iter.nextNode();}}
+function watchStorageChanges(){if(!extensionApi?.storage?.onChanged?.addListener)return;extensionApi.storage.onChanged.addListener((changes,areaName)=>{if(areaName!=="local")return;if(changes[UI_STATE_KEY])debugMode=!!changes[UI_STATE_KEY].newValue?.debugMode;if(!changes[STORAGE_KEY])return;cleanup(false);bootstrap().catch((error)=>console.error("[TabBeacon] reload failed",error));});}
+function installHistoryHooks(){if(state.historyHooked)return;state.historyHooked=true;for(const name of ["pushState","replaceState"]){const original=history[name];history[name]=function(...args){const result=original.apply(this,args);registerCurrentTabUrl().finally(scheduleReevaluate);return result;};}window.addEventListener("popstate",()=>registerCurrentTabUrl().finally(scheduleReevaluate));window.addEventListener("hashchange",()=>registerCurrentTabUrl().finally(scheduleReevaluate));}
+function scheduleReevaluate(){if(!state.activeRules.length)return;clearTimeout(state.reevaluateTimer);state.reevaluateTimer=setTimeout(()=>{clearTimeout(state.reevaluateMaxWaitTimer);state.reevaluateMaxWaitTimer=null;syncBusyStateWithRules();},EVALUATE_DEBOUNCE_MS);if(!state.reevaluateMaxWaitTimer)state.reevaluateMaxWaitTimer=setTimeout(()=>{state.reevaluateMaxWaitTimer=null;clearTimeout(state.reevaluateTimer);state.reevaluateTimer=null;syncBusyStateWithRules();},EVALUATE_MAX_WAIT_MS);}
+function evaluateRuleBusy(rule){const explicitResults=rule.busyWhen.map((condition,index)=>evaluateCondition(rule,condition,index));const explicitMatch=explicitResults.length?(rule.matchMode==="all"?explicitResults.every(Boolean):explicitResults.some(Boolean)):false;const smartSignalsMatch=rule.useSmartBusySignals&&detectSmartBusySignals();const result=explicitMatch||smartSignalsMatch;if(debugMode){dbg(`rule [${rule.id}]`,{explicit:explicitMatch,smart:smartSignalsMatch,result,conditions:rule.busyWhen.map((condition,i)=>({i,source:condition.source,q:condition.source==="network"?condition.value:condition.query,hit:explicitResults[i]}))});}return result;}
+function evaluateCondition(rule,condition,conditionIndex){if(condition.source==="network"){const snap=state.networkSnapshot?.[rule.id];const val=!!snap?.[String(conditionIndex)];if(debugMode&&(val||snap))dbg(`network[${conditionIndex}] snap=${JSON.stringify(snap)} → ${val}`);return val;}const el=queryExistsElement(condition.query,condition.selectorType);if(debugMode)dbg(`dom[${conditionIndex}] "${condition.query}" → ${el?el.tagName:"null"}`);return!!el;}
+function queryExistsElement(query,selectorType="auto"){try{const type=resolveSelectorType(query,selectorType);if(type==="css")return document.querySelector(query)||searchShadowDom(document,query);if(type==="xpath")return document.evaluate(query,document,null,XPathResult.FIRST_ORDERED_NODE_TYPE,null).singleNodeValue;}catch(error){console.warn("[TabBeacon] query evaluation failed",{query,selectorType,error});}return null;}
+function resolveSelectorType(query,selectorType){if(selectorType==="css"||selectorType==="xpath")return selectorType;const trimmed=query.trim();const xpathHint=/^(\.?\/{1,2}|\(|ancestor::|descendant::|following-sibling::|preceding-sibling::|self::|@)/i; if(xpathHint.test(trimmed)||trimmed.includes("::")||trimmed.includes("[@"))return"xpath";try{document.querySelector(trimmed);return"css";}catch{return"xpath";}}
+function getShadowRoot(element){if(!(element instanceof HTMLElement))return element.shadowRoot??null;if(typeof extensionApi?.dom?.openOrClosedShadowRoot==="function"){try{return extensionApi.dom.openOrClosedShadowRoot(element);}catch{}}return element.shadowRoot??null;}
+function searchShadowDom(root,selector){for(const el of root.querySelectorAll("*")){const shadow=getShadowRoot(el);if(!shadow)continue;const found=shadow.querySelector(selector)||searchShadowDom(shadow,selector);if(found)return found;}return null;}
+function detectSmartBusySignals(){if(document.querySelector('[aria-busy="true"]')||searchShadowDom(document,'[aria-busy="true"]'))return true;const stopLikePattern=/(\bstop\b|\bcancel\b|\binterrupt\b|停止|中断|生成を停止)/i;const isStopLike=(node)=>{if(node.closest?.('[data-tabbeacon-ignore-smart-busy="true"]'))return false;const label=[node.getAttribute("aria-label"),node.getAttribute("title"),node.getAttribute("data-testid"),node.textContent].filter(Boolean).join(" ").trim().toLowerCase();return !!label&&stopLikePattern.test(label);};if(Array.from(document.querySelectorAll("button,[role='button'],a")).slice(0,120).some(isStopLike))return true;const shadowMatch=collectShadowElements(document,"button,[role='button'],a",120).some(isStopLike);if(shadowMatch)return true;return !!(document.querySelector('[aria-live][aria-busy="true"]')||searchShadowDom(document,'[aria-live][aria-busy="true"]'));}
+function collectShadowElements(root,selector,limit){const results=[];const iter=document.createTreeWalker(root,NodeFilter.SHOW_ELEMENT);let node=iter.nextNode();while(node&&results.length<limit){const shadow=getShadowRoot(node);if(shadow){for(const el of shadow.querySelectorAll(selector)){if(results.length>=limit)break;results.push(el);}for(const el of collectShadowElements(shadow,selector,limit-results.length)){if(results.length>=limit)break;results.push(el);}}node=iter.nextNode();}return results;}
+function captureOriginalIcons(){return Array.from(document.querySelectorAll("link[rel~='icon']")).map((link)=>({href:link.href,rel:link.getAttribute("rel")||"icon",type:link.getAttribute("type")||"",sizes:link.getAttribute("sizes")||""}));}
+async function resolveBaseIconDataUrl(originalIcons){const preferredHref=pickPreferredIconHref(originalIcons);if(!preferredHref)return createFallbackBaseIcon();try{return await imageUrlToDataUrl(preferredHref);}catch(error){console.warn("[TabBeacon] failed to render original favicon, using fallback",error);return createFallbackBaseIcon();}}
+function pickPreferredIconHref(originalIcons){if(!originalIcons.length)return null;const sized=[...originalIcons].reverse().find((icon)=>icon.sizes&&icon.href);return(sized||[...originalIcons].reverse().find((icon)=>icon.href)||{}).href||null;}
+function imageUrlToDataUrl(url){return new Promise((resolve,reject)=>{const img=new Image();img.crossOrigin="anonymous";img.decoding="async";img.onload=()=>{try{const canvas=document.createElement("canvas");canvas.width=32;canvas.height=32;const ctx=canvas.getContext("2d");ctx.drawImage(img,0,0,32,32);resolve(canvas.toDataURL("image/png"));}catch(error){reject(error);}};img.onerror=()=>reject(new Error(`Could not load image: ${url}`));img.src=url;});}
+function createFallbackBaseIcon(){const canvas=document.createElement("canvas");canvas.width=32;canvas.height=32;const ctx=canvas.getContext("2d");ctx.fillStyle="#111827";ctx.beginPath();ctx.roundRect(0,0,32,32,8);ctx.fill();ctx.fillStyle="#f9fafb";ctx.font="bold 18px system-ui, sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText((document.title||location.hostname||"?").trim().charAt(0).toUpperCase()||"?",16,17);return canvas.toDataURL("image/png");}
+function applyStatus(nextStatus){if(state.currentStatus===nextStatus)return;dbg(`status: ${state.currentStatus} → ${nextStatus}`);state.currentStatus=nextStatus;if(nextStatus==="busy"){startAnimation();return;}stopAnimation();restoreOriginalIcons();}
+async function startAnimation(){stopAnimation();if(!state.baseIconDataUrl)state.baseIconDataUrl=await resolveBaseIconDataUrl(state.originalIcons);setGeneratedIcon(createAnimatedSvgFavicon(state.baseIconDataUrl));}
+function stopAnimation(){if(state.animationTimer){clearInterval(state.animationTimer);state.animationTimer=null;}state.animationFrames=null;state.animationFrameIndex=0;}
+function createAnimatedSvgFavicon(baseIconDataUrl){
+const baseHref=escapeAttribute(baseIconDataUrl);
+const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+<image href="${baseHref}" x="0" y="0" width="32" height="32" preserveAspectRatio="xMidYMid slice"/>
+<rect x="0" y="0" width="32" height="32" rx="8" ry="8" fill="rgba(7,12,24,0.42)"/>
+<circle cx="16" cy="16" r="10.8" fill="rgba(37,99,235,0.16)"/>
+<g transform="translate(16 16)">
+  <g>
+    <circle cx="0" cy="-8.2" r="2.45" fill="rgba(255,255,255,1)"/>
+    <circle cx="5.8" cy="-5.8" r="2.45" fill="rgba(255,255,255,0.875)"/>
+    <circle cx="8.2" cy="0" r="2.45" fill="rgba(255,255,255,0.75)"/>
+    <circle cx="5.8" cy="5.8" r="2.45" fill="rgba(255,255,255,0.625)"/>
+    <circle cx="0" cy="8.2" r="2.45" fill="rgba(255,255,255,0.5)"/>
+    <circle cx="-5.8" cy="5.8" r="2.45" fill="rgba(255,255,255,0.4)"/>
+    <circle cx="-8.2" cy="0" r="2.45" fill="rgba(255,255,255,0.3)"/>
+    <circle cx="-5.8" cy="-5.8" r="2.45" fill="rgba(255,255,255,0.2)"/>
+    <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0" to="360" dur="0.9s" repeatCount="indefinite"/>
+  </g>
+</g>
+<circle cx="16" cy="16" r="11.6" fill="none" stroke="rgba(255,255,255,0.38)" stroke-width="1.15"/>
+</svg>`;
+return svgToDataUrl(svg);
+}
+function escapeAttribute(value){return String(value).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function svgToDataUrl(svg){return`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;}
+function loadImage(url){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error(`Failed to load frame base icon: ${url}`));img.src=url;});}
+function removeAllIconLinks(){document.querySelectorAll("link[rel~='icon']").forEach((link)=>link.remove());}
+function ensureGeneratedIconLink(){let link=document.getElementById(EXT_ICON_LINK_ID);if(link)return link;removeAllIconLinks();link=document.createElement("link");link.id=EXT_ICON_LINK_ID;link.rel="icon";link.type="image/svg+xml";document.head.appendChild(link);return link;}
+function setGeneratedIcon(dataUrl){ensureGeneratedIconLink().href=dataUrl;}
+function restoreOriginalIcons(){removeAllIconLinks();if(state.originalIcons.length){for(const icon of state.originalIcons){const link=document.createElement("link");link.rel=icon.rel;if(icon.type)link.type=icon.type;if(icon.sizes)link.sizes=icon.sizes;link.href=icon.href;document.head.appendChild(link);}return;}if(state.baseIconDataUrl){const link=document.createElement("link");link.rel="icon";link.href=state.baseIconDataUrl;document.head.appendChild(link);}}
+function cleanup(resetRules=true){clearTimeout(state.reevaluateTimer);clearTimeout(state.reevaluateMaxWaitTimer);state.reevaluateTimer=null;state.reevaluateMaxWaitTimer=null;cancelAllRuleIdleTimers();state.ruleActivity=new Map();stopAnimation();restoreOriginalIcons();state.currentStatus="idle";state.observer?.disconnect();state.observer=null;if(resetRules){state.activeRules=[];state.networkSnapshot={};}}
+})();
