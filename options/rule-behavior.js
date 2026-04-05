@@ -38,7 +38,7 @@
                 type="button"
                 class="behavior-help-button"
                 aria-label="${t("endGracePeriodHelpLabel", "Help for end grace period")}"
-                title="${t("endGracePeriodHelpLabel", "Help for end grace period")}"
+                title="${t("endGracePeriodHelpLabel", "Help for end grace period")}" 
               >
                 ${helpIconSvg()}
               </button>
@@ -124,6 +124,25 @@
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `
+      .rule-body > label:first-child {
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .rule-controls {
+        align-items: flex-end;
+        margin-top: 0;
+        margin-bottom: 12px;
+      }
+
+      .rule-controls > label:first-child {
+        gap: 8px;
+      }
+
+      .rule-controls > label:first-child select {
+        margin-top: 0;
+      }
+
       .behavior-panel {
         display: grid;
         gap: 0;
@@ -193,7 +212,7 @@
         box-shadow: none;
       }
 
-      .behavior-help-button:hover(:not(:disabled)) {
+      .behavior-help-button:hover:not(:disabled) {
         color: var(--text);
         background: rgba(255, 255, 255, 0.04);
       }
@@ -293,7 +312,7 @@
         color: var(--muted);
       }
 
-      html[data-theme="win11"] .behavior-help-button:hover(:not(:disabled)) {
+      html[data-theme="win11"] .behavior-help-button:hover:not(:disabled) {
         background: transparent;
         color: var(--text);
       }
