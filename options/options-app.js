@@ -16,7 +16,7 @@ function buildDefaultRules() {
       readonly: false,
       name: "ChatGPT",
       enabled: true,
-      matches: ["https://chatgpt.com/*", "https://chat.openai.com/*"],
+      matches: ["https://chatgpt.com/c/*", "https://chatgpt.com/g/*/c/*"],
       matchMode: "any",
       busyWhen: [
         {
@@ -206,17 +206,21 @@ async function init() {
     chrome.storage.local.get(UI_STATE_KEY)
   ]);
 
-  let initialRules = Array.isArray(rulesResult[STORAGE_KEY]) && rulesResult[STORAGE_KEY].length
-    ? rulesResult[STORAGE_KEY]
-    : DEFAULT_RULES;
+  const hasStoredRules = Array.isArray(rulesResult[STORAGE_KEY]) && rulesResult[STORAGE_KEY].length > 0;
+  let initialRules = hasStoredRules ? rulesResult[STORAGE_KEY] : DEFAULT_RULES;
 
   initialRules = migrateRules(initialRules);
+
+  const uiState = uiStateResult[UI_STATE_KEY] || {};
+
+  if (hasStoredRules) {
+    initialRules = await seedMissingDefaults(initialRules, uiState);
+  }
 
   const normalizedRules = initialRules.map(normalizeRuleForEditor);
   renderRules(normalizedRules);
   bindGlobalActions();
 
-  const uiState = uiStateResult[UI_STATE_KEY] || {};
   const debugExpanded = typeof uiState.debugExpanded === "boolean"
     ? uiState.debugExpanded
     : !!uiState.showDebugTools;
@@ -334,6 +338,47 @@ function bindGlobalActions() {
   });
 }
 
+// Adds any default presets that have never been seeded into stored rules.
+// Uses uiState.seededPresets to track which preset names were already introduced,
+// so user-deleted presets are not re-added on subsequent loads.
+function extractHostnames(matches) {
+  const hosts = new Set();
+  for (const m of (matches || [])) {
+    try { hosts.add(new URL(m.replace(/\*/g, "x")).hostname); } catch {}
+  }
+  return hosts;
+}
+
+async function seedMissingDefaults(rules, uiState) {
+  const seededPresets = new Set(Array.isArray(uiState.seededPresets) ? uiState.seededPresets : []);
+  const defaults = buildDefaultRules();
+  const existingNames = new Set(rules.map((r) => r.name));
+  const existingHostnames = rules.flatMap((r) => [...extractHostnames(r.matches)]);
+
+  const toAdd = defaults.filter((d) => {
+    if (seededPresets.has(d.name) || existingNames.has(d.name)) return false;
+    // Skip if an existing rule already covers the same hostnames (e.g. renamed legacy rule)
+    const defaultHosts = extractHostnames(d.matches);
+    return !existingHostnames.some((h) => defaultHosts.has(h));
+  });
+
+  const allDefaultNames = defaults.map((d) => d.name);
+  const updatedSeeded = [...new Set([...seededPresets, ...allDefaultNames])];
+  const seededChanged = updatedSeeded.length !== seededPresets.size;
+
+  if (!toAdd.length && !seededChanged) return rules;
+
+  const updatedRules = toAdd.length ? [...rules, ...toAdd] : rules;
+  const updatedUiState = { ...uiState, seededPresets: updatedSeeded };
+
+  const saves = [];
+  if (toAdd.length) saves.push(chrome.storage.local.set({ [STORAGE_KEY]: updatedRules }));
+  if (seededChanged) saves.push(chrome.storage.local.set({ [UI_STATE_KEY]: updatedUiState }));
+  await Promise.all(saves);
+
+  return updatedRules;
+}
+
 function migrateRules(rules) {
   let changed = false;
   const migrated = rules.map((rule) => {
@@ -342,9 +387,11 @@ function migrateRules(rules) {
       (c) => !(c.source === "dom" && c.query === '[aria-busy="true"]' && rule.name === "Gemini")
     );
     const removable = rule.slug === DEBUG_PRESET_SLUG ? true : !!rule.removable;
-    if (filtered.length === rule.busyWhen.length && removable === !!rule.removable) return rule;
+    // Rename legacy content-script fallback rule name
+    const name = rule.name === "ChatGPT (starter)" ? "ChatGPT" : rule.name;
+    if (filtered.length === rule.busyWhen.length && removable === !!rule.removable && name === rule.name) return rule;
     changed = true;
-    return { ...rule, busyWhen: filtered, removable };
+    return { ...rule, name, busyWhen: filtered, removable };
   });
   if (changed) {
     chrome.storage.local.set({ [STORAGE_KEY]: migrated });

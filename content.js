@@ -12,7 +12,7 @@ const EXT_NAME="TabBeacon";
 const extensionApi=typeof chrome!=="undefined"?chrome:null;
 const hasStorageApi=!!extensionApi?.storage?.local;
 const hasRuntimeApi=!!extensionApi?.runtime?.id;
-const DEFAULT_RULES=[{id:"default-chat-rule",name:"ChatGPT (starter)",enabled:true,matches:["https://chatgpt.com/*","https://chat.openai.com/*"],matchMode:"any",busyWhen:[{source:"dom",selectorType:"auto",query:'[aria-busy="true"]'}],useSmartBusySignals:true,busyEndGraceMs:10_000,iconMode:"overlaySpinner"}];
+const DEFAULT_RULES=[{id:"default-chat-rule",name:"ChatGPT",enabled:true,matches:["https://chatgpt.com/*","https://chat.openai.com/*"],matchMode:"any",busyWhen:[{source:"dom",selectorType:"auto",query:'[aria-busy="true"]'}],useSmartBusySignals:true,busyEndGraceMs:10_000,iconMode:"overlaySpinner"}];
 let debugMode=false;
 const state={activeRules:[],currentStatus:"idle",originalIcons:[],animationTimer:null,animationFrames:null,animationFrameIndex:0,baseIconDataUrl:null,observer:null,reevaluateTimer:null,reevaluateMaxWaitTimer:null,historyHooked:false,runtimeHooked:false,networkSnapshot:{},ruleActivity:new Map()};
 const dbg=(...args)=>{if(debugMode)console.log("[TabBeacon:dbg]",...args);};
@@ -44,9 +44,7 @@ watchStorageChanges();
 }
 async function loadRules(){
 const result=await storageLocalGet(STORAGE_KEY);
-const rules=Array.isArray(result[STORAGE_KEY])&&result[STORAGE_KEY].length?result[STORAGE_KEY]:DEFAULT_RULES;
-if(!result[STORAGE_KEY])await storageLocalSet({[STORAGE_KEY]:rules});
-return rules;
+return Array.isArray(result[STORAGE_KEY])&&result[STORAGE_KEY].length?result[STORAGE_KEY]:DEFAULT_RULES;
 }
 function normalizeBusyEndGraceMs(value,fallbackMs=10_000){const n=Number(value);return Number.isFinite(n)?Math.max(0,Math.min(300_000,Math.round(n))):fallbackMs;}
 function normalizeRule(rule,index=0){
