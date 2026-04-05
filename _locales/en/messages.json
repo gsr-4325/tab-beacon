@@ -400,5 +400,17 @@
   },
   "footerSince": {
     "message": "Since 2026/04/01"
+  },
+  "behaviorTitle": {
+    "message": "Behavior"
+  },
+  "busyEndGracePeriod": {
+    "message": "Busy end grace period"
+  },
+  "busyEndGraceHint": {
+    "message": "Keep the busy indicator for a short time after all conditions become false."
+  },
+  "secondsUnit": {
+    "message": "seconds"
   }
 }

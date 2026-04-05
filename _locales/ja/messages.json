@@ -400,5 +400,17 @@
   },
   "footerSince": {
     "message": "Since 2026/04/01"
+  },
+  "behaviorTitle": {
+    "message": "Behavior"
+  },
+  "busyEndGracePeriod": {
+    "message": "busy 終了猶予時間"
+  },
+  "busyEndGraceHint": {
+    "message": "すべての条件が false になった後もしばらく busy 表示を維持します。"
+  },
+  "secondsUnit": {
+    "message": "秒"
   }
 }
