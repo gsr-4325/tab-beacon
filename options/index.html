@@ -29,7 +29,9 @@
       <section class="card">
         <div class="section-header">
           <h2 data-i18n="rulesTitle">Rules</h2>
-          <button id="addRule" type="button" data-i18n="addRule">Add rule</button>
+          <div class="section-header-actions">
+            <button id="addRule" type="button" class="action-button" data-i18n="addRule">Add rule</button>
+          </div>
         </div>
         <div id="rulesContainer" class="rules"></div>
       </section>
@@ -48,9 +50,9 @@
           </label>
           <div id="debugPanel" class="stack">
             <p class="hint" data-i18n="debugDescription">Use this section to install a local sandbox preset without overwriting your own rules.</p>
-            <div class="row">
-              <button id="installDebugPreset" type="button" data-i18n="debugLoadPreset">Install local sandbox preset</button>
-              <button id="openPackagedSandbox" type="button" data-i18n="debugOpenPackagedSandbox">Open packaged sandbox</button>
+            <div class="button-cluster">
+              <button id="installDebugPreset" type="button" class="action-button" data-i18n="debugLoadPreset">Install local sandbox preset</button>
+              <button id="openPackagedSandbox" type="button" class="action-button" data-i18n="debugOpenPackagedSandbox">Open packaged sandbox</button>
             </div>
             <p class="hint" data-i18n="debugLocalFileHint">For real file:// testing, open manual-tests/tabbeacon-sandbox.html from your local repo.</p>
             <div id="debugPresetStatus" class="hint"></div>
@@ -139,7 +141,9 @@
           <section class="conditions-panel">
             <div class="section-header">
               <h3 data-i18n="conditionsTitle">Conditions</h3>
-              <button type="button" class="add-condition" data-i18n="addCondition">Add condition</button>
+              <div class="section-header-actions">
+                <button type="button" class="action-button add-condition" data-i18n="addCondition">Add condition</button>
+              </div>
             </div>
             <div class="conditions-container"></div>
           </section>

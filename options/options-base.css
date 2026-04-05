@@ -102,6 +102,26 @@ body {
   justify-content: space-between;
 }
 
+.section-header-actions,
+.button-cluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.section-header-actions {
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
+.section-header-actions > button,
+.button-cluster > button {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: 100%;
+}
+
 .stack,
 .rules,
 .conditions-container {
@@ -128,7 +148,7 @@ body {
   display: none;
 }
 
-.rule-head-start,
+.struct-head-start,
 .rule-head-actions {
   display: flex;
   gap: 12px;
@@ -192,6 +212,13 @@ body {
   border: 1px solid #31405f;
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+.struct-head-start,
+.rule-head-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
 .rule-readonly-note {
@@ -305,6 +332,14 @@ button {
   cursor: pointer;
   background: #2a3756;
   color: var(--text);
+}
+
+button.action-button {
+  transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease, filter 0.14s ease;
+}
+
+button.action-button:hover:not(:disabled) {
+  filter: brightness(1.05);
 }
 
 button.primary {
@@ -449,8 +484,15 @@ select:disabled {
     align-items: stretch;
   }
 
-  .hero-actions {
+  .hero-actions,
+  .section-header-actions,
+  .button-cluster {
     width: 100%;
+  }
+
+  .section-header-actions {
+    margin-left: 0;
+    justify-content: flex-start;
   }
 
   .smart-toggle {

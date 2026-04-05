@@ -236,8 +236,23 @@ html[data-theme="win11"] .conditions-panel > .section-header > h3 {
   line-height: 1.2;
 }
 
-html[data-theme="win11"] #addRule {
+html[data-theme="win11"] .section-header-actions,
+html[data-theme="win11"] .button-cluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+html[data-theme="win11"] .section-header-actions {
   margin-left: auto;
+  justify-content: flex-end;
+}
+
+html[data-theme="win11"] .section-header-actions > .action-button,
+html[data-theme="win11"] .button-cluster > .action-button {
+  flex: 0 0 auto;
+  width: auto;
 }
 
 html[data-theme="win11"] #debugToggle {
@@ -479,10 +494,6 @@ html[data-theme="win11"] .win11-inline-label-row {
   gap: 6px;
 }
 
-html[data-theme="win11"] .conditions-panel > .section-header .add-condition {
-  margin-left: auto;
-}
-
 html[data-theme="win11"] .conditions-container {
   display: grid;
   gap: 12px;
@@ -698,16 +709,18 @@ html[data-theme="win11"] .win11-help-dialog-content code {
   border: 1px solid var(--panel-border);
 }
 
+html[data-theme="win11"] .action-button,
 html[data-theme="win11"] .win11-hover-button {
   transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease, filter 0.14s ease;
 }
 
-html[data-theme="win11"] .win11-hover-button:hover:not(:disabled),
-html[data-theme="win11"] button.primary.win11-hover-button:hover:not(:disabled) {
+html[data-theme="win11"] .action-button:hover:not(:disabled),
+html[data-theme="win11"] .win11-hover-button:hover:not(:disabled) {
   filter: brightness(1.04);
   background: color-mix(in srgb, var(--button-bg) 82%, var(--hover-button) 18%);
 }
 
+html[data-theme="win11"] button.primary.action-button:hover:not(:disabled),
 html[data-theme="win11"] button.primary.win11-hover-button:hover:not(:disabled) {
   filter: brightness(1.03);
   background: linear-gradient(135deg, rgba(108, 174, 255, 0.98), rgba(69, 141, 250, 1));
@@ -729,15 +742,23 @@ html[data-theme="win11"] .win11-footer {
     align-items: stretch;
   }
 
-  html[data-theme="win11"] .hero-actions {
+  html[data-theme="win11"] .hero-actions,
+  html[data-theme="win11"] .section-header-actions,
+  html[data-theme="win11"] .button-cluster {
     width: 100%;
   }
 
   html[data-theme="win11"] .rule-head-actions,
-  html[data-theme="win11"] #addRule,
+  html[data-theme="win11"] .section-header-actions,
+  html[data-theme="win11"] .button-cluster,
   html[data-theme="win11"] .rule-title-area {
     margin-left: 0;
     max-width: none;
     flex-basis: auto;
+  }
+
+  html[data-theme="win11"] .section-header-actions,
+  html[data-theme="win11"] .button-cluster {
+    justify-content: flex-start;
   }
 }
