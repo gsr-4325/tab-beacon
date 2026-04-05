@@ -242,7 +242,7 @@
       .behavior-number-input {
         width: 5.5rem;
         min-width: 5.5rem;
-        padding: 10px 12px;
+        padding: 10px calc(12px + 1ch) 10px 12px;
         border-radius: 10px;
         border: 1px solid #31405f;
         background: #0d1426;
