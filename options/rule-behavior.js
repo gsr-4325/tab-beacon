@@ -127,6 +127,7 @@
       .behavior-panel {
         display: grid;
         gap: 0;
+        margin-bottom: 12px;
         padding: 0;
         background: var(--conditions-surface);
         border: 1px solid var(--panel-border);
@@ -192,7 +193,7 @@
         box-shadow: none;
       }
 
-      .behavior-help-button:hover:not(:disabled) {
+      .behavior-help-button:hover(:not(:disabled)) {
         color: var(--text);
         background: rgba(255, 255, 255, 0.04);
       }
@@ -292,7 +293,7 @@
         color: var(--muted);
       }
 
-      html[data-theme="win11"] .behavior-help-button:hover:not(:disabled) {
+      html[data-theme="win11"] .behavior-help-button:hover(:not(:disabled)) {
         background: transparent;
         color: var(--text);
       }
