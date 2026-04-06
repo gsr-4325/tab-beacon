@@ -84,6 +84,7 @@
     await loadScript("./options-app.js");
     await loadScript("./chatgpt-defaults.js");
     await loadScript("./rule-behavior.js");
+    await loadScript("./indicator-style.js");
     await loadScript("./options-packaged-sandbox.js");
   }
 

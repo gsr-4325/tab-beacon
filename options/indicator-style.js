@@ -1,0 +1,413 @@
+(() => {
+  const STORAGE_KEY = "tabBeaconIndicatorSettings";
+  const STYLE_ID = "tabBeaconIndicatorStyleUi";
+  const CARD_ID = "indicatorSettingsCard";
+  const DEBUG_RENDER_GROUP_ID = "debugRenderMethodGroup";
+  const isJa = (chrome.i18n?.getUILanguage?.() || "").toLowerCase().startsWith("ja");
+  const copy = (en, ja) => (isJa ? ja : en);
+
+  const DEFAULT_SETTINGS = Object.freeze({
+    indicatorStyle: "spinner",
+    spinnerStyle: "ring",
+    badgeStyle: "dot",
+    renderMethod: "gif"
+  });
+
+  function normalizeSettings(value) {
+    const source = value && typeof value === "object" ? value : {};
+    return {
+      indicatorStyle: source.indicatorStyle === "static-badge" ? "static-badge" : "spinner",
+      spinnerStyle: source.spinnerStyle === "ring" ? "ring" : "ring",
+      badgeStyle: ["dot", "ring", "corner"].includes(source.badgeStyle) ? source.badgeStyle : "dot",
+      renderMethod: source.renderMethod === "frames" ? "frames" : "gif"
+    };
+  }
+
+  function indicatorCardMarkup() {
+    return `
+      <section id="${CARD_ID}" class="card indicator-settings-card">
+        <div class="section-header">
+          <h2>${copy("Indicator style", "Indicator style")}</h2>
+        </div>
+        <div class="indicator-settings-body">
+          <section class="indicator-group">
+            <h3 class="indicator-group-title">${copy("Display style", "表示方法")}</h3>
+            <div class="indicator-choice-grid" data-setting-group="indicatorStyle">
+              <label class="indicator-choice-card">
+                <input type="radio" name="indicatorStyle" value="spinner" />
+                <span class="indicator-choice-copy">
+                  <span class="indicator-choice-title">${copy("Spinner animation", "Spinner animation")}</span>
+                  <span class="indicator-choice-description">${copy("Show a spinning busy indicator on the tab icon.", "タブアイコンに回転するこのヂ尚禚高示#��出します")}</span>
+                </span>
+              </label>
+              <label class="indicator-choice-card">
+                <input type="radio" name="indicatorStyle" value="static-badge" />
+                <span class="indicator-choice-copy">
+                  <span class="indicator-choice-title">${copy("Static badge", "Static badge")}</span>
+                  <span class="indicator-choice-description">${copy("Show a non-animated badge on the tab icon.", "タブアイコンに非アニメーションのバッジを出します")}</span>
+                </span>
+              </label>
+            </div>
+          </section>
+
+          <section class="indicator-group indicator-style-group" data-style-group="spinner">
+            <h3 class="indicator-group-title">${copy("Spinner style", "スピナースタイル")}</h3>
+            <div class="indicator-choice-grid" data-setting-group="spinnerStyle">
+              <label class="indicator-preview-card">
+                <input type="radio" name="spinnerStyle" value="ring" />
+                <span class="indicator-preview indicator-preview-spinner">
+                  <span class="indicator-preview-spinner-ring"></span>
+                  <span class="indicator-preview-spinner-dot dot-1"></span>
+                  <span class="indicator-preview-spinner-dot dot-2"></span>
+                  <span class="indicator-preview-spinner-dot dot-3"></span>
+                  <span class="indicator-preview-spinner-dot dot-4"></span>
+                  <span class="indicator-preview-spinner-dot dot-5"></span>
+                  <span class="indicator-preview-spinner-dot dot-6"></span>
+                  <span class="indicator-preview-spinner-dot dot-7"></span>
+                  <span class="indicator-preview-spinner-dot dot-8"></span>
+                </span>
+                <span class="indicator-preview-label">${copy("Ring", "Ring")}</span>
+              </label>
+            </div>
+          </section>
+
+          <section class="indicator-group indicator-style-group" data-style-group="static-badge">
+            <h3 class="indicator-group-title">${copy("Badge style", "バッジスタイル")}</h3>
+            <div class="indicator-choice-grid" data-setting-group="badgeStyle">
+              <label class="indicator-preview-card">
+                <input type="radio" name="badgeStyle" value="dot" />
+                <span class="indicator-preview indicator-preview-badge">
+                  <span class="indicator-badge-sample indicator-badge-dot"></span>
+                </span>
+                <span class="indicator-preview-label">${copy("Dot", "Dot")}</span>
+              </label>
+              <label class="indicator-preview-card">
+                <input type="radio" name="badgeStyle" value="ring" />
+                <span class="indicator-preview indicator-preview-badge">
+                  <span class="indicator-badge-sample indicator-badge-ring"></span>
+                </span>
+                <span class="indicator-preview-label">${copy("Ring", "Ring")}</span>
+              </label>
+              <label class="indicator-preview-card">
+                <input type="radio" name="badgeStyle" value="corner" />
+                <span class="indicator-preview indicator-preview-badge">
+                  <span class="indicator-badge-sample indicator-badge-corner"></span>
+                </span>
+                <span class="indicator-preview-label">${copy("Corner", "Corner")}</span>
+              </label>
+            </div>
+          </section>
+        </div>
+      </section>
+    `;
+  }
+
+  function debugRenderMarkup() {
+    return `
+      <section id="${DEBUG_RENDER_GROUP_ID}" class="debug-render-group">
+        <h3 class="debug-render-title">${copy("Render method", "描画方式")}</h3>
+        <div class="indicator-choice-grid" data-setting-group="renderMethod">
+          <label class="indicator-choice-card compact">
+            <input type="radio" name="renderMethod" value="frames" />
+            <span class="indicator-choice-copy">
+              <span class="indicator-choice-title">${copy("Frames", "Frames")}</span>
+              <span class="indicator-choice-description">${copy("Animate by swapping generated favicon frames with a timer.", "タイマーで生成済㿟 favicon フレームん差し替えてアニメーションします.")}</span>
+            </span>
+          </label>
+          <label class="indicator-choice-card compact">
+            <input type="radio" name="renderMethod" value="gif" />
+            <span class="indicator-choice-copy">
+              <span class="indicator-choice-title">${copy("GIF", "GIF")}</span>
+              <span class="indicator-choice-description">${copy("Animate with a prebuilt GIF favicon while busy.", "busy 中は事前生成し GIF favicon を使います" �}</span>
+            </span>
+          </label>
+        </div>
+      </section>
+    `;
+  }
+
+  function injectStyles() {
+    if (document.getElementById(STYLE_ID)) return;
+
+    const style = document.createElement("style");
+    style.id = STYLE_ID;
+    style.textContent = `
+      .indicator-settings-card {
+        display: grid;
+        gap: 16px;
+      }
+
+      .indicator-settings-body,
+      .indicator-group {
+        display: grid;
+        gap: 12px;
+      }
+
+      .indicator-group-title,
+      .debug-render-title {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .indicator-choice-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+      }
+
+      .indicator-choice-card,
+      .indicator-preview-card {
+        display: grid;
+        gap: 12px;
+        padding: 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(53, 72, 110, 0.45);
+        background: #0d1426;
+        cursor: pointer;
+      }
+
+      .indicator-choice-card.compact {
+        min-height: 100%;
+      }
+
+      .indicator-choice-card input,
+      .indicator-preview-card input {
+        margin: 0;
+      }
+
+      .indicator-choice-card:has(input:checked),
+      .indicator-preview-card:has(input:checked) {
+        border-color: rgba(59, 130, 246, 0.95);
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.35) inset;
+      }
+
+      .indicator-choice-copy {
+        display: grid;
+        gap: 4px;
+      }
+
+      .indicator-choice-title,
+      .indicator-preview-label {
+        font-weight: 700;
+      }
+
+      .indicator-choice-description {
+        color: var(--muted);
+        font-size: 0.92rem;
+        line-height: 1.5;
+      }
+
+      .indicator-preview {
+        position: relative;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(180deg, #18243a, #10182a);
+        border: 1px solid rgba(53, 72, 110, 0.45);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .indicator-preview-spinner-ring {
+        position: absolute;
+        inset: 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+      }
+
+      .indicator-preview-spinner-dot {
+        position: absolute;
+        width: 5px;
+        height: 5px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.95);
+      }
+
+      .indicator-preview-spinner-dot.dot-1 { top: 4px; left: 19.5px; opacity: 1; }
+      .indicator-preview-spinner-dot.dot-2 { top: 9px; right: 8px; opacity: 0.88; }
+      .indicator-preview-spinner-dot.dot-3 { top: 19.5px; right: 4px; opacity: 0.76; }
+      .indicator-preview-spinner-dot.dot-4 { bottom: 9px; right: 8px; opacity: 0.64; }
+      .indicator-preview-spinner-dot.dot-5 { bottom: 4px; left: 19.5px; opacity: 0.52; }
+      .indicator-preview-spinner-dot.dot-6 { bottom: 9px; left: 8px; opacity: 0.4; }
+      .indicator-preview-spinner-dot.dot-7 { top: 19.5px; left: 4px; opacity: 0.34; }
+      .indicator-preview-spinner-dot.dot-8 { top: 9px; left: 8px; opacity: 0.28; }
+
+      .indicator-badge-sample {
+        position: absolute;
+        display: inline-block;
+      }
+
+      .indicator-badge-dot {
+        width: 12px;
+        height: 12px;
+        right: 6px;
+        bottom: 6px;
+        border-radius: 999px;
+        background: rgba(59, 130, 246, 0.96);
+        border: 2px solid rgba(255, 255, 255, 0.92);
+      }
+
+      .indicator-badge-ring {
+        width: 14px;
+        height: 14px;
+        right: 5px;
+        bottom: 5px;
+        border-radius: 999px;
+        border: 3px solid rgba(59, 130, 246, 0.96);
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.92);
+      }
+
+      .indicator-badge-corner {
+        width: 12px;
+        height: 12px;
+        right: 6px;
+        top: 6px;
+        border-radius: 4px;
+        background: rgba(59, 130, 246, 0.96);
+        border: 1px solid rgba(255, 255, 255, 0.92);
+      }
+
+      .debug-render-group {
+        display: grid;
+        gap: 12px;
+        padding-top: 4px;
+      }
+
+      @media (max-width: 760px) {
+        .indicator-choice-grid {
+          grid-template-columns: 1fr ;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function ensureIndicatorCard() {
+    let card = document.getElementById(CARD_ID);
+    if (card) return card;
+
+    const rulesCard = Array.from(document.querySelectorAll(".card")).find((node) => node.querySelector("#rulesContainer"));
+    if (!rulesCard) return null;
+
+    rulesCard.insertAdjacentHTML("beforebegin", indicatorCardMarkup());
+    return document.getElementById(CARD_ID);
+  }
+
+  function ensureDebugRenderGroup() {
+    let panel = document.getElementById(DEBUG_RENDER_GROUP_ID);
+    if (panel) return panel;
+
+    const debugPanel = document.getElementById("debugPanel");
+    if (!debugPanel) return null;
+
+    debugPanel.insertAdjacentHTML("afterbegin", debugRenderMarkup());
+    return document.getElementById(DEBUG_RENDER_GROUP_ID);
+  }
+
+  function setGroupValue(root, name, value) {
+    const input = root?.querySelector(`input[name="${name}"][value="${value}"]`);
+    if (input) input.checked = true;
+  }
+
+  function readSettingsFromDom() {
+    return normalizeSettings({
+      indicatorStyle: document.querySelector('input[name="indicatorStyle"]:checked')?.value,
+      spinnerStyle: document.querySelector('input[name="spinnerStyle"]:checked')?.value,
+      badgeStyle: document.querySelector('input[name="badgeStyle"]:checked')?.value,
+      renderMethod: document.querySelector('input[name="renderMethod"]:checked')?.value
+    });
+  }
+
+  function applySettingsToDom(settings) {
+    setGroupValue(document, "indicatorStyle", settings.indicatorStyle);
+    setGroupValue(document, "spinnerStyle", settings.spinnerStyle);
+    setGroupValue(document, "badgeStyle", settings.badgeStyle);
+    setGroupValue(document, "renderMethod", settings.renderMethod);
+    syncGroupVisibility(settings.indicatorStyle);
+  }
+
+  function syncGroupVisibility(indicatorStyle) {
+    document.querySelectorAll("[data-style-group]").forEach((section) => {
+      section.classList.toggle("hidden", section.dataset.styleGroup !== indicatorStyle);
+    });
+  }
+
+  function bindChangeHandlers(root) {
+    if (!root || root.dataset.bound === "true") return;
+    root.addEventListener("change", () => {
+      const settings = readSettingsFromDom();
+      syncGroupVisibility(settings.indicatorStyle);
+      markDirty?.();
+    });
+    root.dataset.bound = "true";
+  }
+
+  function bindDebugHandlers(root) {
+    if (!root || root.dataset.bound === "true") return;
+    root.addEventListener("change", () => {
+      markDirty?.();
+    });
+    root.dataset.bound = "true";
+  }
+
+  async function loadSettings() {
+    const result = await chrome.storage.local.get(STORAGE_KEY);
+    return normalizeSettings(result[STORAGE_KEY]);
+  }
+
+  async function saveSettings() {
+    const settings = readSettingsFromDom();
+    await chrome.storage.local.set({ [STORAGE_KEY]: settings });
+  }
+
+  async function resetSettings() {
+    await chrome.storage.local.set({ [STORAGE_KEY]: DEFAULT_SETTINGS });
+    applySettingsToDom(DEFAULT_SETTINGS);
+  }
+
+  function ready() {
+    return (
+      typeof markDirty === "function" &&
+      document.getElementById("saveAll") &&
+      document.getElementById("resetConfirmOk") &&
+      document.getElementById("debugPanel")
+    );
+  }
+
+  async function init() {
+    injectStyles();
+
+    if (!ready()) {
+      setTimeout(init, 30);
+      return;
+    }
+
+    const indicatorCard = ensureIndicatorCard();
+    const debugRenderGroup = ensureDebugRenderGroup();
+    if (!indicatorCard || !debugRenderGroup) {
+      setTimeout(init, 60);
+      return;
+    }
+
+    const settings = await loadSettings();
+    applySettingsToDom(settings);
+    bindChangeHandlers(indicatorCard);
+    bindDebugHandlers(debugRenderGroup);
+
+    if (!document.body.dataset.indicatorSettingsSaveBound) {
+      saveButton.addEventListener("click", async () => {
+        await saveSettings();
+      });
+
+      const resetConfirmOkButton = document.getElementById("resetConfirmOk");
+      resetConfirmOkButton?.addEventListener("click", async () => {
+        await resetSettings();
+      });
+
+      document.body.dataset.indicatorSettingsSaveBound = "true";
+    }
+  }
+
+  init().catch((error) => console.error("[TabBeacon] indicator style patch failed", error));
+})();
