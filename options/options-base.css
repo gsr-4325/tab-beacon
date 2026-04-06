@@ -21,8 +21,15 @@
   --system-condition-surface: #202937;
 }
 
+html {
+  min-height: 100%;
+  scrollbar-gutter: stable both-edges;
+}
+
 body {
   margin: 0;
+  min-height: 100%;
+  overflow-y: auto;
   font-family: system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
