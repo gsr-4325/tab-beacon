@@ -134,6 +134,30 @@
     return catalog[kind] || "";
   }
 
+  function localizedHeroOverview() {
+    if (isJapanese()) {
+      return {
+        summary: "DOM と network の busy シグナルをまとめて監視し、今どのタブが忙しいかをひと目で把握できます。",
+        features: [
+          "DOM 条件と network 条件を同じルールに混在できます。",
+          "ANY / ALL で条件の結合方法を切り替えられます。",
+          "smart busy detection を補助シグナルとして使えます。",
+          "ページごとにルールを設定してタブアイコンに busy 状態を表示します。"
+        ]
+      };
+    }
+
+    return {
+      summary: "Track busy DOM and network signals together so you can see which tabs still need attention at a glance.",
+      features: [
+        "Mix DOM and network conditions inside the same rule.",
+        "Switch condition joins between ANY and ALL.",
+        "Use smart busy detection as a fallback signal.",
+        "Show a busy state on the tab icon with page-specific rules."
+      ]
+    };
+  }
+
   function setStoredTheme(themeName) {
     try {
       window.localStorage.setItem(THEME_STORAGE_KEY, themeName);
@@ -539,6 +563,21 @@
     header.dataset.win11Clickable = "true";
   }
 
+  function updateHeroOverview(principles) {
+    if (!principles) return;
+
+    const heroOverview = localizedHeroOverview();
+
+    principles.classList.remove("win11-hidden-principles");
+    principles.replaceChildren(
+      ...heroOverview.features.map((featureText) => {
+        const item = document.createElement("li");
+        item.textContent = featureText;
+        return item;
+      })
+    );
+  }
+
   function ensureLayout() {
     if (document.body.dataset.win11Enhanced === "true") return true;
 
@@ -570,12 +609,10 @@
     }
 
     if (subtitle) {
-      subtitle.textContent = message("win11HeroSubtitle", "Configure your tab busy rules with a compact Windows 11 style layout.");
+      subtitle.textContent = localizedHeroOverview().summary;
     }
 
-    if (principles) {
-      principles.classList.add("win11-hidden-principles");
-    }
+    updateHeroOverview(principles);
 
     ensureModeSwitch(heroActions);
     syncDebugToggleIcon();
