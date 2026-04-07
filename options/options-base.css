@@ -129,6 +129,12 @@ body {
   max-width: 100%;
 }
 
+.rules-card > .section-header,
+.debug-card > .section-header,
+.indicator-settings-card > .section-header {
+  min-height: 64px;
+}
+
 .stack,
 .rules,
 .conditions-container {
