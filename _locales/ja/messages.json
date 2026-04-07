@@ -66,7 +66,7 @@
     "message": "Debug を閉じる"
   },
   "debugDescription": {
-    "message": "このセクションでは、自分のルールを壊さずにローカル sandbox 用プリセットを追加できます。"
+    "message": "デバッグモードをオンにすると、自分のルールを壊さずにローカル sandbox 用プリセットが自動で追加されます。"
   },
   "debugLoadPreset": {
     "message": "ローカル sandbox プリセットを追加"
@@ -81,10 +81,10 @@
     "message": "本当の file:// テストは、ローカル repo の manual-tests/tabbeacon-sandbox.html を開いてください。"
   },
   "debugPresetInstalled": {
-    "message": "ローカル sandbox プリセットは既に追加されています。"
+    "message": "ローカル sandbox プリセットは有効です。"
   },
   "debugPresetMissing": {
-    "message": "ローカル sandbox プリセットはまだ追加されていません。"
+    "message": "ローカル sandbox プリセットは無効です。"
   },
   "networkDiagnosticsTitle": {
     "message": "Network diagnostics"
@@ -394,6 +394,12 @@
   },
   "win11ModeLightTooltip": {
     "message": "ライトモード"
+  },
+  "win11SwitchOn": {
+    "message": "On"
+  },
+  "win11SwitchOff": {
+    "message": "Off"
   },
   "urlPatternsHelpLabel": {
     "message": "URL パターンのヘルプ"

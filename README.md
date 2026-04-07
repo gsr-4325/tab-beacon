@@ -75,7 +75,7 @@ To show the current local branch and HEAD SHA in the options footer during revie
 
 1. In the extension details page, enable **Allow access to file URLs**
 2. Open **Debug** in the options page
-3. Click **Install local sandbox preset**
+3. Turn **Debug mode** on
 4. Open `manual-tests/tabbeacon-sandbox.html` with `file://`
 5. Try adding and removing `aria-busy` elements, or run the 5-second busy scenario
 

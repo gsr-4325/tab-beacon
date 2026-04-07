@@ -256,7 +256,9 @@ html[data-theme="default"] .button-cluster > .action-button {
 }
 
 html[data-theme="default"] #debugToggle {
-  width: 100%;
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
   justify-content: flex-start;
   gap: 8px;
   padding: 0;
@@ -267,6 +269,10 @@ html[data-theme="default"] #debugToggle {
   box-shadow: none;
   font-size: 1.05rem;
   font-weight: 600;
+}
+
+html[data-theme="default"] .debug-card .section-header .default-rule-enable-button {
+  flex-shrink: 0;
 }
 
 html[data-theme="default"] #debugToggle .section-toggle-icon {

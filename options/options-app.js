@@ -179,10 +179,9 @@ const resetConfirmOkButton = document.getElementById("resetConfirmOk");
 const resetConfirmCancelButton = document.getElementById("resetConfirmCancel");
 const addRuleButton = document.getElementById("addRule");
 const debugToggleButton = document.getElementById("debugToggle");
+const debugModeSwitchButton = document.getElementById("debugModeSwitch");
 const debugSectionBody = document.getElementById("debugSectionBody");
-const enableDebugModeCheckbox = document.getElementById("enableDebugMode");
 const debugPanel = document.getElementById("debugPanel");
-const installDebugPresetButton = document.getElementById("installDebugPreset");
 const openPackagedSandboxButton = document.getElementById("openPackagedSandbox");
 const copySettingsButton = document.getElementById("copySettings");
 const debugPresetStatus = document.getElementById("debugPresetStatus");
@@ -219,6 +218,13 @@ async function init() {
     initialRules = await seedMissingDefaults(initialRules, uiState);
   }
 
+  const debugModeEnabled = !!uiState.debugMode;
+  const syncedInitialRules = syncRulesWithDebugMode(initialRules, debugModeEnabled);
+  if (!areRulesEqual(initialRules, syncedInitialRules)) {
+    await chrome.storage.local.set({ [STORAGE_KEY]: syncedInitialRules });
+    initialRules = syncedInitialRules;
+  }
+
   const normalizedRules = initialRules.map(normalizeRuleForEditor);
   renderRules(normalizedRules);
   bindGlobalActions();
@@ -228,8 +234,7 @@ async function init() {
     : !!uiState.showDebugTools;
 
   setDebugSectionExpanded(debugExpanded);
-
-  enableDebugModeCheckbox.checked = !!uiState.debugMode;
+  setDebugModeSwitchState(debugModeEnabled);
   updateDebugPresetStatus(normalizedRules);
 
   if (debugExpanded) {
@@ -259,7 +264,7 @@ function bindGlobalActions() {
   });
 
   saveButton.addEventListener("click", async () => {
-    const rules = collectRulesFromDom();
+    const rules = syncRulesWithDebugMode(collectRulesFromDom(), isDebugModeEnabled());
     await chrome.storage.local.set({ [STORAGE_KEY]: rules });
     renderRules(rules.map(normalizeRuleForEditor));
     setSaveButtonSavedState();
@@ -278,7 +283,7 @@ function bindGlobalActions() {
 
   resetConfirmOkButton.addEventListener("click", async () => {
     resetConfirmModal.close();
-    const freshRules = buildDefaultRules();
+    const freshRules = syncRulesWithDebugMode(buildDefaultRules(), isDebugModeEnabled());
     await chrome.storage.local.set({ [STORAGE_KEY]: freshRules });
     renderRules(freshRules.map(normalizeRuleForEditor));
     markClean();
@@ -298,19 +303,15 @@ function bindGlobalActions() {
     }
   });
 
-  enableDebugModeCheckbox.addEventListener("change", async () => {
+  debugModeSwitchButton.addEventListener("click", async () => {
+    const enabled = !isDebugModeEnabled();
+    setDebugModeSwitchState(enabled);
     const uiState = (await chrome.storage.local.get(UI_STATE_KEY))[UI_STATE_KEY] || {};
-    await chrome.storage.local.set({ [UI_STATE_KEY]: { ...uiState, debugMode: enableDebugModeCheckbox.checked } });
-  });
-
-  installDebugPresetButton.addEventListener("click", async () => {
-    const rules = collectRulesFromDom();
-    if (hasSystemPreset(rules, DEBUG_PRESET_SLUG)) {
-      updateDebugPresetStatus(rules);
-      return;
-    }
-    rules.push(createDebugPresetRule());
-    await chrome.storage.local.set({ [STORAGE_KEY]: rules });
+    const rules = syncRulesWithDebugMode(collectRulesFromDom(), enabled);
+    await Promise.all([
+      chrome.storage.local.set({ [UI_STATE_KEY]: { ...uiState, debugMode: enabled } }),
+      chrome.storage.local.set({ [STORAGE_KEY]: rules })
+    ]);
     renderRules(rules.map(normalizeRuleForEditor));
     updateDebugPresetStatus(rules);
     setSaveButtonSavedState();
@@ -414,7 +415,7 @@ function migrateRules(rules) {
     const filtered = rule.busyWhen.filter(
       (c) => !(c.source === "dom" && c.query === '[aria-busy="true"]' && rule.name === "Gemini")
     );
-    const removable = rule.slug === DEBUG_PRESET_SLUG ? true : !!rule.removable;
+    const removable = !!rule.removable;
     // Rename legacy content-script fallback rule name
     const name = rule.name === "ChatGPT (starter)" ? "ChatGPT" : rule.name;
     if (filtered.length === rule.busyWhen.length && removable === !!rule.removable && name === rule.name) return rule;
@@ -444,7 +445,7 @@ function normalizeRuleForEditor(rule) {
     slug: rule.slug || generateUserSlug(name || rule.name || t("untitledRule"), id),
     origin,
     readonly: origin === SYSTEM_ORIGIN ? true : !!rule.readonly,
-    removable: !!rule.removable || rule.slug === DEBUG_PRESET_SLUG,
+    removable: !!rule.removable,
     name,
     nameKey,
     enabled: rule.enabled !== false,
@@ -732,18 +733,58 @@ function createEmptyCondition() {
   };
 }
 
-function createDebugPresetRule() {
-  return normalizeRuleForEditor({ ...DEBUG_LOCAL_SANDBOX_PRESET, removable: true });
+function createDebugPresetRule(existingRule) {
+  return normalizeRuleForEditor({
+    ...DEBUG_LOCAL_SANDBOX_PRESET,
+    ...(existingRule || {}),
+    id: existingRule?.id || DEBUG_LOCAL_SANDBOX_PRESET.id,
+    slug: DEBUG_PRESET_SLUG,
+    origin: SYSTEM_ORIGIN,
+    readonly: true,
+    removable: false,
+    nameKey: DEBUG_LOCAL_SANDBOX_PRESET.nameKey,
+    enabled: true
+  });
 }
 
 function hasSystemPreset(rules, slug) {
   return rules.some((rule) => rule.origin === SYSTEM_ORIGIN && rule.slug === slug);
 }
 
+function syncRulesWithDebugMode(rules, enabled) {
+  const existingPreset = rules.find((rule) => rule.origin === SYSTEM_ORIGIN && rule.slug === DEBUG_PRESET_SLUG);
+  const nextRules = rules.filter((rule) => !(rule.origin === SYSTEM_ORIGIN && rule.slug === DEBUG_PRESET_SLUG));
+
+  if (!enabled) {
+    return nextRules;
+  }
+
+  return [...nextRules, createDebugPresetRule(existingPreset)];
+}
+
+function areRulesEqual(left, right) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function setDebugModeSwitchState(enabled) {
+  if (!debugModeSwitchButton) return;
+  const switchText = debugModeSwitchButton.querySelector(".default-rule-switch-text");
+  debugModeSwitchButton.classList.toggle("active", enabled);
+  debugModeSwitchButton.setAttribute("aria-pressed", String(enabled));
+  debugModeSwitchButton.setAttribute("aria-label", t("debugModeToggle"));
+  debugModeSwitchButton.setAttribute("title", t("debugModeToggle"));
+  if (switchText) {
+    switchText.textContent = enabled ? t("win11SwitchOn") : t("win11SwitchOff");
+  }
+}
+
+function isDebugModeEnabled() {
+  return debugModeSwitchButton?.getAttribute("aria-pressed") === "true";
+}
+
 function updateDebugPresetStatus(rules) {
   const exists = hasSystemPreset(rules, DEBUG_PRESET_SLUG);
   debugPresetStatus.textContent = exists ? t("debugPresetInstalled") : t("debugPresetMissing");
-  installDebugPresetButton.disabled = exists;
 }
 
 function updateConditionHint(condition, hintEl) {

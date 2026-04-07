@@ -43,16 +43,23 @@
             <span class="section-toggle-icon">▸</span>
             <span data-i18n="debugTitle">Debug</span>
           </button>
+          <div class="section-header-actions">
+            <button
+              id="debugModeSwitch"
+              type="button"
+              class="default-rule-enable-button"
+              aria-pressed="false"
+              aria-label="Enable debug mode (logs to page console)"
+            >
+              <span class="default-rule-switch-text">Off</span>
+              <span class="default-switch-track"><span class="default-switch-thumb"></span></span>
+            </button>
+          </div>
         </div>
         <div id="debugSectionBody" class="stack hidden">
-          <label class="inline">
-            <input id="enableDebugMode" type="checkbox" />
-            <span data-i18n="debugModeToggle">Enable debug mode (logs to page console)</span>
-          </label>
           <div id="debugPanel" class="stack">
-            <p class="hint" data-i18n="debugDescription">Use this section to install a local sandbox preset without overwriting your own rules.</p>
+            <p class="hint" data-i18n="debugDescription">When debug mode is on, the local sandbox preset is added automatically without overwriting your own rules.</p>
             <div class="button-cluster">
-              <button id="installDebugPreset" type="button" class="action-button" data-i18n="debugLoadPreset">Install local sandbox preset</button>
               <button id="openPackagedSandbox" type="button" class="icon-button" title="Open packaged sandbox">
                 <svg class="external-link-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: flex;">
                   <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

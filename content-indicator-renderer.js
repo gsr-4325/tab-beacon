@@ -117,23 +117,7 @@
       matchingRules: matchingRules.length
     });
 
-    if (!matchingRules.length) {
-      if (window.__tabBeaconSandboxMode !== true) return;
-      const sandboxGraceMs = rulesResult.length > 0
-        ? normalizeBusyEndGraceMs(rulesResult[0].busyEndGraceMs)
-        : normalizeBusyEndGraceMs(undefined);
-      matchingRules.push(normalizeRule({
-        id: "sandbox-auto",
-        name: "Sandbox",
-        enabled: true,
-        matches: [href],
-        matchMode: "any",
-        busyWhen: [{ source: "dom", selectorType: "auto", query: '[aria-busy="true"]' }],
-        useSmartBusySignals: true,
-        busyEndGraceMs: sandboxGraceMs,
-        iconMode: "overlaySpinner"
-      }));
-    }
+    if (!matchingRules.length) return;
 
     state.activeRules = matchingRules;
     state.ruleActivity = new Map();
