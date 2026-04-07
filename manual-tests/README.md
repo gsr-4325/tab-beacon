@@ -1,40 +1,40 @@
-# Manual tests
+# Manual Tests
 
-このディレクトリは TabBeacon の手動確認用ページを置くためのものです。本体コードとは用途が違うため、`manual-tests/` に分けています。
+This directory contains utility pages for manual testing of TabBeacon. These are kept in `manual-tests/` separately from the main application code due to their distinct purpose.
 
-## まず必要なこと
+## Prerequisites
 
-`file://` で開く場合、Edge / Chrome の拡張詳細画面で **Allow access to file URLs** を ON にしてください。
+If you are opening these pages via `file://`, you must enable **Allow access to file URLs** in the extension settings for Edge or Chrome.
 
-Edge なら:
+For Edge:
 
-1. `edge://extensions/` を開く
-2. TabBeacon の `Details` を開く
-3. `Allow access to file URLs` を ON
-4. 拡張を再読み込み
+1. Open `edge://extensions/`
+2. Go to the `Details` of TabBeacon
+3. Toggle `Allow access to file URLs` to ON
+4. Reload the extension
 
-## 含まれているページ
+## Available Pages
 
 - `tabbeacon-sandbox.html`
-  - DOM 条件の手動テスト
-  - network 条件の手動テスト
-  - アイコンの変化確認
+  - Manual testing for DOM conditions
+  - Manual testing for network conditions
+  - Verification of icon state changes
 
-## おすすめの最初のルール
+## Recommended First Rule
 
-### URL パターン
+### URL Pattern
 
 ```text
 file:///*manual-tests/*
 ```
 
-### 条件 1
+### Condition 1
 
 - source: `dom`
 - selectorType: `css`
 - query: `[aria-busy="true"]`
 
-### 条件 2
+### Condition 2
 
 - source: `network`
 - matchType: `urlContains`
@@ -42,12 +42,12 @@ file:///*manual-tests/*
 - method: `GET`
 - resourceKind: `fetch/xhr`
 
-### 条件の結合
+### Join Mode
 
 - `ANY`
 
-## 注意
+## Notes
 
-- `file://` ページからの network テストはブラウザ制約や CORS の影響を受けることがあります
-- その場合でも DOM テストは確認可能です
-- network テストが不安定なら、後で `http://localhost` で開く軽いローカルサーバー方式も追加できます
+- Network tests from `file://` pages may be affected by browser security policies or CORS.
+- DOM tests are still verifiable even in those cases.
+- If network tests are unstable, you can consider using a simple local server (e.g., `http://localhost`).
