@@ -129,6 +129,12 @@ body {
   max-width: 100%;
 }
 
+.rules-card > .section-header,
+.debug-card > .section-header,
+.indicator-settings-card > .section-header {
+  min-height: 64px;
+}
+
 .stack,
 .rules,
 .conditions-container {
@@ -229,8 +235,10 @@ body {
 }
 
 .rule-readonly-note {
+  margin: 0 0 16px;
   color: var(--muted);
   font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 .conditions-panel {
@@ -255,6 +263,21 @@ body {
 }
 
 .readonly-rule .condition {
+  background: var(--system-condition-surface);
+  border-color: rgba(95, 108, 133, 0.24);
+}
+
+.rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) {
+  background: var(--system-rule-surface);
+  border-color: rgba(95, 108, 133, 0.38);
+}
+
+.rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) .conditions-panel {
+  background: var(--system-conditions-surface);
+  border-color: rgba(95, 108, 133, 0.28);
+}
+
+.rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) .condition {
   background: var(--system-condition-surface);
   border-color: rgba(95, 108, 133, 0.24);
 }
@@ -332,6 +355,10 @@ select {
   color: var(--text);
 }
 
+textarea {
+  resize: none;
+}
+
 button {
   border: 0;
   border-radius: 10px;
@@ -349,7 +376,41 @@ button.action-button:hover:not(:disabled) {
   filter: brightness(1.05);
 }
 
-html[data-theme="win11"] button.action-button:hover:not(:disabled) {
+button.add-icon-button {
+  min-width: 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+button.add-icon-button .plus-icon {
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+}
+
+button.add-icon-button.add-icon-button-small {
+  min-width: 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+button.add-icon-button.add-icon-button-small .plus-icon {
+  width: 16px;
+  height: 16px;
+}
+
+button.add-icon-button.add-icon-button-spacer {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+html[data-theme="default"] button.action-button:hover:not(:disabled) {
   background-color: color-mix(in srgb, var(--button-bg) 60%, white 0.5%);
 }
 
@@ -374,8 +435,60 @@ select:disabled {
   border-style: dashed;
 }
 
+.default-rule-enable-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  box-shadow: none;
+}
+
+.default-rule-switch-text {
+  min-width: 22px;
+  text-align: right;
+  font-weight: 600;
+}
+
+.default-switch-track {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: #5c6373;
+  transition: background 0.16s ease;
+}
+
+.default-switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #ffffff;
+  transition: transform 0.16s ease;
+}
+
+.default-rule-enable-button.active .default-switch-track {
+  background: var(--primary);
+}
+
+.default-rule-enable-button.active .default-switch-thumb {
+  transform: translateX(18px);
+}
+
 .debug-card .section-header {
   justify-content: flex-start;
+  align-items: center;
+}
+
+.debug-card #debugToggle {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 #debugSectionBody {
@@ -452,6 +565,47 @@ select:disabled {
   stroke-linejoin: round;
   fill: none;
   pointer-events: none;
+}
+
+.icon-button {
+  min-width: 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: #2a3756;
+  color: var(--text);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.14s ease, filter 0.14s ease;
+  position: relative;
+}
+
+.icon-button:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.icon-button svg.copy-icon {
+  display: flex;
+}
+
+.icon-button svg.check-icon {
+  display: none;
+  stroke: #4ade80;
 }
 
 .rule-controls {

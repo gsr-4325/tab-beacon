@@ -5,6 +5,7 @@
     <title data-i18n="optionsTitle">Tab Beacon Settings</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="./options-base.css" />
+    <script src="./themes/registry.js"></script>
     <script src="./boot.js"></script>
   </head>
   <body>
@@ -26,11 +27,25 @@
         </div>
       </header>
 
-      <section class="card">
+      <section class="card rules-card">
         <div class="section-header">
           <h2 data-i18n="rulesTitle">Rules</h2>
           <div class="section-header-actions">
-            <button id="addRule" type="button" class="action-button" data-i18n="addRule">Add rule</button>
+            <button
+              id="addRule"
+              type="button"
+              class="action-button add-icon-button"
+              data-i18n-title="addRule"
+              title="Add rule"
+              aria-label="Add rule"
+            >
+              <svg class="plus-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: flex;">
+                <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </g>
+              </svg>
+            </button>
           </div>
         </div>
         <div id="rulesContainer" class="rules"></div>
@@ -42,17 +57,45 @@
             <span class="section-toggle-icon">▸</span>
             <span data-i18n="debugTitle">Debug</span>
           </button>
+          <div class="section-header-actions">
+            <button
+              id="debugModeSwitch"
+              type="button"
+              class="default-rule-enable-button"
+              aria-pressed="false"
+              aria-label="Enable debug mode (logs to page console)"
+            >
+              <span class="default-rule-switch-text">Off</span>
+              <span class="default-switch-track"><span class="default-switch-thumb"></span></span>
+            </button>
+          </div>
         </div>
         <div id="debugSectionBody" class="stack hidden">
-          <label class="inline">
-            <input id="enableDebugMode" type="checkbox" />
-            <span data-i18n="debugModeToggle">Enable debug mode (logs to page console)</span>
-          </label>
           <div id="debugPanel" class="stack">
-            <p class="hint" data-i18n="debugDescription">Use this section to install a local sandbox preset without overwriting your own rules.</p>
+            <p class="hint" data-i18n="debugDescription">When debug mode is on, the local sandbox preset is added automatically without overwriting your own rules.</p>
             <div class="button-cluster">
-              <button id="installDebugPreset" type="button" class="action-button" data-i18n="debugLoadPreset">Install local sandbox preset</button>
-              <button id="openPackagedSandbox" type="button" class="action-button" data-i18n="debugOpenPackagedSandbox">Open packaged sandbox</button>
+              <button id="openPackagedSandbox" type="button" class="icon-button" title="Open packaged sandbox">
+                <svg class="external-link-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: flex;">
+                  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </g>
+                </svg>
+              </button>
+              <button id="copySettings" type="button" class="icon-button" title="Copy settings">
+                <svg class="copy-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: flex;">
+                  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 8h-7a3 3 0 0 0-3 3v7a3 3 0 0 0 3 3h7a3 3 0 0 0 3-3V11a3 3 0 0 0-3-3Z"></path>
+                    <path d="M18 4h-7a3 3 0 0 0-3 3v7a3 3 0 0 0 3 3h7a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3Z" fill="white"></path>
+                  </g>
+                </svg>
+                <svg class="check-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12l5 5L19 7"></path>
+                  </g>
+                </svg>
+              </button>
             </div>
             <p class="hint" data-i18n="debugLocalFileHint">For real file:// testing, open manual-tests/tabbeacon-sandbox.html from your local repo.</p>
             <div id="debugPresetStatus" class="hint"></div>
@@ -108,7 +151,6 @@
               <input class="rule-name" data-i18n-placeholder="ruleNamePlaceholder" placeholder="Rule name" />
               <div class="rule-meta">
                 <span class="rule-origin-badge"></span>
-                <span class="rule-readonly-note hidden" data-i18n="ruleReadonlyNotice">This preset is managed by the extension and is read-only.</span>
               </div>
             </div>
           </div>
@@ -119,6 +161,7 @@
         </div>
 
         <div class="rule-body">
+          <p class="rule-readonly-note hidden" data-i18n="ruleReadonlyNotice">This preset is managed by the extension and is read-only.</p>
           <label>
             <span data-i18n="urlPatterns">URL patterns</span>
             <textarea class="rule-matches" rows="3" data-i18n-placeholder="urlPatternsPlaceholder" placeholder="Enter one pattern per line"></textarea>
@@ -144,7 +187,20 @@
             <div class="section-header">
               <h3 data-i18n="conditionsTitle">Conditions</h3>
               <div class="section-header-actions">
-                <button type="button" class="action-button add-condition" data-i18n="addCondition">Add condition</button>
+                <button
+                  type="button"
+                  class="action-button add-condition add-icon-button add-icon-button-small"
+                  data-i18n-title="addCondition"
+                  title="Add condition"
+                  aria-label="Add condition"
+                >
+                  <svg class="plus-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: flex;">
+                    <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </g>
+                  </svg>
+                </button>
               </div>
             </div>
             <div class="conditions-container"></div>

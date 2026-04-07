@@ -1,8 +1,14 @@
 (() => {
-  const DEFAULT_THEME = "win11";
+  const themeRegistry = window.TabBeaconThemeRegistry;
+  const DEFAULT_THEME = themeRegistry?.defaultTheme || "default";
   const THEME_STORAGE_KEY = "tabBeaconOptionsTheme";
-  const AVAILABLE_THEMES = new Set(["win11", "vanilla"]);
-  const LEGACY_THEME_ALIASES = { default: "vanilla", plain: "win11" };
+  const AVAILABLE_THEMES = new Set(
+    themeRegistry?.getThemes?.().map((theme) => theme.id) || [DEFAULT_THEME]
+  );
+  const LEGACY_THEME_ALIASES = {
+    default: DEFAULT_THEME,
+    ...(themeRegistry?.aliases || {})
+  };
 
   function normalizeThemeName(value) {
     const candidate = (value || "").trim();
@@ -80,6 +86,8 @@
     window.TabBeaconThemeBootstrap = {
       DEFAULT_THEME,
       THEME_STORAGE_KEY,
+      getThemeDefinition: (themeId) => themeRegistry?.getTheme?.(normalizeThemeName(themeId)) || null,
+      getThemes: () => themeRegistry?.getThemes?.() || [],
       normalizeThemeName,
       getStoredTheme: readStoredTheme,
       setStoredTheme: writeStoredTheme
@@ -106,8 +114,8 @@
 
     await loadScript("../i18n.js");
     await loadScript("./options-app.js");
-    await loadScript("./chatgpt-defaults.js");
     await loadScript("./rule-behavior.js");
+    await loadScript("./indicator-style.js");
     await loadScript("./options-packaged-sandbox.js");
     await loadScript("./review-target.js");
   }

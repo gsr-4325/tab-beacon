@@ -2,8 +2,9 @@
   if (window.__tabBeaconLoaded) return;
   window.__tabBeaconLoaded = true;
 
-  const STORAGE_KEY = "tabBeaconRules";
+  const RULES_STORAGE_KEY = "tabBeaconRules";
   const UI_STATE_KEY = "tabBeaconUiState";
+  const INDICATOR_STORAGE_KEY = "tabBeaconIndicatorSettings";
   const EXT_ICON_LINK_ID = "tabbeacon-generated-favicon";
   const FRAME_COUNT = 8;
   const FRAME_INTERVAL_MS = 250;
@@ -14,6 +15,17 @@
   const extensionApi = typeof chrome !== "undefined" ? chrome : null;
   const hasStorageApi = !!extensionApi?.storage?.local;
   const hasRuntimeApi = !!extensionApi?.runtime?.id;
+
+  const DEFAULT_INDICATOR_SETTINGS = Object.freeze({
+    indicatorStyle: "spinner",
+    spinnerStyle: "ring",
+    badgeStyle: "dot",
+    badgeColor: "#3b82f6",
+    renderMethod: "frames"
+  });
+
+  const ANIMATED_BUSY_ICON_DATA_URL =
+    "data:image/gif;base64,R0lGODlhIAAgAPcAAP///+Xr//T2/wAAAP7+/vj5/5SWmvz8/ADQ/wDK/wDS//7//wDW/wDG/wDe//39//n6/93g6+Dh5fHy9P3+/9rc5v7+/vHy8/38/fP09vX2+P///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAP8ALAAAAAAgACAAAAj/AP8JHEiwoMGDCBMqXMiwocOHECNKnEixosWLGDNq3Mixo8ePIEOKHElSZEiQJ0+SLEmyJMmTKFOqbMmypcuXMGO+bNmypc2bNEOCHEkypMmTJ1OqXMmypcuXL2PGjOlTZs+gQ4seTZo0adKkSKNKnUq1qtWrWLMmXcq0qdOnUKNKnUq1qtWrWLMuzfo0q1evYMWOHTu2rFu3cOM+bds2rly7duPKnaI279+BgBMnTpzIcR8nW8CIGUPHkCFRWlS4sGHKlClfrlzJdSvRqGjVpoQ5dGnZp0mTLjWqlCk1rly8eOMmXYs2rdq5du/CnatX7+DBgAMHTlzIkKFLly5dypUr2bJmza5du3YjABEAOw==";
 
   let debugMode = false;
   const state = {
@@ -33,7 +45,8 @@
     currentHref: location.href,
     bootstrapToken: 0,
     networkSnapshot: {},
-    ruleActivity: new Map()
+    ruleActivity: new Map(),
+    indicatorSettings: { ...DEFAULT_INDICATOR_SETTINGS }
   };
 
   const dbg = (...args) => {
@@ -54,8 +67,6 @@
       : Promise.resolve({});
   }
 
-  bootstrap().catch((error) => console.error("[TabBeacon] bootstrap failed", error));
-
   async function bootstrap() {
     const bootstrapToken = ++state.bootstrapToken;
     const href = location.href;
@@ -66,28 +77,34 @@
     installHistoryHooks();
     watchStorageChanges();
 
-    const [rules, uiState] = await Promise.all([
+    const [rulesResult, uiStateResult, indicatorResult] = await Promise.all([
       loadRules(),
-      storageLocalGet(UI_STATE_KEY)
+      storageLocalGet(UI_STATE_KEY),
+      storageLocalGet(INDICATOR_STORAGE_KEY)
     ]);
     if (bootstrapToken !== state.bootstrapToken) return;
 
-    debugMode = !!uiState[UI_STATE_KEY]?.debugMode;
+    debugMode = !!uiStateResult[UI_STATE_KEY]?.debugMode;
+    state.indicatorSettings = normalizeIndicatorSettings(
+      indicatorResult[INDICATOR_STORAGE_KEY]
+    );
+
     if (debugMode) {
       try {
         const manifest = extensionApi.runtime?.getManifest?.();
-        console.log(`✅ [${EXT_NAME} v${manifest.version}] Content script loaded on ${href}`);
+        console.log(`✅ [${EXT_NAME} v${manifest.version}] Content script loaded on ${location.href}`);
       } catch {
-        console.log(`✅ [${EXT_NAME}] Content script loaded on ${href}`);
+        console.log(`✅ [${EXT_NAME}] Content script loaded on ${location.href}`);
       }
       dbg(
         `chrome.dom.openOrClosedShadowRoot available: ${typeof extensionApi?.dom?.openOrClosedShadowRoot === "function"}`
       );
+      dbg("indicator settings", state.indicatorSettings);
     }
 
     cleanup();
 
-    const matchingRules = rules
+    const matchingRules = rulesResult
       .map(normalizeRule)
       .filter(
         (rule) =>
@@ -97,7 +114,7 @@
 
     dbg("bootstrap", {
       url: href,
-      totalRules: rules.length,
+      totalRules: rulesResult.length,
       matchingRules: matchingRules.length
     });
 
@@ -111,14 +128,36 @@
 
     await registerCurrentTabUrl(href);
     if (bootstrapToken !== state.bootstrapToken) return;
-
     syncBusyStateWithRules({ allowGrace: false });
     installObservers();
   }
 
+  bootstrap().catch((error) =>
+    console.error("[TabBeacon] bootstrap failed", error)
+  );
+
   async function loadRules() {
-    const result = await storageLocalGet(STORAGE_KEY);
-    return Array.isArray(result[STORAGE_KEY]) ? result[STORAGE_KEY] : [];
+    const result = await storageLocalGet(RULES_STORAGE_KEY);
+    return Array.isArray(result[RULES_STORAGE_KEY]) ? result[RULES_STORAGE_KEY] : [];
+  }
+
+  function normalizeIndicatorSettings(value) {
+    const source = value && typeof value === "object" ? value : {};
+    const badgeColor = normalizeBadgeColor(source.badgeColor);
+    return {
+      indicatorStyle: source.indicatorStyle === "static-badge" ? "static-badge" : "spinner",
+      spinnerStyle: "ring",
+      badgeStyle: ["dot", "ring", "corner"].includes(source.badgeStyle)
+        ? source.badgeStyle
+        : "dot",
+      badgeColor,
+      renderMethod: source.renderMethod === "gif" ? "gif" : "frames"
+    };
+  }
+
+  function normalizeBadgeColor(value) {
+    const color = typeof value === "string" ? value.trim() : "";
+    return /^#[0-9a-fA-F]{6}$/.test(color) ? color.toLowerCase() : DEFAULT_INDICATOR_SETTINGS.badgeColor;
   }
 
   function normalizeBusyEndGraceMs(value, fallbackMs = 5000) {
@@ -139,7 +178,6 @@
       busyEndGraceMs: normalizeBusyEndGraceMs(rule.busyEndGraceMs),
       iconMode: rule.iconMode || "overlaySpinner"
     };
-
     if (Array.isArray(rule.busyWhen) && rule.busyWhen.length) {
       normalized.busyWhen = rule.busyWhen;
     } else if (typeof rule.busyQuery === "string" && rule.busyQuery.trim()) {
@@ -151,7 +189,6 @@
         }
       ];
     }
-
     normalized.busyWhen = normalized.busyWhen
       .map((condition) => ({
         source: condition.source === "network" ? "network" : "dom",
@@ -163,7 +200,6 @@
         resourceKind: condition.resourceKind || "any"
       }))
       .filter((condition) => (condition.source === "network" ? condition.value : condition.query));
-
     return normalized;
   }
 
@@ -241,11 +277,9 @@
       applyStatus("idle");
       return false;
     }
-
     for (const rule of state.activeRules) {
       updateRuleActivity(rule, evaluateRuleBusy(rule), { allowGrace });
     }
-
     const busy = hasEffectiveBusyRule();
     applyStatus(busy ? "busy" : "idle");
     return busy;
@@ -257,9 +291,21 @@
     if (!hasRuntimeApi || !extensionApi.runtime?.onMessage?.addListener) return;
 
     extensionApi.runtime.onMessage.addListener((message) => {
-      if (!message || message.type !== "tab-beacon/network-state") return;
-      state.networkSnapshot = message.snapshot || {};
-      scheduleReevaluate();
+      if (!message) return;
+      if (message.type === "tab-beacon/network-state") {
+        state.networkSnapshot = message.snapshot || {};
+        scheduleReevaluate();
+        return;
+      }
+      if (message.type === "tab-beacon/apply-indicator-settings") {
+        state.indicatorSettings = normalizeIndicatorSettings(message.settings);
+        if (state.currentStatus === "busy") {
+          startAnimation().catch((err) => console.error("[TabBeacon] startAnimation failed", err));
+        } else {
+          stopAnimation();
+          restoreOriginalIcons();
+        }
+      }
     });
   }
 
@@ -281,7 +327,6 @@
       window.addEventListener("DOMContentLoaded", installObservers, { once: true });
       return;
     }
-
     state.observer = new MutationObserver((mutations) => {
       scheduleReevaluate();
       for (const mutation of mutations) {
@@ -292,7 +337,6 @@
         }
       }
     });
-
     state.observer.observe(document.body, {
       childList: true,
       subtree: true,
@@ -325,13 +369,26 @@
     if (state.storageHooked) return;
     state.storageHooked = true;
     if (!extensionApi?.storage?.onChanged?.addListener) return;
-
     extensionApi.storage.onChanged.addListener((changes, areaName) => {
       if (areaName !== "local") return;
+
       if (changes[UI_STATE_KEY]) {
         debugMode = !!changes[UI_STATE_KEY].newValue?.debugMode;
       }
-      if (!changes[STORAGE_KEY]) return;
+
+      if (changes[INDICATOR_STORAGE_KEY]) {
+        state.indicatorSettings = normalizeIndicatorSettings(
+          changes[INDICATOR_STORAGE_KEY].newValue
+        );
+        if (state.currentStatus === "busy") {
+          startAnimation().catch((err) => console.error("[TabBeacon] startAnimation failed", err));
+        } else {
+          stopAnimation();
+          restoreOriginalIcons();
+        }
+      }
+
+      if (!changes[RULES_STORAGE_KEY]) return;
       bootstrap().catch((error) => console.error("[TabBeacon] reload failed", error));
     });
   }
@@ -339,7 +396,6 @@
   function installHistoryHooks() {
     if (state.historyHooked) return;
     state.historyHooked = true;
-
     for (const name of ["pushState", "replaceState"]) {
       const original = history[name];
       history[name] = function (...args) {
@@ -348,7 +404,6 @@
         return result;
       };
     }
-
     window.addEventListener("popstate", handleLocationChange);
     window.addEventListener("hashchange", handleLocationChange);
   }
@@ -394,7 +449,6 @@
       : false;
     const smartSignalsMatch = rule.useSmartBusySignals && detectSmartBusySignals();
     const result = explicitMatch || smartSignalsMatch;
-
     if (debugMode) {
       dbg(`rule [${rule.id}]`, {
         explicit: explicitMatch,
@@ -408,7 +462,6 @@
         }))
       });
     }
-
     return result;
   }
 
@@ -421,7 +474,6 @@
       }
       return val;
     }
-
     const el = queryExistsElement(condition.query, condition.selectorType);
     if (debugMode) dbg(`dom[${conditionIndex}] "${condition.query}" → ${el ? el.tagName : "null"}`);
     return !!el;
@@ -487,7 +539,6 @@
     if (document.querySelector('[aria-busy="true"]') || searchShadowDom(document, '[aria-busy="true"]')) {
       return true;
     }
-
     const stopLikePattern = /(\bstop\b|\bcancel\b|\binterrupt\b|停止|中断|生成を停止)/i;
     const isStopLike = (node) => {
       if (node.closest?.('[data-tabbeacon-ignore-smart-busy="true"]')) return false;
@@ -503,14 +554,11 @@
         .toLowerCase();
       return !!label && stopLikePattern.test(label);
     };
-
     if (Array.from(document.querySelectorAll("button,[role='button'],a")).slice(0, 120).some(isStopLike)) {
       return true;
     }
-
     const shadowMatch = collectShadowElements(document, "button,[role='button'],a", 120).some(isStopLike);
     if (shadowMatch) return true;
-
     return !!(
       document.querySelector('[aria-live][aria-busy="true"]') ||
       searchShadowDom(document, '[aria-live][aria-busy="true"]')
@@ -521,7 +569,6 @@
     const results = [];
     const iter = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
     let node = iter.nextNode();
-
     while (node && results.length < limit) {
       const shadow = getShadowRoot(node);
       if (shadow) {
@@ -536,7 +583,6 @@
       }
       node = iter.nextNode();
     }
-
     return results;
   }
 
@@ -595,7 +641,11 @@
     const ctx = canvas.getContext("2d");
     ctx.fillStyle = "#111827";
     ctx.beginPath();
-    ctx.roundRect(0, 0, 32, 32, 8);
+    if (typeof ctx.roundRect === "function") {
+      ctx.roundRect(0, 0, 32, 32, 8);
+    } else {
+      ctx.rect(0, 0, 32, 32);
+    }
     ctx.fill();
     ctx.fillStyle = "#f9fafb";
     ctx.font = "bold 18px system-ui, sans-serif";
@@ -610,7 +660,7 @@
     dbg(`status: ${state.currentStatus} → ${nextStatus}`);
     state.currentStatus = nextStatus;
     if (nextStatus === "busy") {
-      startAnimation();
+      startAnimation().catch((err) => console.error("[TabBeacon] startAnimation failed", err));
       return;
     }
     stopAnimation();
@@ -622,13 +672,31 @@
     if (!state.baseIconDataUrl) {
       state.baseIconDataUrl = await resolveBaseIconDataUrl(state.originalIcons);
     }
+
+    if (state.indicatorSettings.indicatorStyle === "static-badge") {
+      setGeneratedIcon(
+        await generateStaticBadgeDataUrl(
+          state.baseIconDataUrl,
+          state.indicatorSettings.badgeStyle,
+          state.indicatorSettings.badgeColor
+        ),
+        "image/png"
+      );
+      return;
+    }
+
+    if (state.indicatorSettings.renderMethod === "gif") {
+      setGeneratedIcon(ANIMATED_BUSY_ICON_DATA_URL, "image/gif");
+      return;
+    }
+
     state.animationFrames = await generateSpinnerFrames(state.baseIconDataUrl);
     state.animationFrameIndex = 0;
-    setGeneratedIcon(state.animationFrames[0]);
+    setGeneratedIcon(state.animationFrames[0], "image/png");
     state.animationTimer = window.setInterval(() => {
       if (!state.animationFrames?.length) return;
       state.animationFrameIndex = (state.animationFrameIndex + 1) % state.animationFrames.length;
-      setGeneratedIcon(state.animationFrames[state.animationFrameIndex]);
+      setGeneratedIcon(state.animationFrames[state.animationFrameIndex], "image/png");
     }, FRAME_INTERVAL_MS);
   }
 
@@ -637,48 +705,115 @@
       clearInterval(state.animationTimer);
       state.animationTimer = null;
     }
+    state.animationFrames = null;
+    state.animationFrameIndex = 0;
   }
 
   async function generateSpinnerFrames(baseIconDataUrl) {
     const baseImage = await loadImage(baseIconDataUrl);
     const frames = [];
-
     for (let frameIndex = 0; frameIndex < FRAME_COUNT; frameIndex += 1) {
       const canvas = document.createElement("canvas");
       canvas.width = 32;
       canvas.height = 32;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(baseImage, 0, 0, 32, 32);
-      ctx.fillStyle = "rgba(7, 12, 24, 0.42)";
-      ctx.beginPath();
-      ctx.roundRect(0, 0, 32, 32, 8);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.fillStyle = "rgba(37, 99, 235, 0.16)";
-      ctx.arc(16, 16, 10.8, 0, Math.PI * 2);
-      ctx.fill();
-
-      for (let dotIndex = 0; dotIndex < FRAME_COUNT; dotIndex += 1) {
-        const normalized = (dotIndex - frameIndex + FRAME_COUNT) % FRAME_COUNT;
-        const alpha = 1 - normalized / FRAME_COUNT;
-        const angle = (Math.PI * 2 * dotIndex) / FRAME_COUNT - Math.PI / 2;
-        const x = 16 + Math.cos(angle) * 8.2;
-        const y = 16 + Math.sin(angle) * 8.2;
-        ctx.beginPath();
-        ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.2, alpha)})`;
-        ctx.arc(x, y, 2.45, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      ctx.beginPath();
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.38)";
-      ctx.lineWidth = 1.15;
-      ctx.arc(16, 16, 11.6, 0, Math.PI * 2);
-      ctx.stroke();
+      drawSpinnerOverlay(ctx, frameIndex);
       frames.push(canvas.toDataURL("image/png"));
     }
-
     return frames;
+  }
+
+  function drawSpinnerOverlay(ctx, frameIndex = 0) {
+    ctx.fillStyle = "rgba(7, 12, 24, 0.42)";
+    ctx.beginPath();
+    if (typeof ctx.roundRect === "function") {
+      ctx.roundRect(0, 0, 32, 32, 8);
+    } else {
+      ctx.rect(0, 0, 32, 32);
+    }
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.fillStyle = "rgba(37, 99, 235, 0.16)";
+    ctx.arc(16, 16, 10.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    for (let dotIndex = 0; dotIndex < FRAME_COUNT; dotIndex += 1) {
+      const normalized = (dotIndex - frameIndex + FRAME_COUNT) % FRAME_COUNT;
+      const alpha = 1 - normalized / FRAME_COUNT;
+      const angle = (Math.PI * 2 * dotIndex) / FRAME_COUNT - Math.PI / 2;
+      const x = 16 + Math.cos(angle) * 8.2;
+      const y = 16 + Math.sin(angle) * 8.2;
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.2, alpha)})`;
+      ctx.arc(x, y, 2.45, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.beginPath();
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.38)";
+    ctx.lineWidth = 1.15;
+    ctx.arc(16, 16, 11.6, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  async function generateStaticBadgeDataUrl(baseIconDataUrl, badgeStyle, badgeColor) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 32;
+    canvas.height = 32;
+    const ctx = canvas.getContext("2d");
+    const img = await loadImage(baseIconDataUrl);
+    ctx.drawImage(img, 0, 0, 32, 32);
+    const fillColor = hexToRgba(normalizeBadgeColor(badgeColor), 0.98);
+
+    if (badgeStyle === "ring") {
+      ctx.beginPath();
+      ctx.strokeStyle = fillColor;
+      ctx.lineWidth = 3.4;
+      ctx.arc(24.5, 24.5, 5.2, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
+      ctx.lineWidth = 1.2;
+      ctx.arc(24.5, 24.5, 7, 0, Math.PI * 2);
+      ctx.stroke();
+      return canvas.toDataURL("image/png");
+    }
+
+    if (badgeStyle === "corner") {
+      ctx.fillStyle = fillColor;
+      ctx.beginPath();
+      if (typeof ctx.roundRect === "function") {
+        ctx.roundRect(20, 4, 8, 8, 2.5);
+      } else {
+        ctx.rect(20, 4, 8, 8);
+      }
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      return canvas.toDataURL("image/png");
+    }
+
+    ctx.beginPath();
+    ctx.fillStyle = fillColor;
+    ctx.arc(24.5, 24.5, 5.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.lineWidth = 1.6;
+    ctx.arc(24.5, 24.5, 6.8, 0, Math.PI * 2);
+    ctx.stroke();
+    return canvas.toDataURL("image/png");
+  }
+
+  function hexToRgba(hex, alpha = 1) {
+    const normalized = normalizeBadgeColor(hex);
+    const r = Number.parseInt(normalized.slice(1, 3), 16);
+    const g = Number.parseInt(normalized.slice(3, 5), 16);
+    const b = Number.parseInt(normalized.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, alpha))})`;
   }
 
   function loadImage(url) {
@@ -705,8 +840,14 @@
     return link;
   }
 
-  function setGeneratedIcon(dataUrl) {
-    ensureGeneratedIconLink().href = dataUrl;
+  function setGeneratedIcon(dataUrl, mimeType = "") {
+    const link = ensureGeneratedIconLink();
+    if (mimeType) {
+      link.type = mimeType;
+    } else {
+      link.removeAttribute("type");
+    }
+    link.href = dataUrl;
   }
 
   function restoreOriginalIcons() {

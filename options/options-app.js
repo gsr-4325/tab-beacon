@@ -139,7 +139,7 @@ const DEBUG_LOCAL_SANDBOX_PRESET = {
   removable: true,
   nameKey: "presetDebugLocalSandboxName",
   enabled: true,
-  matches: ["file:///*manual-tests/*"],
+  matches: ["file:///*/tabbeacon-sandbox.html", "extension://*/tabbeacon-sandbox.html", "chrome-extension://*/tabbeacon-sandbox.html"],
   matchMode: "any",
   busyWhen: [
     {
@@ -179,11 +179,11 @@ const resetConfirmOkButton = document.getElementById("resetConfirmOk");
 const resetConfirmCancelButton = document.getElementById("resetConfirmCancel");
 const addRuleButton = document.getElementById("addRule");
 const debugToggleButton = document.getElementById("debugToggle");
+const debugModeSwitchButton = document.getElementById("debugModeSwitch");
 const debugSectionBody = document.getElementById("debugSectionBody");
-const enableDebugModeCheckbox = document.getElementById("enableDebugMode");
 const debugPanel = document.getElementById("debugPanel");
-const installDebugPresetButton = document.getElementById("installDebugPreset");
 const openPackagedSandboxButton = document.getElementById("openPackagedSandbox");
+const copySettingsButton = document.getElementById("copySettings");
 const debugPresetStatus = document.getElementById("debugPresetStatus");
 let refreshDiagnosticTabsButton;
 let refreshDiagnosticsButton;
@@ -192,6 +192,8 @@ let diagnosticTabSelect;
 let diagnosticSummary;
 let diagnosticsBody;
 const versionText = document.getElementById("versionText");
+const MOTION_FADE_MS = 220;
+const MOTION_SLIDE_MS = 170;
 
 init().catch((error) => {
   console.error("[TabBeacon] options init failed", error);
@@ -200,6 +202,8 @@ init().catch((error) => {
 async function init() {
   ensureDiagnosticsUi();
   I18N.apply(document);
+  syncIconButtonLabels();
+  openPackagedSandboxButton.setAttribute("title", t("debugOpenPackagedSandbox"));
   versionText.textContent = `v${chrome.runtime.getManifest().version}`;
   const [rulesResult, uiStateResult] = await Promise.all([
     chrome.storage.local.get(STORAGE_KEY),
@@ -217,6 +221,13 @@ async function init() {
     initialRules = await seedMissingDefaults(initialRules, uiState);
   }
 
+  const debugModeEnabled = !!uiState.debugMode;
+  const syncedInitialRules = syncRulesWithDebugMode(initialRules, debugModeEnabled);
+  if (!areRulesEqual(initialRules, syncedInitialRules)) {
+    await chrome.storage.local.set({ [STORAGE_KEY]: syncedInitialRules });
+    initialRules = syncedInitialRules;
+  }
+
   const normalizedRules = initialRules.map(normalizeRuleForEditor);
   renderRules(normalizedRules);
   bindGlobalActions();
@@ -226,8 +237,7 @@ async function init() {
     : !!uiState.showDebugTools;
 
   setDebugSectionExpanded(debugExpanded);
-
-  enableDebugModeCheckbox.checked = !!uiState.debugMode;
+  setDebugModeSwitchState(debugModeEnabled);
   updateDebugPresetStatus(normalizedRules);
 
   if (debugExpanded) {
@@ -235,6 +245,15 @@ async function init() {
   } else {
     renderDiagnosticEmptyState("networkDiagnosticsEmptyState");
   }
+}
+
+function syncIconButtonLabels() {
+  document.querySelectorAll(".add-icon-button").forEach((button) => {
+    const title = button.getAttribute("title");
+    if (title) {
+      button.setAttribute("aria-label", title);
+    }
+  });
 }
 
 function markDirty() {
@@ -249,15 +268,16 @@ function bindGlobalActions() {
   rulesContainer.addEventListener("input", markDirty);
   rulesContainer.addEventListener("change", markDirty);
 
-  addRuleButton.addEventListener("click", () => {
+  addRuleButton.addEventListener("click", async () => {
     const node = createRuleNode(createEmptyRule(), { collapsed: false });
     rulesContainer.prepend(node);
+    await animateElementEnter(node);
     node.querySelector(".rule-name")?.focus();
     markDirty();
   });
 
   saveButton.addEventListener("click", async () => {
-    const rules = collectRulesFromDom();
+    const rules = syncRulesWithDebugMode(collectRulesFromDom(), isDebugModeEnabled());
     await chrome.storage.local.set({ [STORAGE_KEY]: rules });
     renderRules(rules.map(normalizeRuleForEditor));
     setSaveButtonSavedState();
@@ -276,7 +296,7 @@ function bindGlobalActions() {
 
   resetConfirmOkButton.addEventListener("click", async () => {
     resetConfirmModal.close();
-    const freshRules = buildDefaultRules();
+    const freshRules = syncRulesWithDebugMode(buildDefaultRules(), isDebugModeEnabled());
     await chrome.storage.local.set({ [STORAGE_KEY]: freshRules });
     renderRules(freshRules.map(normalizeRuleForEditor));
     markClean();
@@ -296,20 +316,16 @@ function bindGlobalActions() {
     }
   });
 
-  enableDebugModeCheckbox.addEventListener("change", async () => {
+  debugModeSwitchButton.addEventListener("click", async () => {
+    const enabled = !isDebugModeEnabled();
+    setDebugModeSwitchState(enabled);
     const uiState = (await chrome.storage.local.get(UI_STATE_KEY))[UI_STATE_KEY] || {};
-    await chrome.storage.local.set({ [UI_STATE_KEY]: { ...uiState, debugMode: enableDebugModeCheckbox.checked } });
-  });
-
-  installDebugPresetButton.addEventListener("click", async () => {
-    const rules = collectRulesFromDom();
-    if (hasSystemPreset(rules, DEBUG_PRESET_SLUG)) {
-      updateDebugPresetStatus(rules);
-      return;
-    }
-    rules.push(createDebugPresetRule());
-    await chrome.storage.local.set({ [STORAGE_KEY]: rules });
-    renderRules(rules.map(normalizeRuleForEditor));
+    const rules = syncRulesWithDebugMode(collectRulesFromDom(), enabled);
+    await Promise.all([
+      chrome.storage.local.set({ [UI_STATE_KEY]: { ...uiState, debugMode: enabled } }),
+      chrome.storage.local.set({ [STORAGE_KEY]: rules })
+    ]);
+    await reconcileRulesWithAnimation(rules.map(normalizeRuleForEditor));
     updateDebugPresetStatus(rules);
     setSaveButtonSavedState();
     if (isDebugSectionExpanded()) {
@@ -319,6 +335,32 @@ function bindGlobalActions() {
 
   openPackagedSandboxButton.addEventListener("click", async () => {
     await chrome.tabs.create({ url: chrome.runtime.getURL("manual-tests/tabbeacon-sandbox.html") });
+  });
+
+  copySettingsButton.addEventListener("click", async () => {
+    const [rulesResult, uiStateResult] = await Promise.all([
+      chrome.storage.local.get(STORAGE_KEY),
+      chrome.storage.local.get(UI_STATE_KEY)
+    ]);
+    const settings = {
+      rules: rulesResult[STORAGE_KEY] || [],
+      uiState: uiStateResult[UI_STATE_KEY] || {}
+    };
+    await navigator.clipboard.writeText(JSON.stringify(settings, null, 2));
+
+    // Show check icon for 3.5 seconds
+    const copyIcon = copySettingsButton.querySelector(".copy-icon");
+    const checkIcon = copySettingsButton.querySelector(".check-icon");
+
+    copyIcon.style.display = "none";
+    checkIcon.style.display = "flex";
+    copySettingsButton.setAttribute("title", "Copied!");
+
+    setTimeout(() => {
+      copyIcon.style.display = "flex";
+      checkIcon.style.display = "none";
+      copySettingsButton.setAttribute("title", "Copy settings");
+    }, 3500);
   });
 
   refreshDiagnosticTabsButton.addEventListener("click", async () => {
@@ -386,7 +428,7 @@ function migrateRules(rules) {
     const filtered = rule.busyWhen.filter(
       (c) => !(c.source === "dom" && c.query === '[aria-busy="true"]' && rule.name === "Gemini")
     );
-    const removable = rule.slug === DEBUG_PRESET_SLUG ? true : !!rule.removable;
+    const removable = !!rule.removable;
     // Rename legacy content-script fallback rule name
     const name = rule.name === "ChatGPT (starter)" ? "ChatGPT" : rule.name;
     if (filtered.length === rule.busyWhen.length && removable === !!rule.removable && name === rule.name) return rule;
@@ -416,7 +458,7 @@ function normalizeRuleForEditor(rule) {
     slug: rule.slug || generateUserSlug(name || rule.name || t("untitledRule"), id),
     origin,
     readonly: origin === SYSTEM_ORIGIN ? true : !!rule.readonly,
-    removable: !!rule.removable || rule.slug === DEBUG_PRESET_SLUG,
+    removable: !!rule.removable,
     name,
     nameKey,
     enabled: rule.enabled !== false,
@@ -468,7 +510,9 @@ function createRuleNode(rule = createEmptyRule(), options = {}) {
   }
 
   nameInput.value = rule.name || "";
-  root.querySelector(".rule-enabled").checked = !!rule.enabled;
+  const enabledInput = root.querySelector(".rule-enabled");
+  enabledInput.checked = !!rule.enabled;
+  setRuleEnabledState(root, enabledInput.checked);
   root.querySelector(".rule-matches").value = (rule.matches || []).join("\n");
   root.querySelector(".rule-match-mode").value = rule.matchMode || "any";
   root.querySelector(".rule-smart-busy").checked = !!rule.useSmartBusySignals;
@@ -496,9 +540,11 @@ function createRuleNode(rule = createEmptyRule(), options = {}) {
 
   refreshConditionIndexes(conditionsContainer);
 
-  root.querySelector(".add-condition").addEventListener("click", () => {
-    conditionsContainer.appendChild(createConditionNode(undefined, rule.readonly));
+  root.querySelector(".add-condition").addEventListener("click", async () => {
+    const node = createConditionNode(undefined, rule.readonly);
+    conditionsContainer.appendChild(node);
     refreshConditionIndexes(conditionsContainer);
+    await animateElementEnter(node);
     markDirty();
   });
 
@@ -507,9 +553,9 @@ function createRuleNode(rule = createEmptyRule(), options = {}) {
   });
 
   removeRuleButton.disabled = !canRemoveRule(rule);
-  removeRuleButton.addEventListener("click", () => {
+  removeRuleButton.addEventListener("click", async () => {
     if (!canRemoveRule(rule)) return;
-    root.remove();
+    await animateElementExit(root);
     updateDebugPresetStatus(collectRulesFromDom());
     markDirty();
   });
@@ -520,12 +566,23 @@ function createRuleNode(rule = createEmptyRule(), options = {}) {
     disableRuleEditing(root, { allowRemove: !!rule.removable });
   }
 
+  enabledInput.addEventListener("input", () => {
+    setRuleEnabledState(root, enabledInput.checked);
+  });
+  enabledInput.addEventListener("change", () => {
+    setRuleEnabledState(root, enabledInput.checked);
+  });
+
   setRuleCollapsed(root, collapsed);
   return root;
 }
 
 function canRemoveRule(rule) {
   return !rule.readonly || !!rule.removable;
+}
+
+function setRuleEnabledState(root, enabled) {
+  root.dataset.ruleEnabled = String(!!enabled);
 }
 
 function disableRuleEditing(root, { allowRemove = false } = {}) {
@@ -603,12 +660,14 @@ function createConditionNode(condition = createEmptyCondition(), readonly = fals
 
   update();
 
-  removeConditionButton.addEventListener("click", () => {
+  removeConditionButton.addEventListener("click", async () => {
     if (readonly) return;
     const parent = root.parentElement;
-    root.remove();
+    await animateElementExit(root);
     if (parent && !parent.children.length) {
-      parent.appendChild(createConditionNode(undefined, readonly));
+      const replacement = createConditionNode(undefined, readonly);
+      parent.appendChild(replacement);
+      await animateElementEnter(replacement);
     }
     if (parent) {
       refreshConditionIndexes(parent);
@@ -704,18 +763,160 @@ function createEmptyCondition() {
   };
 }
 
-function createDebugPresetRule() {
-  return normalizeRuleForEditor({ ...DEBUG_LOCAL_SANDBOX_PRESET, removable: true });
+function createDebugPresetRule(existingRule) {
+  return normalizeRuleForEditor({
+    ...DEBUG_LOCAL_SANDBOX_PRESET,
+    ...(existingRule || {}),
+    id: existingRule?.id || DEBUG_LOCAL_SANDBOX_PRESET.id,
+    slug: DEBUG_PRESET_SLUG,
+    origin: SYSTEM_ORIGIN,
+    readonly: true,
+    removable: false,
+    nameKey: DEBUG_LOCAL_SANDBOX_PRESET.nameKey,
+    enabled: true
+  });
 }
 
 function hasSystemPreset(rules, slug) {
   return rules.some((rule) => rule.origin === SYSTEM_ORIGIN && rule.slug === slug);
 }
 
+function syncRulesWithDebugMode(rules, enabled) {
+  const existingPreset = rules.find((rule) => rule.origin === SYSTEM_ORIGIN && rule.slug === DEBUG_PRESET_SLUG);
+  const nextRules = rules.filter((rule) => !(rule.origin === SYSTEM_ORIGIN && rule.slug === DEBUG_PRESET_SLUG));
+
+  if (!enabled) {
+    return nextRules;
+  }
+
+  return [...nextRules, createDebugPresetRule(existingPreset)];
+}
+
+function areRulesEqual(left, right) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+async function reconcileRulesWithAnimation(rules) {
+  const currentNodes = Array.from(rulesContainer.querySelectorAll(".rule"));
+  const currentById = new Map(currentNodes.map((node) => [node.dataset.ruleId, node]));
+  const nextIds = new Set(rules.map((rule) => rule.id));
+
+  const removals = currentNodes
+    .filter((node) => !nextIds.has(node.dataset.ruleId))
+    .map((node) => animateElementExit(node));
+
+  if (removals.length) {
+    await Promise.all(removals);
+  }
+
+  rules.forEach((rule) => {
+    if (currentById.has(rule.id)) return;
+    const node = createRuleNode(rule);
+    rulesContainer.appendChild(node);
+    void animateElementEnter(node);
+  });
+}
+
+function animateElementEnter(element) {
+  return animateElementHeight(element, "enter");
+}
+
+function animateElementExit(element) {
+  return animateElementHeight(element, "exit");
+}
+
+function animateElementHeight(element, direction) {
+  if (!element || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (direction === "exit") element?.remove();
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    const existing = element._tabBeaconMotionCleanup;
+    if (typeof existing === "function") existing();
+
+    const style = element.style;
+    const initialTransition = style.transition;
+    const initialOverflow = style.overflow;
+    const initialWillChange = style.willChange;
+    const initialOpacity = style.opacity;
+    const initialPointerEvents = style.pointerEvents;
+    const initialDisplay = style.display;
+    const initialMaxHeight = style.maxHeight;
+    const cleanup = () => {
+      style.transition = initialTransition;
+      style.overflow = initialOverflow;
+      style.willChange = initialWillChange;
+      style.opacity = initialOpacity;
+      style.pointerEvents = initialPointerEvents;
+      style.display = initialDisplay;
+      style.maxHeight = initialMaxHeight;
+      element._tabBeaconMotionCleanup = null;
+    };
+
+    element._tabBeaconMotionCleanup = cleanup;
+    style.overflow = "hidden";
+    style.willChange = "max-height, opacity";
+
+    if (direction === "enter") {
+      const targetHeight = `${element.scrollHeight}px`;
+      style.display = "";
+      style.maxHeight = "0px";
+      style.opacity = "0";
+      requestAnimationFrame(() => {
+        style.transition = `max-height ${MOTION_SLIDE_MS}ms ease`;
+        style.maxHeight = targetHeight;
+        window.setTimeout(() => {
+          style.transition = `opacity ${MOTION_FADE_MS}ms ease`;
+          style.opacity = "1";
+        }, MOTION_SLIDE_MS);
+      });
+      window.setTimeout(() => {
+        cleanup();
+        resolve();
+      }, MOTION_SLIDE_MS + MOTION_FADE_MS + 60);
+      return;
+    }
+
+    style.maxHeight = `${element.offsetHeight}px`;
+    style.opacity = "1";
+    style.pointerEvents = "none";
+    requestAnimationFrame(() => {
+      style.transition = `opacity ${MOTION_FADE_MS}ms ease`;
+      style.opacity = "0";
+    });
+    window.setTimeout(() => {
+      style.transition = `max-height ${MOTION_SLIDE_MS}ms ease`;
+      style.maxHeight = "0px";
+      window.setTimeout(() => {
+        style.display = "none";
+        cleanup();
+        element.remove();
+        resolve();
+      }, MOTION_SLIDE_MS + 40);
+    }, MOTION_FADE_MS);
+  });
+}
+
+function setDebugModeSwitchState(enabled) {
+  if (!debugModeSwitchButton) return;
+  const switchText = debugModeSwitchButton.querySelector(".default-rule-switch-text");
+  debugModeSwitchButton.classList.toggle("active", enabled);
+  debugModeSwitchButton.setAttribute("aria-pressed", String(enabled));
+  debugModeSwitchButton.setAttribute("aria-label", t("debugModeToggle"));
+  debugModeSwitchButton.setAttribute("title", t("debugModeToggle"));
+  if (switchText) {
+    switchText.textContent = enabled ? t("win11SwitchOn") : t("win11SwitchOff");
+  }
+}
+
+function isDebugModeEnabled() {
+  return debugModeSwitchButton?.getAttribute("aria-pressed") === "true";
+}
+
 function updateDebugPresetStatus(rules) {
   const exists = hasSystemPreset(rules, DEBUG_PRESET_SLUG);
   debugPresetStatus.textContent = exists ? t("debugPresetInstalled") : t("debugPresetMissing");
-  installDebugPresetButton.disabled = exists;
 }
 
 function updateConditionHint(condition, hintEl) {

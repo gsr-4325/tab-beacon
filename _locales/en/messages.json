@@ -66,7 +66,7 @@
     "message": "Collapse debug"
   },
   "debugDescription": {
-    "message": "Use this section to install a local sandbox preset without overwriting your own rules."
+    "message": "When debug mode is on, the local sandbox preset is added automatically without overwriting your own rules."
   },
   "debugLoadPreset": {
     "message": "Install local sandbox preset"
@@ -74,14 +74,17 @@
   "debugOpenPackagedSandbox": {
     "message": "Open packaged sandbox"
   },
+  "debugCopySettings": {
+    "message": "Copy settings"
+  },
   "debugLocalFileHint": {
     "message": "For real file:// testing, open manual-tests/tabbeacon-sandbox.html from your local repo."
   },
   "debugPresetInstalled": {
-    "message": "The local sandbox preset is already installed."
+    "message": "The local sandbox preset is active."
   },
   "debugPresetMissing": {
-    "message": "The local sandbox preset is not installed yet."
+    "message": "The local sandbox preset is inactive."
   },
   "networkDiagnosticsTitle": {
     "message": "Network diagnostics"
@@ -374,6 +377,12 @@
   "presetDebugLocalSandboxName": {
     "message": "Debug: Local Sandbox"
   },
+  "optionsThemeSelectorLabel": {
+    "message": "Options theme"
+  },
+  "optionsThemeDefault": {
+    "message": "Default"
+  },
   "win11ModeDark": {
     "message": "Dark"
   },
@@ -385,6 +394,12 @@
   },
   "win11ModeLightTooltip": {
     "message": "Light mode"
+  },
+  "win11SwitchOn": {
+    "message": "On"
+  },
+  "win11SwitchOff": {
+    "message": "Off"
   },
   "urlPatternsHelpLabel": {
     "message": "Help for URL patterns"
