@@ -87,7 +87,7 @@ html[data-theme="default"] .page {
 }
 
 html[data-theme="default"] .hero {
-  margin: 0 0 14px;
+  margin: 0 0 20px;
   padding: 0;
   background: transparent;
   border: 0;
@@ -100,6 +100,21 @@ html[data-theme="default"] .hero-copy {
   gap: 8px;
 }
 
+html[data-theme="default"] .hero-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+html[data-theme="default"] .hero-app-icon {
+  width: 36px;
+  height: 36px;
+  display: block;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
 html[data-theme="default"] .hero-copy h1 {
   margin: 0;
   font-size: 2.15rem;
@@ -108,7 +123,7 @@ html[data-theme="default"] .hero-copy h1 {
 }
 
 html[data-theme="default"] .subtitle {
-  margin: 0;
+  margin: 6px 0 10px;
   color: var(--muted);
   max-width: 760px;
 }

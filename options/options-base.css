@@ -66,6 +66,19 @@ body {
   flex: 1;
 }
 
+.hero-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hero-app-icon {
+  width: 32px;
+  height: 32px;
+  display: block;
+  flex: 0 0 auto;
+}
+
 .hero-copy h1 {
   margin: 0;
 }
