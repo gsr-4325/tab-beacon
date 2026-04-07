@@ -1,11 +1,9 @@
 (() => {
+  const themeBootstrap = window.TabBeaconThemeBootstrap || {};
   const THEME_STORAGE_KEY = window.TabBeaconThemeBootstrap?.THEME_STORAGE_KEY || "tabBeaconOptionsTheme";
-  const MODE_STORAGE_KEY = "tabBeaconWin11ColorMode";
-  const CURRENT_THEME = "win11";
-  const AVAILABLE_THEMES = [
-    { value: "win11", labelKey: "optionsThemeWin11", fallback: "Windows 11" },
-    { value: "vanilla", labelKey: "optionsThemeVanilla", fallback: "Vanilla" }
-  ];
+  const MODE_STORAGE_KEY = "tabBeaconDefaultColorMode";
+  const LEGACY_MODE_STORAGE_KEY = "tabBeaconWin11ColorMode";
+  const CURRENT_THEME = "default";
   const COLOR_MODES = ["dark", "light"];
 
   let rulesObserver = null;
@@ -188,10 +186,21 @@
 
   function setStoredTheme(themeName) {
     try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, themeName);
+      window.localStorage.setItem(
+        THEME_STORAGE_KEY,
+        themeBootstrap.normalizeThemeName?.(themeName) || CURRENT_THEME
+      );
     } catch {
       // ignore storage access failures
     }
+  }
+
+  function getAvailableThemes() {
+    return (themeBootstrap.getThemes?.() || []).map((theme) => ({
+      value: theme.id,
+      labelKey: theme.labelKey,
+      fallback: theme.fallback
+    }));
   }
 
   function resolveMode(mode) {
@@ -201,7 +210,9 @@
 
   function getStoredMode() {
     try {
-      const value = window.localStorage.getItem(MODE_STORAGE_KEY);
+      const value =
+        window.localStorage.getItem(MODE_STORAGE_KEY) ||
+        window.localStorage.getItem(LEGACY_MODE_STORAGE_KEY);
       return resolveMode(value);
     } catch {
       return resolveMode("auto");
@@ -210,7 +221,9 @@
 
   function setStoredMode(mode) {
     try {
-      window.localStorage.setItem(MODE_STORAGE_KEY, COLOR_MODES.includes(mode) ? mode : resolveMode("auto"));
+      const resolvedMode = COLOR_MODES.includes(mode) ? mode : resolveMode("auto");
+      window.localStorage.setItem(MODE_STORAGE_KEY, resolvedMode);
+      window.localStorage.removeItem(LEGACY_MODE_STORAGE_KEY);
     } catch {
       // ignore storage access failures
     }
@@ -224,10 +237,10 @@
 
   function applyMode(mode) {
     const resolved = resolveMode(mode);
-    document.documentElement.dataset.win11Mode = resolved;
+    document.documentElement.dataset.defaultMode = resolved;
 
-    document.querySelectorAll("[data-win11-mode-button]").forEach((button) => {
-      const active = button.dataset.win11ModeButton === resolved;
+    document.querySelectorAll("[data-default-mode-button]").forEach((button) => {
+      const active = button.dataset.defaultModeButton === resolved;
       button.classList.toggle("active", active);
       button.setAttribute("aria-pressed", String(active));
     });
@@ -235,6 +248,8 @@
 
   function ensureThemeSelector() {
     if (document.getElementById("themeDebugControl")) return;
+    const availableThemes = getAvailableThemes();
+    if (availableThemes.length <= 1) return;
 
     const debugSectionBody = document.getElementById("debugSectionBody");
     if (!debugSectionBody) return;
@@ -255,7 +270,7 @@
     select.className = "theme-debug-select";
     select.setAttribute("aria-label", title.textContent);
 
-    AVAILABLE_THEMES.forEach((theme) => {
+    availableThemes.forEach((theme) => {
       const option = document.createElement("option");
       option.value = theme.value;
       option.textContent = message(theme.labelKey, theme.fallback);
@@ -306,12 +321,12 @@
     if (helpDialog) return helpDialog;
 
     const dialog = document.createElement("dialog");
-    dialog.className = "win11-help-dialog";
+    dialog.className = "default-help-dialog";
     dialog.innerHTML = `
-      <div class="win11-help-dialog-header">
-        <h2 class="win11-help-dialog-title"></h2>
+      <div class="default-help-dialog-header">
+        <h2 class="default-help-dialog-title"></h2>
       </div>
-      <div class="win11-help-dialog-content" role="document"></div>
+      <div class="default-help-dialog-content" role="document"></div>
     `;
 
     dialog.addEventListener("click", (event) => {
@@ -325,8 +340,8 @@
 
   function openHelpDialog(titleText, bodyHtml) {
     const dialog = ensureHelpDialog();
-    dialog.querySelector(".win11-help-dialog-title").textContent = titleText;
-    dialog.querySelector(".win11-help-dialog-content").innerHTML = bodyHtml;
+    dialog.querySelector(".default-help-dialog-title").textContent = titleText;
+    dialog.querySelector(".default-help-dialog-content").innerHTML = bodyHtml;
     if (dialog.open) dialog.close();
     if (typeof dialog.showModal === "function") {
       dialog.showModal();
@@ -338,8 +353,8 @@
   function createModeButton(mode) {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "win11-mode-button";
-    button.dataset.win11ModeButton = mode;
+    button.className = "default-mode-button";
+    button.dataset.defaultModeButton = mode;
     button.title = message(mode === "dark" ? "win11ModeDarkTooltip" : "win11ModeLightTooltip", mode === "dark" ? "Dark mode" : "Light mode");
     button.setAttribute("aria-label", button.title);
     button.innerHTML = mode === "dark" ? moonIconSvg() : sunIconSvg();
@@ -347,10 +362,10 @@
   }
 
   function ensureModeSwitch(heroActions) {
-    if (!heroActions || heroActions.querySelector(".win11-mode-switch")) return;
+    if (!heroActions || heroActions.querySelector(".default-mode-switch")) return;
 
     const switcher = document.createElement("div");
-    switcher.className = "win11-mode-switch";
+    switcher.className = "default-mode-switch";
     switcher.setAttribute("role", "button");
     switcher.setAttribute("tabindex", "0");
     switcher.setAttribute("aria-label", isJapanese() ? "ダーク / ライトの切り替え" : "Toggle dark and light mode");
@@ -373,18 +388,18 @@
   }
 
   function decorateRemoveButton(button) {
-    if (!button || button.dataset.win11RemoveEnhanced === "true") return;
-    button.classList.add("win11-remove-icon-button");
+    if (!button || button.dataset.defaultRemoveEnhanced === "true") return;
+    button.classList.add("default-remove-icon-button");
     button.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8M12 4L4 12"/></svg>';
     button.title = message("remove", "Remove");
     button.setAttribute("aria-label", message("remove", "Remove"));
-    button.dataset.win11RemoveEnhanced = "true";
+    button.dataset.defaultRemoveEnhanced = "true";
   }
 
   function createHelpButton(helpKind, titleText) {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "win11-help-button";
+    button.className = "default-help-button";
     button.innerHTML = helpIconSvg();
     button.setAttribute("aria-label", titleText);
     button.addEventListener("click", (event) => {
@@ -397,10 +412,10 @@
 
   function attachInlineHelp(labelSpan, helpKind, titleText) {
     const label = labelSpan?.closest("label");
-    if (!label || label.querySelector(`.win11-inline-label-row[data-help="${helpKind}"]`)) return;
+    if (!label || label.querySelector(`.default-inline-label-row[data-help="${helpKind}"]`)) return;
 
     const row = document.createElement("span");
-    row.className = "win11-inline-label-row";
+    row.className = "default-inline-label-row";
     row.dataset.help = helpKind;
     const button = createHelpButton(helpKind, titleText);
     label.insertBefore(row, label.firstChild);
@@ -418,7 +433,7 @@
       "#clearDiagnostics"
     ].forEach((selector) => {
       root.querySelectorAll(selector).forEach((element) => {
-        element.classList.add("win11-hover-button");
+        element.classList.add("default-hover-button");
       });
     });
   }
@@ -435,17 +450,17 @@
     }
 
     const smartBusyHelpButton = root.querySelector(".smart-busy-help-button");
-    if (smartBusyHelpButton && !smartBusyHelpButton.dataset.win11HelpBound) {
+    if (smartBusyHelpButton && !smartBusyHelpButton.dataset.defaultHelpBound) {
       smartBusyHelpButton.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
         openHelpDialog(message("smartBusyToggle", "Use smart busy detection"), localizedHelpContent("smartBusy"));
       });
-      smartBusyHelpButton.dataset.win11HelpBound = "true";
+      smartBusyHelpButton.dataset.defaultHelpBound = "true";
     }
 
     const conditionsHeading = root.querySelector('.conditions-panel > .section-header > h3');
-    if (conditionsHeading && !conditionsHeading.querySelector('.win11-help-button[data-help="conditions"]')) {
+    if (conditionsHeading && !conditionsHeading.querySelector('.default-help-button[data-help="conditions"]')) {
       const button = createHelpButton("conditions", message("conditionsTitle", "Conditions"));
       button.dataset.help = "conditions";
       conditionsHeading.appendChild(button);
@@ -455,17 +470,17 @@
   function createRuleToggleButton(checkbox) {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "win11-rule-enable-button";
+    button.className = "default-rule-enable-button";
     button.innerHTML = `
-      <span class="win11-rule-switch-text">Off</span>
-      <span class="win11-switch-track"><span class="win11-switch-thumb"></span></span>
+      <span class="default-rule-switch-text">Off</span>
+      <span class="default-switch-track"><span class="default-switch-thumb"></span></span>
     `;
 
     const sync = () => {
       const enabled = !!checkbox.checked;
       button.classList.toggle("active", enabled);
       button.classList.toggle("disabled", !!checkbox.disabled);
-      button.querySelector(".win11-rule-switch-text").textContent = enabled ? message("win11SwitchOn", "On") : message("win11SwitchOff", "Off");
+      button.querySelector(".default-rule-switch-text").textContent = enabled ? message("win11SwitchOn", "On") : message("win11SwitchOff", "Off");
       button.setAttribute("aria-pressed", String(enabled));
       button.disabled = !!checkbox.disabled;
     };
@@ -487,7 +502,7 @@
   }
 
   function enhanceConditionCard(condition) {
-    if (!condition || condition.dataset.win11EnhancedCondition === "true") return;
+    if (!condition || condition.dataset.defaultEnhancedCondition === "true") return;
     const removeButton = condition.querySelector(".remove-condition");
     const header = condition.querySelector(".condition-header");
     const toggle = condition.querySelector(".condition-toggle");
@@ -501,11 +516,11 @@
       });
     }
 
-    condition.dataset.win11EnhancedCondition = "true";
+    condition.dataset.defaultEnhancedCondition = "true";
   }
 
   function enhanceRuleCard(rule) {
-    if (!rule || rule.dataset.win11EnhancedRule === "true") return;
+    if (!rule || rule.dataset.defaultEnhancedRule === "true") return;
 
     const head = rule.querySelector(".rule-head");
     const actions = rule.querySelector(".rule-head-actions");
@@ -517,7 +532,7 @@
     if (!head || !actions || !checkbox || !ruleToggle) return;
 
     if (enableLabel) {
-      enableLabel.classList.add("win11-enable-label");
+      enableLabel.classList.add("default-enable-label");
       enableLabel.setAttribute("aria-hidden", "true");
     }
 
@@ -525,7 +540,7 @@
     ensureRuleHelp(rule);
     markHoverButtons(rule);
 
-    if (!actions.querySelector(".win11-rule-enable-button")) {
+    if (!actions.querySelector(".default-rule-enable-button")) {
       const customToggle = createRuleToggleButton(checkbox);
       if (removeButton) {
         actions.insertBefore(customToggle, removeButton);
@@ -545,7 +560,7 @@
       ruleToggle.click();
     });
 
-    rule.dataset.win11EnhancedRule = "true";
+    rule.dataset.defaultEnhancedRule = "true";
   }
 
   function enhanceAllRules() {
@@ -562,7 +577,7 @@
       const titleText = el.textContent.trim();
       const button = createHelpButton(kind, titleText);
       button.dataset.help = kind;
-      // win11-inline-label-row expects the button to be inside the flex row, aligning nicely.
+      // default-inline-label-row expects the button to be inside the flex row, aligning nicely.
       el.appendChild(button);
       el.dataset.helpBound = "true";
     });
@@ -600,7 +615,7 @@
   function ensureDebugHeaderBehavior() {
     const header = document.querySelector(".debug-card .section-header");
     const toggle = document.getElementById("debugToggle");
-    if (!header || !toggle || header.dataset.win11Clickable === "true") return;
+    if (!header || !toggle || header.dataset.defaultClickable === "true") return;
 
     syncDebugToggleIcon();
 
@@ -609,7 +624,7 @@
       toggle.click();
     });
 
-    header.dataset.win11Clickable = "true";
+    header.dataset.defaultClickable = "true";
   }
 
   function updateHeroOverview(principles) {
@@ -617,7 +632,7 @@
 
     const heroOverview = localizedHeroOverview();
 
-    principles.classList.remove("win11-hidden-principles");
+    principles.classList.remove("default-hidden-principles");
     principles.replaceChildren(
       ...heroOverview.features.map((featureText) => {
         const item = document.createElement("li");
@@ -628,7 +643,7 @@
   }
 
   function ensureLayout() {
-    if (document.body.dataset.win11Enhanced === "true") return true;
+    if (document.body.dataset.defaultEnhanced === "true") return true;
 
     const page = document.querySelector(".page");
     const hero = page?.querySelector(".hero");
@@ -643,13 +658,13 @@
 
     if (!page || !hero) return false;
 
-    page.classList.add("win11-page");
-    hero.classList.add("win11-hero");
-    if (debugCard) debugCard.classList.add("win11-section-card", "win11-debug-card");
-    if (footer) footer.classList.add("win11-footer");
+    page.classList.add("default-page");
+    hero.classList.add("default-hero");
+    if (debugCard) debugCard.classList.add("default-section-card", "default-debug-card");
+    if (footer) footer.classList.add("default-footer");
 
     if (examplesCard) {
-      examplesCard.classList.add("win11-hidden-section");
+      examplesCard.classList.add("default-hidden-section");
       examplesCard.remove();
     }
 
@@ -668,7 +683,7 @@
     ensureHelpDialog();
     markHoverButtons(document);
 
-    document.body.dataset.win11Enhanced = "true";
+    document.body.dataset.defaultEnhanced = "true";
     return true;
   }
 

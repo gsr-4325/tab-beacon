@@ -351,7 +351,7 @@ button.action-button:hover:not(:disabled) {
   filter: brightness(1.05);
 }
 
-html[data-theme="win11"] button.action-button:hover:not(:disabled) {
+html[data-theme="default"] button.action-button:hover:not(:disabled) {
   background-color: color-mix(in srgb, var(--button-bg) 60%, white 0.5%);
 }
 

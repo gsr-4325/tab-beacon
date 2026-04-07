@@ -20,7 +20,7 @@
     indicatorStyle: "spinner",
     spinnerStyle: "ring",
     badgeStyle: "dot",
-    renderMethod: "gif"
+    renderMethod: "frames"
   });
 
   const ANIMATED_BUSY_ICON_DATA_URL =
@@ -164,11 +164,11 @@
       badgeStyle: ["dot", "ring", "corner"].includes(source.badgeStyle)
         ? source.badgeStyle
         : "dot",
-      renderMethod: source.renderMethod === "frames" ? "frames" : "gif"
+      renderMethod: source.renderMethod === "gif" ? "gif" : "frames"
     };
   }
 
-  function normalizeBusyEndGraceMs(value, fallbackMs = 10000) {
+  function normalizeBusyEndGraceMs(value, fallbackMs = 5000) {
     const n = Number(value);
     return Number.isFinite(n)
       ? Math.max(0, Math.min(300000, Math.round(n)))

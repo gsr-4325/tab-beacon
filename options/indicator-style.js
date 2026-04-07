@@ -8,7 +8,7 @@
     indicatorStyle: "spinner",
     spinnerStyle: "ring",
     badgeStyle: "dot",
-    renderMethod: "gif"
+    renderMethod: "frames"
   });
 
   function normalizeSettings(value) {
@@ -17,7 +17,7 @@
       indicatorStyle: source.indicatorStyle === "static-badge" ? "static-badge" : "spinner",
       spinnerStyle: "ring",
       badgeStyle: ["dot", "ring", "corner"].includes(source.badgeStyle) ? source.badgeStyle : "dot",
-      renderMethod: source.renderMethod === "frames" ? "frames" : "gif"
+      renderMethod: source.renderMethod === "gif" ? "gif" : "frames"
     };
   }
 
@@ -34,13 +34,13 @@
               <label class="indicator-choice-card" style="align-items: center;">
                 <input type="radio" name="indicatorStyle" value="spinner" />
                 <span class="indicator-choice-copy">
-                  <span class="indicator-choice-title win11-inline-label-row" data-indicator-help="indicatorStyleSpinner">Spinner animation</span>
+                  <span class="indicator-choice-title default-inline-label-row" data-indicator-help="indicatorStyleSpinner">Spinner animation</span>
                 </span>
               </label>
               <label class="indicator-choice-card" style="align-items: center;">
                 <input type="radio" name="indicatorStyle" value="static-badge" />
                 <span class="indicator-choice-copy">
-                  <span class="indicator-choice-title win11-inline-label-row" data-indicator-help="indicatorStyleStaticBadge">Static badge</span>
+                  <span class="indicator-choice-title default-inline-label-row" data-indicator-help="indicatorStyleStaticBadge">Static badge</span>
                 </span>
               </label>
             </div>
@@ -180,8 +180,8 @@
         }
       }
 
-      html[data-win11-mode="light"] .indicator-choice-card,
-      html[data-win11-mode="light"] .indicator-preview-card {
+      html[data-default-mode="light"] .indicator-choice-card,
+      html[data-default-mode="light"] .indicator-preview-card {
         border-color: rgba(100, 130, 180, 0.35);
         background: #eef2f9;
         color: #1a2540;
@@ -217,8 +217,8 @@
         }
       }
 
-      html[data-win11-mode="light"] .indicator-choice-card input[type="radio"],
-      html[data-win11-mode="light"] .indicator-preview-card input[type="radio"] {
+      html[data-default-mode="light"] .indicator-choice-card input[type="radio"],
+      html[data-default-mode="light"] .indicator-preview-card input[type="radio"] {
         border-color: rgba(80, 100, 150, 0.55);
       }
 
@@ -243,8 +243,8 @@
         }
       }
 
-      html[data-win11-mode="light"] .indicator-choice-card input[type="radio"]:checked,
-      html[data-win11-mode="light"] .indicator-preview-card input[type="radio"]:checked {
+      html[data-default-mode="light"] .indicator-choice-card input[type="radio"]:checked,
+      html[data-default-mode="light"] .indicator-preview-card input[type="radio"]:checked {
         background: radial-gradient(
           circle at center,
           var(--primary, #3b82f6) 38%,
@@ -266,8 +266,8 @@
         }
       }
 
-      html[data-win11-mode="light"] .indicator-choice-card:has(input:checked),
-      html[data-win11-mode="light"] .indicator-preview-card:has(input:checked) {
+      html[data-default-mode="light"] .indicator-choice-card:has(input:checked),
+      html[data-default-mode="light"] .indicator-preview-card:has(input:checked) {
         background: #dce5f5;
       }
 
@@ -293,7 +293,7 @@
         }
       }
 
-      html[data-win11-mode="light"] .indicator-choice-description {
+      html[data-default-mode="light"] .indicator-choice-description {
         color: #5a7090;
       }
 

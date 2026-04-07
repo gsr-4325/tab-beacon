@@ -2,9 +2,10 @@
   const STORAGE_KEY = "tabBeaconRules";
   const STYLE_ID = "tabBeaconRuleBehaviorStyle";
   const HELP_DIALOG_ID = "tabBeaconBehaviorHelpDialog";
+  const DEFAULT_BUSY_END_GRACE_MS = 5_000;
   const t = (key, fallback) => chrome.i18n?.getMessage?.(key) || fallback || key;
 
-  const normalizeBusyEndGraceMs = (value, fallbackMs = 10_000) => {
+  const normalizeBusyEndGraceMs = (value, fallbackMs = DEFAULT_BUSY_END_GRACE_MS) => {
     const n = Number(value);
     return Number.isFinite(n) ? Math.max(0, Math.min(300_000, Math.round(n))) : fallbackMs;
   };
@@ -13,7 +14,7 @@
 
   const parseBusyEndGraceSeconds = (value) => {
     const n = Number.parseFloat(String(value || "").trim());
-    return Number.isFinite(n) ? normalizeBusyEndGraceMs(n * 1000) : 10_000;
+    return Number.isFinite(n) ? normalizeBusyEndGraceMs(n * 1000) : DEFAULT_BUSY_END_GRACE_MS;
   };
 
   const helpIconSvg = () => `
@@ -280,7 +281,7 @@
         line-height: 1.6;
       }
 
-      html[data-theme="win11"] .behavior-panel {
+      html[data-theme="default"] .behavior-panel {
         border-radius: 8px;
         backdrop-filter: blur(16px) saturate(125%);
         -webkit-backdrop-filter: blur(16px) saturate(125%);
@@ -289,26 +290,26 @@
         border: 1px solid var(--panel-border);
       }
 
-      html[data-theme="win11"] .rule[data-rule-origin="system"] .behavior-panel {
+      html[data-theme="default"] .rule[data-rule-origin="system"] .behavior-panel {
         background: var(--system-panel-bg);
       }
 
-      html[data-theme="win11"] .behavior-panel > .section-header {
+      html[data-theme="default"] .behavior-panel > .section-header {
         padding: 8px 12px;
         border-bottom: 1px solid var(--panel-border);
       }
 
-      html[data-theme="win11"] .behavior-panel > .section-header > h3 {
+      html[data-theme="default"] .behavior-panel > .section-header > h3 {
         display: inline-flex;
         align-items: center;
         gap: 6px;
       }
 
-      html[data-theme="win11"] .behavior-body {
+      html[data-theme="default"] .behavior-body {
         padding: 12px;
       }
 
-      html[data-theme="win11"] .behavior-help-button {
+      html[data-theme="default"] .behavior-help-button {
         min-width: 28px;
         width: 28px;
         height: 28px;
@@ -317,18 +318,18 @@
         color: var(--muted);
       }
 
-      html[data-theme="win11"] .behavior-help-button:hover:not(:disabled) {
+      html[data-theme="default"] .behavior-help-button:hover:not(:disabled) {
         background: transparent;
         color: var(--text);
       }
 
-      html[data-theme="win11"] .behavior-number-input {
+      html[data-theme="default"] .behavior-number-input {
         border-radius: 8px;
         border: 1px solid var(--field-border);
         background: var(--field-bg);
       }
 
-      html[data-theme="win11"] .behavior-help-dialog {
+      html[data-theme="default"] .behavior-help-dialog {
         width: min(640px, calc(100vw - 32px));
         padding: 18px 20px;
         border-radius: 12px;
@@ -338,7 +339,7 @@
         box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
       }
 
-      html[data-theme="win11"] .behavior-help-dialog::backdrop {
+      html[data-theme="default"] .behavior-help-dialog::backdrop {
         background: rgba(3, 8, 20, 0.58);
       }
 
@@ -387,7 +388,7 @@
     const originalCreateEmptyRule = createEmptyRule;
     createEmptyRule = function() {
       const rule = originalCreateEmptyRule();
-      rule.busyEndGraceMs = 10_000;
+      rule.busyEndGraceMs = DEFAULT_BUSY_END_GRACE_MS;
       return rule;
     };
 

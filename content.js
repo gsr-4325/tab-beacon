@@ -121,7 +121,7 @@
     return Array.isArray(result[STORAGE_KEY]) ? result[STORAGE_KEY] : [];
   }
 
-  function normalizeBusyEndGraceMs(value, fallbackMs = 10000) {
+  function normalizeBusyEndGraceMs(value, fallbackMs = 5000) {
     const n = Number(value);
     return Number.isFinite(n)
       ? Math.max(0, Math.min(300000, Math.round(n)))

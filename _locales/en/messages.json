@@ -377,6 +377,12 @@
   "presetDebugLocalSandboxName": {
     "message": "Debug: Local Sandbox"
   },
+  "optionsThemeSelectorLabel": {
+    "message": "Options theme"
+  },
+  "optionsThemeDefault": {
+    "message": "Default"
+  },
   "win11ModeDark": {
     "message": "Dark"
   },
