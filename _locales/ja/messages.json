@@ -74,6 +74,9 @@
   "debugOpenPackagedSandbox": {
     "message": "同梱 sandbox を開く"
   },
+  "debugCopySettings": {
+    "message": "設定をコピー"
+  },
   "debugLocalFileHint": {
     "message": "本当の file:// テストは、ローカル repo の manual-tests/tabbeacon-sandbox.html を開いてください。"
   },

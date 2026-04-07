@@ -74,6 +74,9 @@
   "debugOpenPackagedSandbox": {
     "message": "Open packaged sandbox"
   },
+  "debugCopySettings": {
+    "message": "Copy settings"
+  },
   "debugLocalFileHint": {
     "message": "For real file:// testing, open manual-tests/tabbeacon-sandbox.html from your local repo."
   },

@@ -454,6 +454,47 @@ select:disabled {
   pointer-events: none;
 }
 
+.icon-button {
+  min-width: 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: #2a3756;
+  color: var(--text);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.14s ease, filter 0.14s ease;
+  position: relative;
+}
+
+.icon-button:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.icon-button svg.copy-icon {
+  display: flex;
+}
+
+.icon-button svg.check-icon {
+  display: none;
+  stroke: #4ade80;
+}
+
 .rule-controls {
   align-items: flex-end;
   margin-top: 8px;

@@ -164,6 +164,15 @@
         cursor: pointer;
       }
 
+      @media (prefers-color-scheme: light) {
+        .indicator-choice-card,
+        .indicator-preview-card {
+          border-color: rgba(100, 130, 180, 0.35);
+          background: #eef2f9;
+          color: #1a2540;
+        }
+      }
+
       .indicator-choice-card.compact {
         min-height: 100%;
       }
@@ -173,10 +182,45 @@
         margin: 0;
       }
 
+      .indicator-choice-card input[type="radio"],
+      .indicator-preview-card input[type="radio"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 16px;
+        height: 16px;
+        min-width: 16px;
+        border-radius: 50%;
+        border: 2px solid rgba(90, 112, 153, 0.7);
+        background: transparent;
+        cursor: pointer;
+        transition: border-color 0.14s, background-color 0.14s;
+      }
+
+      @media (prefers-color-scheme: light) {
+        .indicator-choice-card input[type="radio"],
+        .indicator-preview-card input[type="radio"] {
+          border-color: rgba(80, 100, 150, 0.55);
+        }
+      }
+
+      .indicator-choice-card input[type="radio"]:checked,
+      .indicator-preview-card input[type="radio"]:checked {
+        border-color: var(--primary, #3b82f6);
+        background: var(--primary, #3b82f6);
+      }
+
       .indicator-choice-card:has(input:checked),
       .indicator-preview-card:has(input:checked) {
         border-color: rgba(59, 130, 246, 0.95);
         box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.35) inset;
+        background: #142135;
+      }
+
+      @media (prefers-color-scheme: light) {
+        .indicator-choice-card:has(input:checked),
+        .indicator-preview-card:has(input:checked) {
+          background: #dce5f5;
+        }
       }
 
       .indicator-choice-copy {
@@ -193,6 +237,12 @@
         color: var(--muted);
         font-size: 0.92rem;
         line-height: 1.5;
+      }
+
+      @media (prefers-color-scheme: light) {
+        .indicator-choice-description {
+          color: #5a7090;
+        }
       }
 
       .indicator-preview {

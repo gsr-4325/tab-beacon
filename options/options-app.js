@@ -139,7 +139,7 @@ const DEBUG_LOCAL_SANDBOX_PRESET = {
   removable: true,
   nameKey: "presetDebugLocalSandboxName",
   enabled: true,
-  matches: ["file:///*manual-tests/*"],
+  matches: ["file:///*/tabbeacon-sandbox.html", "extension://*/tabbeacon-sandbox.html", "chrome-extension://*/tabbeacon-sandbox.html"],
   matchMode: "any",
   busyWhen: [
     {
@@ -184,6 +184,7 @@ const enableDebugModeCheckbox = document.getElementById("enableDebugMode");
 const debugPanel = document.getElementById("debugPanel");
 const installDebugPresetButton = document.getElementById("installDebugPreset");
 const openPackagedSandboxButton = document.getElementById("openPackagedSandbox");
+const copySettingsButton = document.getElementById("copySettings");
 const debugPresetStatus = document.getElementById("debugPresetStatus");
 let refreshDiagnosticTabsButton;
 let refreshDiagnosticsButton;
@@ -200,6 +201,7 @@ init().catch((error) => {
 async function init() {
   ensureDiagnosticsUi();
   I18N.apply(document);
+  openPackagedSandboxButton.setAttribute("title", t("debugOpenPackagedSandbox"));
   versionText.textContent = `v${chrome.runtime.getManifest().version}`;
   const [rulesResult, uiStateResult] = await Promise.all([
     chrome.storage.local.get(STORAGE_KEY),
@@ -319,6 +321,32 @@ function bindGlobalActions() {
 
   openPackagedSandboxButton.addEventListener("click", async () => {
     await chrome.tabs.create({ url: chrome.runtime.getURL("manual-tests/tabbeacon-sandbox.html") });
+  });
+
+  copySettingsButton.addEventListener("click", async () => {
+    const [rulesResult, uiStateResult] = await Promise.all([
+      chrome.storage.local.get(STORAGE_KEY),
+      chrome.storage.local.get(UI_STATE_KEY)
+    ]);
+    const settings = {
+      rules: rulesResult[STORAGE_KEY] || [],
+      uiState: uiStateResult[UI_STATE_KEY] || {}
+    };
+    await navigator.clipboard.writeText(JSON.stringify(settings, null, 2));
+
+    // Show check icon for 3.5 seconds
+    const copyIcon = copySettingsButton.querySelector(".copy-icon");
+    const checkIcon = copySettingsButton.querySelector(".check-icon");
+
+    copyIcon.style.display = "none";
+    checkIcon.style.display = "flex";
+    copySettingsButton.setAttribute("title", "Copied!");
+
+    setTimeout(() => {
+      copyIcon.style.display = "flex";
+      checkIcon.style.display = "none";
+      copySettingsButton.setAttribute("title", "Copy settings");
+    }, 3500);
   });
 
   refreshDiagnosticTabsButton.addEventListener("click", async () => {

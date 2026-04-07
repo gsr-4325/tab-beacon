@@ -51,7 +51,6 @@
     animationFrames: null,
     animationFrameIndex: 0,
     baseIconDataUrl: null,
-    animatedGifObjectUrl: null,
     observer: null,
     reevaluateTimer: null,
     reevaluateMaxWaitTimer: null,
@@ -121,7 +120,23 @@
       matchingRules: matchingRules.length
     });
 
-    if (!matchingRules.length) return;
+    if (!matchingRules.length) {
+      if (window.__tabBeaconSandboxMode !== true) return;
+      const sandboxGraceMs = rulesResult.length > 0
+        ? normalizeBusyEndGraceMs(rulesResult[0].busyEndGraceMs)
+        : normalizeBusyEndGraceMs(undefined);
+      matchingRules.push(normalizeRule({
+        id: "sandbox-auto",
+        name: "Sandbox",
+        enabled: true,
+        matches: [location.href],
+        matchMode: "any",
+        busyWhen: [{ source: "dom", selectorType: "auto", query: '[aria-busy="true"]' }],
+        useSmartBusySignals: true,
+        busyEndGraceMs: sandboxGraceMs,
+        iconMode: "overlaySpinner"
+      }));
+    }
 
     state.activeRules = matchingRules;
     state.ruleActivity = new Map();
@@ -299,7 +314,7 @@
       if (message.type === "tab-beacon/apply-indicator-settings") {
         state.indicatorSettings = normalizeIndicatorSettings(message.settings);
         if (state.currentStatus === "busy") {
-          void startAnimation();
+          startAnimation().catch((err) => console.error("[TabBeacon] startAnimation failed", err));
         } else {
           stopAnimation();
           restoreOriginalIcons();
@@ -378,7 +393,7 @@
           changes[INDICATOR_STORAGE_KEY].newValue
         );
         if (state.currentStatus === "busy") {
-          void startAnimation();
+          startAnimation().catch((err) => console.error("[TabBeacon] startAnimation failed", err));
         } else {
           stopAnimation();
           restoreOriginalIcons();
@@ -642,46 +657,12 @@
     return canvas.toDataURL("image/png");
   }
 
-  function dataUrlToObjectUrl(dataUrl) {
-    const parts = String(dataUrl || "").split(",");
-    if (parts.length < 2) {
-      throw new Error("Invalid data URL");
-    }
-    const meta = parts[0];
-    const body = parts.slice(1).join(",");
-    const mimeMatch = /^data:([^;]+)/i.exec(meta);
-    const mimeType = mimeMatch?.[1] || "application/octet-stream";
-    const isBase64 = /;base64/i.test(meta);
-
-    let bytes;
-    if (isBase64) {
-      const binary = atob(body);
-      bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i += 1) {
-        bytes[i] = binary.charCodeAt(i);
-      }
-    } else {
-      const decoded = decodeURIComponent(body);
-      bytes = new TextEncoder().encode(decoded);
-    }
-
-    return URL.createObjectURL(new Blob([bytes], { type: mimeType }));
-  }
-
-  function revokeAnimatedGifObjectUrl() {
-    if (!state.animatedGifObjectUrl) return;
-    try {
-      URL.revokeObjectURL(state.animatedGifObjectUrl);
-    } catch {}
-    state.animatedGifObjectUrl = null;
-  }
-
   function applyStatus(nextStatus) {
     if (state.currentStatus === nextStatus) return;
     dbg(`status: ${state.currentStatus} → ${nextStatus}`);
     state.currentStatus = nextStatus;
     if (nextStatus === "busy") {
-      void startAnimation();
+      startAnimation().catch((err) => console.error("[TabBeacon] startAnimation failed", err));
       return;
     }
     stopAnimation();
@@ -703,10 +684,7 @@
     }
 
     if (state.indicatorSettings.renderMethod === "gif") {
-      if (!state.animatedGifObjectUrl) {
-        state.animatedGifObjectUrl = dataUrlToObjectUrl(ANIMATED_BUSY_ICON_DATA_URL);
-      }
-      setGeneratedIcon(state.animatedGifObjectUrl, "image/gif");
+      setGeneratedIcon(ANIMATED_BUSY_ICON_DATA_URL, "image/gif");
       return;
     }
 
@@ -727,7 +705,6 @@
     }
     state.animationFrames = null;
     state.animationFrameIndex = 0;
-    revokeAnimatedGifObjectUrl();
   }
 
   async function generateSpinnerFrames(baseIconDataUrl) {

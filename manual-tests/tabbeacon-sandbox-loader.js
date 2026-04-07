@@ -3,6 +3,7 @@
   const scripts = [];
 
   if (shouldLoadTabBeacon) {
+    window.__tabBeaconSandboxMode = true;
     scripts.push("../content-indicator-renderer.js");
   }
   scripts.push("tabbeacon-sandbox.js");
