@@ -27,6 +27,7 @@ The current manifest version is `0.3.2`.
 - Version display in the options page footer
 - Collapsible Debug section
 - Since display in the options page footer
+- Review target display in the options page footer when git hooks are installed
 
 ## Behavior already confirmed by the user
 
@@ -43,7 +44,7 @@ These behaviors were confirmed directly during the conversation.
 - `manifest.json`: Manifest V3 definition
 - `background.js`: minimal per-tab and per-rule network monitoring implementation
 - `content.js`: DOM monitoring, smart busy detection, and favicon updates
-- `options.html` / `options.js` / `options.css`: options UI
+- `options/`: options UI shell, behaviors, and themes
 - `i18n.js`: i18n helper for the options UI
 - `_locales/en/messages.json` / `_locales/ja/messages.json`: locale strings
 - `manual-tests/tabbeacon-sandbox.html`: local manual test page
@@ -58,6 +59,17 @@ These behaviors were confirmed directly during the conversation.
 3. Choose **Load unpacked**
 4. Load the root of this repository
 5. Open the options page
+
+### Enable automatic review target tracking
+
+To show the current local branch and HEAD SHA in the options footer during review:
+
+1. Run `git config core.hooksPath githooks` once in your local clone
+2. Run `githooks/update-review-build-info.sh` once to generate the initial file
+3. After that, every `git checkout` / `git switch` / `git pull` will refresh `generated/review-build-info.local.js`
+4. Reload the unpacked extension from `chrome://extensions`
+
+`generated/review-build-info.local.js` is intentionally ignored by Git, so the review target can change locally without causing merge conflicts between PRs.
 
 ### Test the sandbox
 
