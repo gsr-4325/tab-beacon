@@ -3,8 +3,6 @@
   const STYLE_ID = "tabBeaconIndicatorStyleUi";
   const CARD_ID = "indicatorSettingsCard";
   const DEBUG_RENDER_GROUP_ID = "debugRenderMethodGroup";
-  const isJa = (chrome.i18n?.getUILanguage?.() || "").toLowerCase().startsWith("ja");
-  const copy = (en, ja) => (isJa ? ja : en);
 
   const DEFAULT_SETTINGS = Object.freeze({
     indicatorStyle: "spinner",
@@ -17,7 +15,7 @@
     const source = value && typeof value === "object" ? value : {};
     return {
       indicatorStyle: source.indicatorStyle === "static-badge" ? "static-badge" : "spinner",
-      spinnerStyle: source.spinnerStyle === "ring" ? "ring" : "ring",
+      spinnerStyle: "ring",
       badgeStyle: ["dot", "ring", "corner"].includes(source.badgeStyle) ? source.badgeStyle : "dot",
       renderMethod: source.renderMethod === "frames" ? "frames" : "gif"
     };
@@ -27,31 +25,31 @@
     return `
       <section id="${CARD_ID}" class="card indicator-settings-card">
         <div class="section-header">
-          <h2>${copy("Indicator style", "Indicator style")}</h2>
+          <h2>Indicator style</h2>
         </div>
         <div class="indicator-settings-body">
           <section class="indicator-group">
-            <h3 class="indicator-group-title">${copy("Display style", "表示方法")}</h3>
+            <h3 class="indicator-group-title">Display style</h3>
             <div class="indicator-choice-grid" data-setting-group="indicatorStyle">
               <label class="indicator-choice-card">
                 <input type="radio" name="indicatorStyle" value="spinner" />
                 <span class="indicator-choice-copy">
-                  <span class="indicator-choice-title">${copy("Spinner animation", "Spinner animation")}</span>
-                  <span class="indicator-choice-description">${copy("Show a spinning busy indicator on the tab icon.", "タブアイコンに回転するこのヂ尚禚高示#��出します")}</span>
+                  <span class="indicator-choice-title">Spinner animation</span>
+                  <span class="indicator-choice-description">Show a spinning busy indicator on the tab icon.</span>
                 </span>
               </label>
               <label class="indicator-choice-card">
                 <input type="radio" name="indicatorStyle" value="static-badge" />
                 <span class="indicator-choice-copy">
-                  <span class="indicator-choice-title">${copy("Static badge", "Static badge")}</span>
-                  <span class="indicator-choice-description">${copy("Show a non-animated badge on the tab icon.", "タブアイコンに非アニメーションのバッジを出します")}</span>
+                  <span class="indicator-choice-title">Static badge</span>
+                  <span class="indicator-choice-description">Show a non-animated badge on the tab icon.</span>
                 </span>
               </label>
             </div>
           </section>
 
           <section class="indicator-group indicator-style-group" data-style-group="spinner">
-            <h3 class="indicator-group-title">${copy("Spinner style", "スピナースタイル")}</h3>
+            <h3 class="indicator-group-title">Spinner style</h3>
             <div class="indicator-choice-grid" data-setting-group="spinnerStyle">
               <label class="indicator-preview-card">
                 <input type="radio" name="spinnerStyle" value="ring" />
@@ -66,34 +64,34 @@
                   <span class="indicator-preview-spinner-dot dot-7"></span>
                   <span class="indicator-preview-spinner-dot dot-8"></span>
                 </span>
-                <span class="indicator-preview-label">${copy("Ring", "Ring")}</span>
+                <span class="indicator-preview-label">Ring</span>
               </label>
             </div>
           </section>
 
           <section class="indicator-group indicator-style-group" data-style-group="static-badge">
-            <h3 class="indicator-group-title">${copy("Badge style", "バッジスタイル")}</h3>
+            <h3 class="indicator-group-title">Badge style</h3>
             <div class="indicator-choice-grid" data-setting-group="badgeStyle">
               <label class="indicator-preview-card">
                 <input type="radio" name="badgeStyle" value="dot" />
                 <span class="indicator-preview indicator-preview-badge">
                   <span class="indicator-badge-sample indicator-badge-dot"></span>
                 </span>
-                <span class="indicator-preview-label">${copy("Dot", "Dot")}</span>
+                <span class="indicator-preview-label">Dot</span>
               </label>
               <label class="indicator-preview-card">
                 <input type="radio" name="badgeStyle" value="ring" />
                 <span class="indicator-preview indicator-preview-badge">
                   <span class="indicator-badge-sample indicator-badge-ring"></span>
                 </span>
-                <span class="indicator-preview-label">${copy("Ring", "Ring")}</span>
+                <span class="indicator-preview-label">Ring</span>
               </label>
               <label class="indicator-preview-card">
                 <input type="radio" name="badgeStyle" value="corner" />
                 <span class="indicator-preview indicator-preview-badge">
                   <span class="indicator-badge-sample indicator-badge-corner"></span>
                 </span>
-                <span class="indicator-preview-label">${copy("Corner", "Corner")}</span>
+                <span class="indicator-preview-label">Corner</span>
               </label>
             </div>
           </section>
@@ -105,20 +103,20 @@
   function debugRenderMarkup() {
     return `
       <section id="${DEBUG_RENDER_GROUP_ID}" class="debug-render-group">
-        <h3 class="debug-render-title">${copy("Render method", "描画方式")}</h3>
+        <h3 class="debug-render-title">Render method</h3>
         <div class="indicator-choice-grid" data-setting-group="renderMethod">
           <label class="indicator-choice-card compact">
             <input type="radio" name="renderMethod" value="frames" />
             <span class="indicator-choice-copy">
-              <span class="indicator-choice-title">${copy("Frames", "Frames")}</span>
-              <span class="indicator-choice-description">${copy("Animate by swapping generated favicon frames with a timer.", "タイマーで生成済㿟 favicon フレームん差し替えてアニメーションします.")}</span>
+              <span class="indicator-choice-title">Frames</span>
+              <span class="indicator-choice-description">Animate by swapping generated favicon frames with a timer.</span>
             </span>
           </label>
           <label class="indicator-choice-card compact">
             <input type="radio" name="renderMethod" value="gif" />
             <span class="indicator-choice-copy">
-              <span class="indicator-choice-title">${copy("GIF", "GIF")}</span>
-              <span class="indicator-choice-description">${copy("Animate with a prebuilt GIF favicon while busy.", "busy 中は事前生成し GIF favicon を使います" �}</span>
+              <span class="indicator-choice-title">GIF</span>
+              <span class="indicator-choice-description">Animate with a prebuilt GIF favicon while busy.</span>
             </span>
           </label>
         </div>
@@ -276,7 +274,7 @@
 
       @media (max-width: 760px) {
         .indicator-choice-grid {
-          grid-template-columns: 1fr ;
+          grid-template-columns: 1fr;
         }
       }
     `;
@@ -338,7 +336,7 @@
     root.addEventListener("change", () => {
       const settings = readSettingsFromDom();
       syncGroupVisibility(settings.indicatorStyle);
-      markDirty?.();
+      if (typeof markDirty === "function") markDirty();
     });
     root.dataset.bound = "true";
   }
@@ -346,7 +344,7 @@
   function bindDebugHandlers(root) {
     if (!root || root.dataset.bound === "true") return;
     root.addEventListener("change", () => {
-      markDirty?.();
+      if (typeof markDirty === "function") markDirty();
     });
     root.dataset.bound = "true";
   }
@@ -367,8 +365,7 @@
   }
 
   function ready() {
-    return (
-      typeof markDirty === "function" &&
+    return !!(
       document.getElementById("saveAll") &&
       document.getElementById("resetConfirmOk") &&
       document.getElementById("debugPanel")
@@ -396,12 +393,11 @@
     bindDebugHandlers(debugRenderGroup);
 
     if (!document.body.dataset.indicatorSettingsSaveBound) {
-      saveButton.addEventListener("click", async () => {
+      document.getElementById("saveAll")?.addEventListener("click", async () => {
         await saveSettings();
       });
 
-      const resetConfirmOkButton = document.getElementById("resetConfirmOk");
-      resetConfirmOkButton?.addEventListener("click", async () => {
+      document.getElementById("resetConfirmOk")?.addEventListener("click", async () => {
         await resetSettings();
       });
 
