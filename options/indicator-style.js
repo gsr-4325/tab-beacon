@@ -130,10 +130,15 @@
     style.textContent = `
       .indicator-settings-card {
         display: grid;
-        gap: 16px;
+        gap: 0;
       }
 
-      .indicator-settings-body,
+      .indicator-settings-body {
+        display: grid;
+        gap: 16px;
+        padding: 14px;
+      }
+
       .indicator-group {
         display: grid;
         gap: 12px;
