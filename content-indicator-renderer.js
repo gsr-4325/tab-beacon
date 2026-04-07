@@ -20,6 +20,7 @@
     indicatorStyle: "spinner",
     spinnerStyle: "ring",
     badgeStyle: "dot",
+    badgeColor: "#3b82f6",
     renderMethod: "frames"
   });
 
@@ -142,14 +143,21 @@
 
   function normalizeIndicatorSettings(value) {
     const source = value && typeof value === "object" ? value : {};
+    const badgeColor = normalizeBadgeColor(source.badgeColor);
     return {
       indicatorStyle: source.indicatorStyle === "static-badge" ? "static-badge" : "spinner",
       spinnerStyle: "ring",
       badgeStyle: ["dot", "ring", "corner"].includes(source.badgeStyle)
         ? source.badgeStyle
         : "dot",
+      badgeColor,
       renderMethod: source.renderMethod === "gif" ? "gif" : "frames"
     };
+  }
+
+  function normalizeBadgeColor(value) {
+    const color = typeof value === "string" ? value.trim() : "";
+    return /^#[0-9a-fA-F]{6}$/.test(color) ? color.toLowerCase() : DEFAULT_INDICATOR_SETTINGS.badgeColor;
   }
 
   function normalizeBusyEndGraceMs(value, fallbackMs = 5000) {
@@ -667,7 +675,11 @@
 
     if (state.indicatorSettings.indicatorStyle === "static-badge") {
       setGeneratedIcon(
-        await generateStaticBadgeDataUrl(state.baseIconDataUrl, state.indicatorSettings.badgeStyle),
+        await generateStaticBadgeDataUrl(
+          state.baseIconDataUrl,
+          state.indicatorSettings.badgeStyle,
+          state.indicatorSettings.badgeColor
+        ),
         "image/png"
       );
       return;
@@ -746,17 +758,18 @@
     ctx.stroke();
   }
 
-  async function generateStaticBadgeDataUrl(baseIconDataUrl, badgeStyle) {
+  async function generateStaticBadgeDataUrl(baseIconDataUrl, badgeStyle, badgeColor) {
     const canvas = document.createElement("canvas");
     canvas.width = 32;
     canvas.height = 32;
     const ctx = canvas.getContext("2d");
     const img = await loadImage(baseIconDataUrl);
     ctx.drawImage(img, 0, 0, 32, 32);
+    const fillColor = hexToRgba(normalizeBadgeColor(badgeColor), 0.98);
 
     if (badgeStyle === "ring") {
       ctx.beginPath();
-      ctx.strokeStyle = "rgba(59, 130, 246, 0.98)";
+      ctx.strokeStyle = fillColor;
       ctx.lineWidth = 3.4;
       ctx.arc(24.5, 24.5, 5.2, 0, Math.PI * 2);
       ctx.stroke();
@@ -769,7 +782,7 @@
     }
 
     if (badgeStyle === "corner") {
-      ctx.fillStyle = "rgba(59, 130, 246, 0.98)";
+      ctx.fillStyle = fillColor;
       ctx.beginPath();
       if (typeof ctx.roundRect === "function") {
         ctx.roundRect(20, 4, 8, 8, 2.5);
@@ -784,7 +797,7 @@
     }
 
     ctx.beginPath();
-    ctx.fillStyle = "rgba(59, 130, 246, 0.98)";
+    ctx.fillStyle = fillColor;
     ctx.arc(24.5, 24.5, 5.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
@@ -793,6 +806,14 @@
     ctx.arc(24.5, 24.5, 6.8, 0, Math.PI * 2);
     ctx.stroke();
     return canvas.toDataURL("image/png");
+  }
+
+  function hexToRgba(hex, alpha = 1) {
+    const normalized = normalizeBadgeColor(hex);
+    const r = Number.parseInt(normalized.slice(1, 3), 16);
+    const g = Number.parseInt(normalized.slice(3, 5), 16);
+    const b = Number.parseInt(normalized.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, alpha))})`;
   }
 
   function loadImage(url) {

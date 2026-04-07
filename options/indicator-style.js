@@ -8,17 +8,25 @@
     indicatorStyle: "spinner",
     spinnerStyle: "ring",
     badgeStyle: "dot",
+    badgeColor: "#3b82f6",
     renderMethod: "frames"
   });
 
   function normalizeSettings(value) {
     const source = value && typeof value === "object" ? value : {};
+    const badgeColor = normalizeBadgeColor(source.badgeColor);
     return {
       indicatorStyle: source.indicatorStyle === "static-badge" ? "static-badge" : "spinner",
       spinnerStyle: "ring",
       badgeStyle: ["dot", "ring", "corner"].includes(source.badgeStyle) ? source.badgeStyle : "dot",
+      badgeColor,
       renderMethod: source.renderMethod === "gif" ? "gif" : "frames"
     };
+  }
+
+  function normalizeBadgeColor(value) {
+    const color = typeof value === "string" ? value.trim() : "";
+    return /^#[0-9a-fA-F]{6}$/.test(color) ? color.toLowerCase() : DEFAULT_SETTINGS.badgeColor;
   }
 
   function indicatorCardMarkup() {
@@ -93,6 +101,14 @@
               </label>
             </div>
           </section>
+
+          <section class="indicator-group indicator-style-group" data-style-group="static-badge">
+            <h3 class="indicator-group-title">Color</h3>
+            <label class="indicator-color-field" for="badgeColorInput">
+              <span class="indicator-color-label">Badge color</span>
+              <input id="badgeColorInput" name="badgeColor" type="color" value="#3b82f6" />
+            </label>
+          </section>
         </div>
       </section>
     `;
@@ -158,6 +174,10 @@
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 12px;
+      }
+
+      .indicator-settings-card {
+        --indicator-badge-color: #3b82f6;
       }
 
       .indicator-choice-card,
@@ -349,7 +369,7 @@
         right: 6px;
         bottom: 6px;
         border-radius: 999px;
-        background: rgba(59, 130, 246, 0.96);
+        background: color-mix(in srgb, var(--indicator-badge-color) 96%, transparent);
         border: 2px solid rgba(255, 255, 255, 0.92);
       }
 
@@ -359,7 +379,7 @@
         right: 5px;
         bottom: 5px;
         border-radius: 999px;
-        border: 3px solid rgba(59, 130, 246, 0.96);
+        border: 3px solid color-mix(in srgb, var(--indicator-badge-color) 96%, transparent);
         box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.92);
       }
 
@@ -369,8 +389,49 @@
         right: 6px;
         top: 6px;
         border-radius: 4px;
-        background: rgba(59, 130, 246, 0.96);
+        background: color-mix(in srgb, var(--indicator-badge-color) 96%, transparent);
         border: 1px solid rgba(255, 255, 255, 0.92);
+      }
+
+      .indicator-color-field {
+        display: grid;
+        gap: 10px;
+        max-width: 220px;
+      }
+
+      .indicator-color-label {
+        font-weight: 700;
+      }
+
+      .indicator-color-field input[type="color"] {
+        width: 100%;
+        min-height: 44px;
+        padding: 6px;
+        border-radius: 12px;
+        border: 1px solid rgba(53, 72, 110, 0.45);
+        background: #0d1426;
+        cursor: pointer;
+      }
+
+      .indicator-color-field input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 0;
+      }
+
+      .indicator-color-field input[type="color"]::-webkit-color-swatch {
+        border: 0;
+        border-radius: 8px;
+      }
+
+      @media (prefers-color-scheme: light) {
+        .indicator-color-field input[type="color"] {
+          border-color: rgba(100, 130, 180, 0.35);
+          background: #eef2f9;
+        }
+      }
+
+      html[data-default-mode="light"] .indicator-color-field input[type="color"] {
+        border-color: rgba(100, 130, 180, 0.35);
+        background: #eef2f9;
       }
 
       .debug-render-group {
@@ -420,6 +481,7 @@
       indicatorStyle: document.querySelector('input[name="indicatorStyle"]:checked')?.value,
       spinnerStyle: document.querySelector('input[name="spinnerStyle"]:checked')?.value,
       badgeStyle: document.querySelector('input[name="badgeStyle"]:checked')?.value,
+      badgeColor: document.querySelector('input[name="badgeColor"]')?.value,
       renderMethod: document.querySelector('input[name="renderMethod"]:checked')?.value
     });
   }
@@ -429,7 +491,16 @@
     setGroupValue(document, "spinnerStyle", settings.spinnerStyle);
     setGroupValue(document, "badgeStyle", settings.badgeStyle);
     setGroupValue(document, "renderMethod", settings.renderMethod);
+    const badgeColorInput = document.querySelector('input[name="badgeColor"]');
+    if (badgeColorInput) badgeColorInput.value = settings.badgeColor;
     syncGroupVisibility(settings.indicatorStyle);
+    syncBadgeColorPreview(settings.badgeColor);
+  }
+
+  function syncBadgeColorPreview(color) {
+    const card = document.getElementById(CARD_ID);
+    if (!card) return;
+    card.style.setProperty("--indicator-badge-color", normalizeBadgeColor(color));
   }
 
   function syncGroupVisibility(indicatorStyle) {
@@ -443,7 +514,14 @@
     root.addEventListener("change", () => {
       const settings = readSettingsFromDom();
       syncGroupVisibility(settings.indicatorStyle);
+      syncBadgeColorPreview(settings.badgeColor);
       if (typeof markDirty === "function") markDirty();
+    });
+    root.addEventListener("input", (event) => {
+      if (event.target instanceof HTMLInputElement && event.target.name === "badgeColor") {
+        syncBadgeColorPreview(event.target.value);
+        if (typeof markDirty === "function") markDirty();
+      }
     });
     root.dataset.bound = "true";
   }
