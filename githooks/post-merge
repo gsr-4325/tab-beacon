@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+"$REPO_ROOT/githooks/update-review-build-info.sh"
