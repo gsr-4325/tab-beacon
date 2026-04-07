@@ -31,18 +31,16 @@
           <section class="indicator-group">
             <h3 class="indicator-group-title">Display style</h3>
             <div class="indicator-choice-grid" data-setting-group="indicatorStyle">
-              <label class="indicator-choice-card">
+              <label class="indicator-choice-card" style="align-items: center;">
                 <input type="radio" name="indicatorStyle" value="spinner" />
                 <span class="indicator-choice-copy">
-                  <span class="indicator-choice-title">Spinner animation</span>
-                  <span class="indicator-choice-description">Show a spinning busy indicator on the tab icon.</span>
+                  <span class="indicator-choice-title win11-inline-label-row" data-indicator-help="indicatorStyleSpinner">Spinner animation</span>
                 </span>
               </label>
-              <label class="indicator-choice-card">
+              <label class="indicator-choice-card" style="align-items: center;">
                 <input type="radio" name="indicatorStyle" value="static-badge" />
                 <span class="indicator-choice-copy">
-                  <span class="indicator-choice-title">Static badge</span>
-                  <span class="indicator-choice-description">Show a non-animated badge on the tab icon.</span>
+                  <span class="indicator-choice-title win11-inline-label-row" data-indicator-help="indicatorStyleStaticBadge">Static badge</span>
                 </span>
               </label>
             </div>
@@ -166,6 +164,11 @@
         border: 1px solid rgba(53, 72, 110, 0.45);
         background: #0d1426;
         cursor: pointer;
+      }
+
+      .indicator-preview-card {
+        justify-items: center;
+        text-align: center;
       }
 
       @media (prefers-color-scheme: light) {

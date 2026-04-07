@@ -78,6 +78,20 @@
           <li>逆に、完全に手動で条件を管理したい場合はオフにしてください。</li>
         </ul>
         <p>つまり、smart busy detection は「ルール全体の追加ヒント」として働きます。</p>
+      `,
+      indicatorStyleSpinner: `
+        <p>タブアイコンの右下に、回転する busy インジケーター（スピナー）を表示します。</p>
+        <ul>
+          <li>アクティブな処理が進行中であることを直感的に伝えます。</li>
+          <li>Spinning style セクションから、スピナーの見た目を選べます。</li>
+        </ul>
+      `,
+      indicatorStyleStaticBadge: `
+        <p>タブアイコンの右下に、アニメーションしない静的なバッジを表示します。</p>
+        <ul>
+          <li>処理中であることを控えめに、アニメーションの煩わしさなしに伝えます。</li>
+          <li>Badge style セクションから、バッジの見た目を選べます。</li>
+        </ul>
       `
     };
 
@@ -127,6 +141,20 @@
           <li>Disable it when you want the rule to depend only on the conditions you configured manually.</li>
         </ul>
         <p>In other words, smart busy detection acts as a rule-wide fallback hint.</p>
+      `,
+      indicatorStyleSpinner: `
+        <p>Show a spinning busy indicator on the tab icon.</p>
+        <ul>
+          <li>Provides an intuitive animated signal for ongoing processes.</li>
+          <li>You can customize the look from the Spinner style section.</li>
+        </ul>
+      `,
+      indicatorStyleStaticBadge: `
+        <p>Show a non-animated badge on the tab icon.</p>
+        <ul>
+          <li>Provides a subtle, distraction-free signal for busy states.</li>
+          <li>You can customize the look from the Badge style section.</li>
+        </ul>
       `
     };
 
@@ -528,6 +556,27 @@
     markHoverButtons(document);
   }
 
+  function ensureGlobalHelp() {
+    document.querySelectorAll('[data-indicator-help]:not([data-help-bound])').forEach((el) => {
+      const kind = el.dataset.indicatorHelp;
+      const titleText = el.textContent.trim();
+      const button = createHelpButton(kind, titleText);
+      button.dataset.help = kind;
+      // win11-inline-label-row expects the button to be inside the flex row, aligning nicely.
+      el.appendChild(button);
+      el.dataset.helpBound = "true";
+    });
+  }
+
+  function observeBody() {
+    const observer = new MutationObserver(() => {
+      window.requestAnimationFrame(() => {
+        ensureGlobalHelp();
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
   function observeRules() {
     const rulesContainer = document.getElementById("rulesContainer");
     if (!rulesContainer || rulesObserver) return;
@@ -627,7 +676,9 @@
     if (!ensureLayout()) return;
     ensureThemeSelector();
     enhanceAllRules();
+    ensureGlobalHelp();
     observeRules();
+    observeBody();
     ensureDebugHeaderBehavior();
     applyMode(getStoredMode());
     window.TabBeaconOptionsTheme = {
