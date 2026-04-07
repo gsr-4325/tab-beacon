@@ -20,6 +20,42 @@
   "saved": {
     "message": "Saved"
   },
+  "autosaveSaving": {
+    "message": "Saving settings..."
+  },
+  "autosaveUpdated": {
+    "message": "Updated settings"
+  },
+  "autosaveFailed": {
+    "message": "Couldn't save settings"
+  },
+  "settingsData": {
+    "message": "Settings data"
+  },
+  "importSettings": {
+    "message": "Import settings"
+  },
+  "exportSettings": {
+    "message": "Export settings"
+  },
+  "importingSettings": {
+    "message": "Importing settings..."
+  },
+  "importedSettings": {
+    "message": "Imported settings"
+  },
+  "importSettingsFailed": {
+    "message": "Couldn't import settings"
+  },
+  "exportingSettings": {
+    "message": "Exporting settings..."
+  },
+  "exportedSettings": {
+    "message": "Exported settings"
+  },
+  "exportSettingsFailed": {
+    "message": "Couldn't export settings"
+  },
   "reset": {
     "message": "Reset"
   },

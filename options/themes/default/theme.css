@@ -126,6 +126,41 @@ html[data-theme="default"] .hero-actions {
   flex-wrap: wrap;
 }
 
+html[data-theme="default"] .settings-data-button {
+  border: 1px solid var(--button-border);
+  background: var(--button-bg);
+  color: var(--text);
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+html[data-theme="default"] .settings-data-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--button-bg) 60%, white 0.5%);
+}
+
+html[data-theme="default"] .settings-data-actions {
+  padding: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel) 86%, var(--field-bg) 14%);
+  border: 1px solid var(--button-border);
+  backdrop-filter: blur(14px) saturate(125%);
+  -webkit-backdrop-filter: blur(14px) saturate(125%);
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.16);
+}
+
+html[data-theme="default"] .settings-data-button .database-icon-base {
+  opacity: 0.62;
+}
+
+html[data-theme="default"] .settings-data-button .database-icon-arrow-cutout {
+  stroke: color-mix(in srgb, var(--button-bg) 78%, var(--panel) 22%);
+}
+
+html[data-theme="default"] .settings-data-button .database-icon-arrow {
+  stroke: var(--switch-on);
+  filter: drop-shadow(0 0 1.5px color-mix(in srgb, var(--panel) 92%, black 8%));
+}
+
 html[data-theme="default"] .default-mode-switch {
   display: inline-flex;
   align-items: center;
@@ -745,6 +780,27 @@ html[data-theme="default"] .diagnostic-status-completed {
 
 html[data-theme="default"] .diagnostic-status-error {
   background: rgba(248, 113, 113, 0.16);
+}
+
+html[data-theme="default"] .autosave-toast {
+  border-radius: 12px;
+  border-color: var(--panel-border);
+  background: color-mix(in srgb, var(--panel) 88%, var(--field-bg) 12%);
+  backdrop-filter: blur(16px) saturate(125%);
+  -webkit-backdrop-filter: blur(16px) saturate(125%);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+}
+
+html[data-theme="default"] .autosave-toast[data-state="saving"] {
+  border-color: color-mix(in srgb, var(--primary) 38%, var(--panel-border) 62%);
+}
+
+html[data-theme="default"] .autosave-toast[data-state="saved"] {
+  border-color: rgba(74, 222, 128, 0.32);
+}
+
+html[data-theme="default"] .autosave-toast[data-state="error"] {
+  border-color: rgba(248, 113, 113, 0.36);
 }
 
 html[data-theme="default"] .default-help-dialog {

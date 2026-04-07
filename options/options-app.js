@@ -1,5 +1,6 @@
 const STORAGE_KEY = "tabBeaconRules";
 const UI_STATE_KEY = "tabBeaconUiState";
+const INDICATOR_SETTINGS_KEY = "tabBeaconIndicatorSettings";
 const DEBUG_PRESET_SLUG = "debug-local-sandbox";
 const SYSTEM_ORIGIN = "system";
 const USER_ORIGIN = "user";
@@ -172,11 +173,14 @@ function helpIconSvg() {
 const rulesContainer = document.getElementById("rulesContainer");
 const ruleTemplate = document.getElementById("ruleTemplate");
 const conditionTemplate = document.getElementById("conditionTemplate");
-const saveButton = document.getElementById("saveAll");
 const resetButton = document.getElementById("resetAll");
 const resetConfirmModal = document.getElementById("resetConfirmModal");
 const resetConfirmOkButton = document.getElementById("resetConfirmOk");
 const resetConfirmCancelButton = document.getElementById("resetConfirmCancel");
+const settingsDataTriggerButton = document.getElementById("settingsDataTrigger");
+const importSettingsButton = document.getElementById("importSettings");
+const exportSettingsButton = document.getElementById("exportSettings");
+const importSettingsInput = document.getElementById("importSettingsInput");
 const addRuleButton = document.getElementById("addRule");
 const debugToggleButton = document.getElementById("debugToggle");
 const debugModeSwitchButton = document.getElementById("debugModeSwitch");
@@ -192,8 +196,20 @@ let diagnosticTabSelect;
 let diagnosticSummary;
 let diagnosticsBody;
 const versionText = document.getElementById("versionText");
+const autosaveToast = document.getElementById("autosaveToast");
+const autosaveToastIcon = autosaveToast?.querySelector(".autosave-toast-icon");
+const autosaveToastText = autosaveToast?.querySelector(".autosave-toast-text");
 const MOTION_FADE_MS = 220;
 const MOTION_SLIDE_MS = 170;
+const AUTOSAVE_DEBOUNCE_MS = 1500;
+const AUTOSAVE_TOAST_MS = 2600;
+let autosaveTimerId = 0;
+let autosaveHideTimerId = 0;
+let autosaveInFlight = null;
+let autosaveQueued = false;
+let autosaveDirty = false;
+let autosaveRevision = 0;
+let autosaveSavedRevision = 0;
 
 init().catch((error) => {
   console.error("[TabBeacon] options init failed", error);
@@ -248,7 +264,7 @@ async function init() {
 }
 
 function syncIconButtonLabels() {
-  document.querySelectorAll(".add-icon-button").forEach((button) => {
+  document.querySelectorAll(".add-icon-button, .settings-data-button").forEach((button) => {
     const title = button.getAttribute("title");
     if (title) {
       button.setAttribute("aria-label", title);
@@ -256,12 +272,285 @@ function syncIconButtonLabels() {
   });
 }
 
-function markDirty() {
-  saveButton.disabled = false;
+function autosaveSavingIconSvg() {
+  return `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="8" opacity="0.28"></circle>
+      <path d="M12 4a8 8 0 0 1 8 8"></path>
+    </svg>
+  `;
+}
+
+function autosaveSavedIconSvg() {
+  return `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M5 12.5l4.5 4.5L19 7.5"></path>
+    </svg>
+  `;
+}
+
+function autosaveErrorIconSvg() {
+  return `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="8.5"></circle>
+      <path d="M12 8v5"></path>
+      <circle cx="12" cy="16.5" r="0.9" fill="currentColor" stroke="none"></circle>
+    </svg>
+  `;
+}
+
+function clearAutosaveTimer() {
+  if (!autosaveTimerId) return;
+  window.clearTimeout(autosaveTimerId);
+  autosaveTimerId = 0;
+}
+
+function clearAutosaveHideTimer() {
+  if (!autosaveHideTimerId) return;
+  window.clearTimeout(autosaveHideTimerId);
+  autosaveHideTimerId = 0;
+}
+
+function hideAutosaveToast() {
+  clearAutosaveHideTimer();
+  if (!autosaveToast) return;
+  autosaveToast.classList.remove("is-visible");
+  autosaveToast.setAttribute("aria-hidden", "true");
+}
+
+function messageText(key, fallbackText) {
+  const translated = t(key);
+  return translated === key ? fallbackText : translated;
+}
+
+function showAutosaveToast(state, messageKey, fallbackText) {
+  if (!autosaveToast || !autosaveToastIcon || !autosaveToastText) return;
+
+  clearAutosaveHideTimer();
+  autosaveToast.dataset.state = state;
+  autosaveToast.classList.add("is-visible");
+  autosaveToast.setAttribute("aria-hidden", "false");
+  autosaveToastText.textContent = messageText(messageKey, fallbackText);
+
+  if (state === "saving") {
+    autosaveToastIcon.innerHTML = autosaveSavingIconSvg();
+  } else if (state === "error") {
+    autosaveToastIcon.innerHTML = autosaveErrorIconSvg();
+  } else {
+    autosaveToastIcon.innerHTML = autosaveSavedIconSvg();
+  }
+
+  if (state !== "saving") {
+    autosaveHideTimerId = window.setTimeout(() => {
+      hideAutosaveToast();
+    }, AUTOSAVE_TOAST_MS);
+  }
+}
+
+function getIndicatorSettingsApi() {
+  const api = window.TabBeaconIndicatorSettings;
+  return api && typeof api.saveSettings === "function" && document.getElementById("indicatorSettingsCard") ? api : null;
+}
+
+function isPlainObject(value) {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function buildExportFileName() {
+  const manifestName = chrome.runtime.getManifest()?.name || "tab-beacon";
+  const safeName = manifestName
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase() || "tab-beacon";
+  const now = new Date();
+  const dateStamp = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0")
+  ].join("");
+  const timeStamp = [
+    String(now.getHours()).padStart(2, "0"),
+    String(now.getMinutes()).padStart(2, "0"),
+    String(now.getSeconds()).padStart(2, "0")
+  ].join("");
+  return `${safeName}-${dateStamp}-${timeStamp}.json`;
+}
+
+async function ensureLatestSettingsStored() {
+  clearAutosaveTimer();
+  if (autosaveDirty) {
+    await flushAutosave();
+    if (autosaveDirty) {
+      throw new Error("Latest settings could not be persisted before export");
+    }
+    return;
+  }
+  await waitForAutosaveIdle();
+}
+
+async function buildSettingsSnapshot() {
+  const indicatorSettingsApi = getIndicatorSettingsApi();
+  const [rulesResult, uiStateResult, indicatorSettings] = await Promise.all([
+    chrome.storage.local.get(STORAGE_KEY),
+    chrome.storage.local.get(UI_STATE_KEY),
+    indicatorSettingsApi?.loadSettings?.() || chrome.storage.local.get(INDICATOR_SETTINGS_KEY).then((result) => result[INDICATOR_SETTINGS_KEY] || {})
+  ]);
+
+  return {
+    appName: chrome.runtime.getManifest()?.name || "Tab Beacon",
+    schemaVersion: 1,
+    exportedAt: new Date().toISOString(),
+    rules: rulesResult[STORAGE_KEY] || [],
+    uiState: uiStateResult[UI_STATE_KEY] || {},
+    indicatorSettings: indicatorSettings || {}
+  };
+}
+
+function downloadTextFile(filename, content, mimeType = "application/json") {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 0);
+}
+
+async function applyImportedSettings(payload) {
+  if (!isPlainObject(payload) || !Array.isArray(payload.rules)) {
+    throw new Error("Invalid settings file");
+  }
+
+  const indicatorSettingsApi = getIndicatorSettingsApi();
+  const [currentUiStateResult, currentIndicatorSettings] = await Promise.all([
+    chrome.storage.local.get(UI_STATE_KEY),
+    indicatorSettingsApi?.loadSettings?.() || chrome.storage.local.get(INDICATOR_SETTINGS_KEY).then((result) => result[INDICATOR_SETTINGS_KEY] || {})
+  ]);
+
+  const mergedUiState = isPlainObject(payload.uiState)
+    ? { ...(currentUiStateResult[UI_STATE_KEY] || {}), ...payload.uiState }
+    : (currentUiStateResult[UI_STATE_KEY] || {});
+  const debugModeEnabled = !!mergedUiState.debugMode;
+  const importedRules = syncRulesWithDebugMode(migrateRules(payload.rules), debugModeEnabled);
+  const nextIndicatorSettings = isPlainObject(payload.indicatorSettings)
+    ? payload.indicatorSettings
+    : currentIndicatorSettings;
+
+  clearAutosaveTimer();
+  await waitForAutosaveIdle();
+
+  await Promise.all([
+    chrome.storage.local.set({ [STORAGE_KEY]: importedRules }),
+    chrome.storage.local.set({ [UI_STATE_KEY]: mergedUiState }),
+    chrome.storage.local.set({ [INDICATOR_SETTINGS_KEY]: nextIndicatorSettings })
+  ]);
+
+  renderRules(importedRules.map(normalizeRuleForEditor));
+  const debugExpanded = typeof mergedUiState.debugExpanded === "boolean"
+    ? mergedUiState.debugExpanded
+    : !!mergedUiState.showDebugTools;
+  setDebugSectionExpanded(debugExpanded);
+  setDebugModeSwitchState(debugModeEnabled);
+  updateDebugPresetStatus(importedRules);
+
+  if (indicatorSettingsApi) {
+    const normalizedIndicatorSettings = await indicatorSettingsApi.loadSettings();
+    indicatorSettingsApi.applySettingsToDom(normalizedIndicatorSettings);
+  }
+
+  markClean();
+
+  if (debugExpanded) {
+    await refreshDiagnosticTabs({ refreshDiagnostics: true });
+  } else {
+    renderDiagnosticEmptyState("networkDiagnosticsEmptyState");
+  }
+}
+
+async function persistEditorSettings() {
+  const rules = syncRulesWithDebugMode(collectRulesFromDom(), isDebugModeEnabled());
+  const saves = [chrome.storage.local.set({ [STORAGE_KEY]: rules })];
+  const indicatorSettingsApi = getIndicatorSettingsApi();
+  if (indicatorSettingsApi) {
+    saves.push(indicatorSettingsApi.saveSettings());
+  }
+  await Promise.all(saves);
+  updateDebugPresetStatus(rules);
+  return rules;
+}
+
+function scheduleAutosave({ immediate = false } = {}) {
+  autosaveDirty = true;
+  autosaveRevision += 1;
+  clearAutosaveTimer();
+
+  if (immediate) {
+    void flushAutosave();
+    return;
+  }
+
+  autosaveTimerId = window.setTimeout(() => {
+    void flushAutosave();
+  }, AUTOSAVE_DEBOUNCE_MS);
+}
+
+function markDirty(options = {}) {
+  scheduleAutosave(options);
 }
 
 function markClean() {
-  saveButton.disabled = true;
+  autosaveDirty = false;
+  autosaveQueued = false;
+  autosaveSavedRevision = autosaveRevision;
+  clearAutosaveTimer();
+}
+
+async function waitForAutosaveIdle() {
+  if (autosaveInFlight) {
+    await autosaveInFlight;
+  }
+}
+
+async function flushAutosave() {
+  clearAutosaveTimer();
+
+  if (!autosaveDirty) return;
+  if (autosaveInFlight) {
+    autosaveQueued = true;
+    return;
+  }
+
+  const targetRevision = autosaveRevision;
+  showAutosaveToast("saving", "autosaveSaving", "Saving settings...");
+
+  autosaveInFlight = (async () => {
+    try {
+      await persistEditorSettings();
+      autosaveSavedRevision = targetRevision;
+      autosaveDirty = autosaveRevision > autosaveSavedRevision;
+      showAutosaveToast("saved", "autosaveUpdated", "Updated settings");
+    } catch (error) {
+      console.error("[TabBeacon] autosave failed", error);
+      autosaveDirty = true;
+      showAutosaveToast("error", "autosaveFailed", "Couldn't save settings");
+    } finally {
+      autosaveInFlight = null;
+      if (autosaveRevision > autosaveSavedRevision || autosaveQueued) {
+        autosaveQueued = false;
+        autosaveTimerId = window.setTimeout(() => {
+          void flushAutosave();
+        }, AUTOSAVE_DEBOUNCE_MS);
+      } else {
+        autosaveQueued = false;
+      }
+    }
+  })();
+
+  await autosaveInFlight;
 }
 
 function bindGlobalActions() {
@@ -276,16 +565,6 @@ function bindGlobalActions() {
     markDirty();
   });
 
-  saveButton.addEventListener("click", async () => {
-    const rules = syncRulesWithDebugMode(collectRulesFromDom(), isDebugModeEnabled());
-    await chrome.storage.local.set({ [STORAGE_KEY]: rules });
-    renderRules(rules.map(normalizeRuleForEditor));
-    setSaveButtonSavedState();
-    if (isDebugSectionExpanded()) {
-      await refreshNetworkDiagnosticsForSelectedTab();
-    }
-  });
-
   resetButton.addEventListener("click", () => {
     resetConfirmModal.showModal();
   });
@@ -296,13 +575,29 @@ function bindGlobalActions() {
 
   resetConfirmOkButton.addEventListener("click", async () => {
     resetConfirmModal.close();
-    const freshRules = syncRulesWithDebugMode(buildDefaultRules(), isDebugModeEnabled());
-    await chrome.storage.local.set({ [STORAGE_KEY]: freshRules });
-    renderRules(freshRules.map(normalizeRuleForEditor));
-    markClean();
-    updateDebugPresetStatus(freshRules);
-    if (isDebugSectionExpanded()) {
-      await refreshNetworkDiagnosticsForSelectedTab();
+    const uiState = (await chrome.storage.local.get(UI_STATE_KEY))[UI_STATE_KEY] || {};
+    const freshRules = syncRulesWithDebugMode(buildDefaultRules(), false);
+    const indicatorSettingsApi = getIndicatorSettingsApi();
+    clearAutosaveTimer();
+    await waitForAutosaveIdle();
+    setDebugModeSwitchState(false);
+    showAutosaveToast("saving", "autosaveSaving", "Saving settings...");
+    try {
+      await Promise.all([
+        chrome.storage.local.set({ [STORAGE_KEY]: freshRules }),
+        chrome.storage.local.set({ [UI_STATE_KEY]: { ...uiState, debugMode: false } }),
+        indicatorSettingsApi?.resetSettings?.()
+      ]);
+      renderRules(freshRules.map(normalizeRuleForEditor));
+      markClean();
+      updateDebugPresetStatus(freshRules);
+      showAutosaveToast("saved", "autosaveUpdated", "Updated settings");
+      if (isDebugSectionExpanded()) {
+        await refreshNetworkDiagnosticsForSelectedTab();
+      }
+    } catch (error) {
+      console.error("[TabBeacon] reset failed", error);
+      showAutosaveToast("error", "autosaveFailed", "Couldn't save settings");
     }
   });
 
@@ -321,15 +616,27 @@ function bindGlobalActions() {
     setDebugModeSwitchState(enabled);
     const uiState = (await chrome.storage.local.get(UI_STATE_KEY))[UI_STATE_KEY] || {};
     const rules = syncRulesWithDebugMode(collectRulesFromDom(), enabled);
-    await Promise.all([
-      chrome.storage.local.set({ [UI_STATE_KEY]: { ...uiState, debugMode: enabled } }),
-      chrome.storage.local.set({ [STORAGE_KEY]: rules })
-    ]);
-    await reconcileRulesWithAnimation(rules.map(normalizeRuleForEditor));
-    updateDebugPresetStatus(rules);
-    setSaveButtonSavedState();
-    if (isDebugSectionExpanded()) {
-      await refreshNetworkDiagnosticsForSelectedTab();
+    const indicatorSettingsApi = getIndicatorSettingsApi();
+    clearAutosaveTimer();
+    await waitForAutosaveIdle();
+    showAutosaveToast("saving", "autosaveSaving", "Saving settings...");
+    try {
+      await Promise.all([
+        chrome.storage.local.set({ [UI_STATE_KEY]: { ...uiState, debugMode: enabled } }),
+        chrome.storage.local.set({ [STORAGE_KEY]: rules }),
+        indicatorSettingsApi?.saveSettings?.()
+      ]);
+      await reconcileRulesWithAnimation(rules.map(normalizeRuleForEditor));
+      updateDebugPresetStatus(rules);
+      markClean();
+      showAutosaveToast("saved", "autosaveUpdated", "Updated settings");
+      if (isDebugSectionExpanded()) {
+        await refreshNetworkDiagnosticsForSelectedTab();
+      }
+    } catch (error) {
+      console.error("[TabBeacon] failed to update debug mode", error);
+      setDebugModeSwitchState(!enabled);
+      showAutosaveToast("error", "autosaveFailed", "Couldn't save settings");
     }
   });
 
@@ -337,15 +644,48 @@ function bindGlobalActions() {
     await chrome.tabs.create({ url: chrome.runtime.getURL("manual-tests/tabbeacon-sandbox.html") });
   });
 
+  settingsDataTriggerButton?.addEventListener("click", (event) => {
+    event.preventDefault();
+    settingsDataTriggerButton.focus();
+  });
+
+  importSettingsButton?.addEventListener("click", () => {
+    importSettingsInput?.click();
+  });
+
+  importSettingsInput?.addEventListener("change", async () => {
+    const [file] = importSettingsInput.files || [];
+    if (!file) return;
+
+    showAutosaveToast("saving", "importingSettings", "Importing settings...");
+    try {
+      const text = await file.text();
+      const payload = JSON.parse(text);
+      await applyImportedSettings(payload);
+      showAutosaveToast("saved", "importedSettings", "Imported settings");
+    } catch (error) {
+      console.error("[TabBeacon] failed to import settings", error);
+      showAutosaveToast("error", "importSettingsFailed", "Couldn't import settings");
+    } finally {
+      importSettingsInput.value = "";
+    }
+  });
+
+  exportSettingsButton?.addEventListener("click", async () => {
+    showAutosaveToast("saving", "exportingSettings", "Exporting settings...");
+    try {
+      await ensureLatestSettingsStored();
+      const snapshot = await buildSettingsSnapshot();
+      downloadTextFile(buildExportFileName(), JSON.stringify(snapshot, null, 2));
+      showAutosaveToast("saved", "exportedSettings", "Exported settings");
+    } catch (error) {
+      console.error("[TabBeacon] failed to export settings", error);
+      showAutosaveToast("error", "exportSettingsFailed", "Couldn't export settings");
+    }
+  });
+
   copySettingsButton.addEventListener("click", async () => {
-    const [rulesResult, uiStateResult] = await Promise.all([
-      chrome.storage.local.get(STORAGE_KEY),
-      chrome.storage.local.get(UI_STATE_KEY)
-    ]);
-    const settings = {
-      rules: rulesResult[STORAGE_KEY] || [],
-      uiState: uiStateResult[UI_STATE_KEY] || {}
-    };
+    const settings = await buildSettingsSnapshot();
     await navigator.clipboard.writeText(JSON.stringify(settings, null, 2));
 
     // Show check icon for 3.5 seconds
@@ -905,6 +1245,10 @@ function setDebugModeSwitchState(enabled) {
   debugModeSwitchButton.setAttribute("aria-pressed", String(enabled));
   debugModeSwitchButton.setAttribute("aria-label", t("debugModeToggle"));
   debugModeSwitchButton.setAttribute("title", t("debugModeToggle"));
+  if (openPackagedSandboxButton) {
+    openPackagedSandboxButton.disabled = !enabled;
+    openPackagedSandboxButton.setAttribute("aria-disabled", String(!enabled));
+  }
   if (switchText) {
     switchText.textContent = enabled ? t("win11SwitchOn") : t("win11SwitchOff");
   }
@@ -1606,10 +1950,3 @@ function slugify(value) {
     .slice(0, 40);
 }
 
-function setSaveButtonSavedState() {
-  saveButton.textContent = t("saved");
-  markClean();
-  window.setTimeout(() => {
-    saveButton.textContent = t("save");
-  }, 1200);
-}
