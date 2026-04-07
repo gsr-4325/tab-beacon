@@ -141,6 +141,10 @@
         gap: 12px;
       }
 
+      .indicator-group.hidden {
+        display: none !important;
+      }
+
       .indicator-group-title,
       .debug-render-title {
         margin: 0;
@@ -206,7 +210,11 @@
       .indicator-choice-card input[type="radio"]:checked,
       .indicator-preview-card input[type="radio"]:checked {
         border-color: var(--primary, #3b82f6);
-        background: var(--primary, #3b82f6);
+        background: radial-gradient(
+          circle at center,
+          color-mix(in srgb, var(--primary, #3b82f6), #ffffff 80%) 38%,
+          transparent 45%
+        );
       }
 
       .indicator-choice-card:has(input:checked),
