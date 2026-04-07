@@ -35,8 +35,7 @@
         "<all_urls>"
       ],
       "js": [
-        "content-indicator-renderer.js",
-        "content-route-boundary-reload.js"
+        "content-indicator-renderer.js"
       ],
       "run_at": "document_idle"
     }

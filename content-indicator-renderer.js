@@ -16,22 +16,6 @@
   const hasStorageApi = !!extensionApi?.storage?.local;
   const hasRuntimeApi = !!extensionApi?.runtime?.id;
 
-  const DEFAULT_RULES = [
-    {
-      id: "default-chat-rule",
-      name: "ChatGPT",
-      enabled: true,
-      matches: ["https://chatgpt.com/*", "https://chat.openai.com/*"],
-      matchMode: "any",
-      busyWhen: [
-        { source: "dom", selectorType: "auto", query: '[aria-busy="true"]' }
-      ],
-      useSmartBusySignals: true,
-      busyEndGraceMs: 10000,
-      iconMode: "overlaySpinner"
-    }
-  ];
-
   const DEFAULT_INDICATOR_SETTINGS = Object.freeze({
     indicatorStyle: "spinner",
     spinnerStyle: "ring",
@@ -55,7 +39,10 @@
     reevaluateTimer: null,
     reevaluateMaxWaitTimer: null,
     historyHooked: false,
+    storageHooked: false,
     runtimeHooked: false,
+    currentHref: location.href,
+    bootstrapToken: 0,
     networkSnapshot: {},
     ruleActivity: new Map(),
     indicatorSettings: { ...DEFAULT_INDICATOR_SETTINGS }
@@ -80,13 +67,21 @@
   }
 
   async function bootstrap() {
+    const bootstrapToken = ++state.bootstrapToken;
+    const href = location.href;
+    state.currentHref = href;
+
     if (!hasStorageApi || !hasRuntimeApi) logMissingExtensionApi();
+    installRuntimeHooks();
+    installHistoryHooks();
+    watchStorageChanges();
 
     const [rulesResult, uiStateResult, indicatorResult] = await Promise.all([
       loadRules(),
       storageLocalGet(UI_STATE_KEY),
       storageLocalGet(INDICATOR_STORAGE_KEY)
     ]);
+    if (bootstrapToken !== state.bootstrapToken) return;
 
     debugMode = !!uiStateResult[UI_STATE_KEY]?.debugMode;
     state.indicatorSettings = normalizeIndicatorSettings(
@@ -106,16 +101,18 @@
       dbg("indicator settings", state.indicatorSettings);
     }
 
+    cleanup();
+
     const matchingRules = rulesResult
       .map(normalizeRule)
       .filter(
         (rule) =>
           rule.enabled &&
-          rule.matches.some((pattern) => wildcardMatch(pattern, location.href))
+          rule.matches.some((pattern) => wildcardMatch(pattern, href))
       );
 
     dbg("bootstrap", {
-      url: location.href,
+      url: href,
       totalRules: rulesResult.length,
       matchingRules: matchingRules.length
     });
@@ -129,7 +126,7 @@
         id: "sandbox-auto",
         name: "Sandbox",
         enabled: true,
-        matches: [location.href],
+        matches: [href],
         matchMode: "any",
         busyWhen: [{ source: "dom", selectorType: "auto", query: '[aria-busy="true"]' }],
         useSmartBusySignals: true,
@@ -142,13 +139,12 @@
     state.ruleActivity = new Map();
     state.originalIcons = captureOriginalIcons();
     state.baseIconDataUrl = await resolveBaseIconDataUrl(state.originalIcons);
+    if (bootstrapToken !== state.bootstrapToken) return;
 
-    installRuntimeHooks();
-    await registerCurrentTabUrl();
+    await registerCurrentTabUrl(href);
+    if (bootstrapToken !== state.bootstrapToken) return;
     syncBusyStateWithRules({ allowGrace: false });
     installObservers();
-    installHistoryHooks();
-    watchStorageChanges();
   }
 
   bootstrap().catch((error) =>
@@ -157,9 +153,7 @@
 
   async function loadRules() {
     const result = await storageLocalGet(RULES_STORAGE_KEY);
-    return Array.isArray(result[RULES_STORAGE_KEY]) && result[RULES_STORAGE_KEY].length
-      ? result[RULES_STORAGE_KEY]
-      : DEFAULT_RULES;
+    return Array.isArray(result[RULES_STORAGE_KEY]) ? result[RULES_STORAGE_KEY] : [];
   }
 
   function normalizeIndicatorSettings(value) {
@@ -323,12 +317,12 @@
     });
   }
 
-  async function registerCurrentTabUrl() {
+  async function registerCurrentTabUrl(href = location.href) {
     try {
       if (!hasRuntimeApi || !extensionApi.runtime?.sendMessage) return;
       const response = await extensionApi.runtime.sendMessage({
         type: "tab-beacon/register-tab",
-        url: location.href
+        url: href
       });
       state.networkSnapshot = response?.snapshot || {};
     } catch (error) {
@@ -380,6 +374,8 @@
   }
 
   function watchStorageChanges() {
+    if (state.storageHooked) return;
+    state.storageHooked = true;
     if (!extensionApi?.storage?.onChanged?.addListener) return;
     extensionApi.storage.onChanged.addListener((changes, areaName) => {
       if (areaName !== "local") return;
@@ -401,7 +397,6 @@
       }
 
       if (!changes[RULES_STORAGE_KEY]) return;
-      cleanup(false);
       bootstrap().catch((error) => console.error("[TabBeacon] reload failed", error));
     });
   }
@@ -413,12 +408,23 @@
       const original = history[name];
       history[name] = function (...args) {
         const result = original.apply(this, args);
-        registerCurrentTabUrl().finally(scheduleReevaluate);
+        handleLocationChange();
         return result;
       };
     }
-    window.addEventListener("popstate", () => registerCurrentTabUrl().finally(scheduleReevaluate));
-    window.addEventListener("hashchange", () => registerCurrentTabUrl().finally(scheduleReevaluate));
+    window.addEventListener("popstate", handleLocationChange);
+    window.addEventListener("hashchange", handleLocationChange);
+  }
+
+  function handleLocationChange() {
+    const href = location.href;
+    if (href !== state.currentHref) {
+      bootstrap().catch((error) => console.error("[TabBeacon] route reload failed", error));
+      return;
+    }
+    registerCurrentTabUrl(href).finally(() => {
+      if (state.activeRules.length) scheduleReevaluate();
+    });
   }
 
   function scheduleReevaluate() {
@@ -868,10 +874,16 @@
     cancelAllRuleIdleTimers();
     state.ruleActivity = new Map();
     stopAnimation();
-    restoreOriginalIcons();
+    if (document.getElementById(EXT_ICON_LINK_ID) || state.originalIcons.length || state.baseIconDataUrl) {
+      restoreOriginalIcons();
+    }
     state.currentStatus = "idle";
     state.observer?.disconnect();
     state.observer = null;
+    state.originalIcons = [];
+    state.baseIconDataUrl = null;
+    state.animationFrames = null;
+    state.animationFrameIndex = 0;
     if (resetRules) {
       state.activeRules = [];
       state.networkSnapshot = {};
