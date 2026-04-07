@@ -5,3 +5,5 @@ notes/
 *.del*
 
 node_modules/
+
+generated/review-build-info.local.js

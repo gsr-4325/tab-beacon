@@ -54,6 +54,25 @@
     });
   }
 
+  async function loadOptionalScript(src) {
+    try {
+      await loadScript(src);
+      return true;
+    } catch (error) {
+      console.info("[Tab Beacon] optional script not loaded", src, error);
+      return false;
+    }
+  }
+
+  function normalizeReviewTarget(value) {
+    const branch = typeof value?.branch === "string" && value.branch.trim() ? value.branch.trim() : "unknown";
+    const commit = typeof value?.commit === "string" && value.commit.trim() ? value.commit.trim() : "unknown";
+    const base = typeof value?.base === "string" ? value.base.trim() : "";
+    const updatedAt = typeof value?.updatedAt === "string" ? value.updatedAt.trim() : "";
+    const source = typeof value?.source === "string" && value.source.trim() ? value.source.trim() : "unavailable";
+    return { branch, commit, base, updatedAt, source };
+  }
+
   async function init() {
     const requestedTheme = resolveThemeName();
 
@@ -64,6 +83,10 @@
       getStoredTheme: readStoredTheme,
       setStoredTheme: writeStoredTheme
     };
+
+    window.TabBeaconReviewTarget = normalizeReviewTarget(window.TabBeaconReviewTarget);
+    await loadOptionalScript("../generated/review-build-info.local.js");
+    window.TabBeaconReviewTarget = normalizeReviewTarget(window.TabBeaconReviewTarget);
 
     document.documentElement.dataset.theme = requestedTheme;
 
@@ -85,6 +108,7 @@
     await loadScript("./chatgpt-defaults.js");
     await loadScript("./rule-behavior.js");
     await loadScript("./options-packaged-sandbox.js");
+    await loadScript("./review-target.js");
   }
 
   init().catch((error) => {
