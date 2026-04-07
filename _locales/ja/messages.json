@@ -20,6 +20,42 @@
   "saved": {
     "message": "保存しました"
   },
+  "autosaveSaving": {
+    "message": "設定を保存中..."
+  },
+  "autosaveUpdated": {
+    "message": "設定を更新しました"
+  },
+  "autosaveFailed": {
+    "message": "設定を保存できませんでした"
+  },
+  "settingsData": {
+    "message": "設定データ"
+  },
+  "importSettings": {
+    "message": "設定をインポート"
+  },
+  "exportSettings": {
+    "message": "設定をエクスポート"
+  },
+  "importingSettings": {
+    "message": "設定をインポート中..."
+  },
+  "importedSettings": {
+    "message": "設定をインポートしました"
+  },
+  "importSettingsFailed": {
+    "message": "設定をインポートできませんでした"
+  },
+  "exportingSettings": {
+    "message": "設定をエクスポート中..."
+  },
+  "exportedSettings": {
+    "message": "設定をエクスポートしました"
+  },
+  "exportSettingsFailed": {
+    "message": "設定をエクスポートできませんでした"
+  },
   "reset": {
     "message": "リセット"
   },

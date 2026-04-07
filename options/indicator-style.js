@@ -11,6 +11,8 @@
     badgeColor: "#3b82f6",
     renderMethod: "frames"
   });
+  const indicatorSettingsApi = window.TabBeaconIndicatorSettings || {};
+  window.TabBeaconIndicatorSettings = indicatorSettingsApi;
 
   function normalizeSettings(value) {
     const source = value && typeof value === "object" ? value : {};
@@ -587,6 +589,7 @@
   async function saveSettings() {
     const settings = readSettingsFromDom();
     await chrome.storage.local.set({ [STORAGE_KEY]: settings });
+    return settings;
   }
 
   async function resetSettings() {
@@ -596,7 +599,6 @@
 
   function ready() {
     return !!(
-      document.getElementById("saveAll") &&
       document.getElementById("resetConfirmOk") &&
       document.getElementById("debugPanel")
     );
@@ -621,19 +623,16 @@
     applySettingsToDom(settings);
     bindChangeHandlers(indicatorCard);
     bindDebugHandlers(debugRenderGroup);
-
-    if (!document.body.dataset.indicatorSettingsSaveBound) {
-      document.getElementById("saveAll")?.addEventListener("click", async () => {
-        await saveSettings();
-      });
-
-      document.getElementById("resetConfirmOk")?.addEventListener("click", async () => {
-        await resetSettings();
-      });
-
-      document.body.dataset.indicatorSettingsSaveBound = "true";
-    }
   }
+
+  Object.assign(indicatorSettingsApi, {
+    DEFAULT_SETTINGS,
+    readSettingsFromDom,
+    loadSettings,
+    saveSettings,
+    resetSettings,
+    applySettingsToDom
+  });
 
   init().catch((error) => console.error("[TabBeacon] indicator style patch failed", error));
 })();

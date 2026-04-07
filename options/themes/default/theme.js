@@ -380,7 +380,7 @@
       }
     });
     COLOR_MODES.forEach((mode) => switcher.appendChild(createModeButton(mode)));
-    heroActions.prepend(switcher);
+    heroActions.appendChild(switcher);
   }
 
   function shouldIgnoreHeaderToggle(target) {
