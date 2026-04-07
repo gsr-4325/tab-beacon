@@ -51,6 +51,7 @@
     animationFrames: null,
     animationFrameIndex: 0,
     baseIconDataUrl: null,
+    animatedGifObjectUrl: null,
     observer: null,
     reevaluateTimer: null,
     reevaluateMaxWaitTimer: null,
@@ -641,6 +642,40 @@
     return canvas.toDataURL("image/png");
   }
 
+  function dataUrlToObjectUrl(dataUrl) {
+    const parts = String(dataUrl || "").split(",");
+    if (parts.length < 2) {
+      throw new Error("Invalid data URL");
+    }
+    const meta = parts[0];
+    const body = parts.slice(1).join(",");
+    const mimeMatch = /^data:([^;]+)/i.exec(meta);
+    const mimeType = mimeMatch?.[1] || "application/octet-stream";
+    const isBase64 = /;base64/i.test(meta);
+
+    let bytes;
+    if (isBase64) {
+      const binary = atob(body);
+      bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+    } else {
+      const decoded = decodeURIComponent(body);
+      bytes = new TextEncoder().encode(decoded);
+    }
+
+    return URL.createObjectURL(new Blob([bytes], { type: mimeType }));
+  }
+
+  function revokeAnimatedGifObjectUrl() {
+    if (!state.animatedGifObjectUrl) return;
+    try {
+      URL.revokeObjectURL(state.animatedGifObjectUrl);
+    } catch {}
+    state.animatedGifObjectUrl = null;
+  }
+
   function applyStatus(nextStatus) {
     if (state.currentStatus === nextStatus) return;
     dbg(`status: ${state.currentStatus} → ${nextStatus}`);
@@ -668,7 +703,10 @@
     }
 
     if (state.indicatorSettings.renderMethod === "gif") {
-      setGeneratedIcon(ANIMATED_BUSY_ICON_DATA_URL, "image/gif");
+      if (!state.animatedGifObjectUrl) {
+        state.animatedGifObjectUrl = dataUrlToObjectUrl(ANIMATED_BUSY_ICON_DATA_URL);
+      }
+      setGeneratedIcon(state.animatedGifObjectUrl, "image/gif");
       return;
     }
 
@@ -689,6 +727,7 @@
     }
     state.animationFrames = null;
     state.animationFrameIndex = 0;
+    revokeAnimatedGifObjectUrl();
   }
 
   async function generateSpinnerFrames(baseIconDataUrl) {
