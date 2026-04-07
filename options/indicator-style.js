@@ -104,10 +104,20 @@
 
           <section class="indicator-group indicator-style-group" data-style-group="static-badge">
             <h3 class="indicator-group-title">Color</h3>
-            <label class="indicator-color-field" for="badgeColorInput">
-              <span class="indicator-color-label">Badge color</span>
+            <div class="indicator-color-field">
               <input id="badgeColorInput" name="badgeColor" type="color" value="#3b82f6" />
-            </label>
+              <button type="button" class="indicator-color-picker-button" aria-label="Open color picker" title="Open color picker">
+                <svg class="color-picker-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: flex;">
+                  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14.5 5.5l5 5"></path>
+                    <path d="M19.5 10.5l-9.5 9.5-2.5-1-1-2.5 9.5-9.5 3.5 3.5z"></path>
+                    <path d="M14.5 5.5c2.5-2.5 5.5.5 3 3"></path>
+                    <path d="M12.5 7.5L16.5 11.5"></path>
+                    <path d="M4 19l2.5 2.5"></path>
+                  </g>
+                </svg>
+              </button>
+            </div>
           </section>
         </div>
       </section>
@@ -394,17 +404,14 @@
       }
 
       .indicator-color-field {
-        display: grid;
+        display: flex;
+        align-items: center;
         gap: 10px;
-        max-width: 220px;
-      }
-
-      .indicator-color-label {
-        font-weight: 700;
+        max-width: 260px;
       }
 
       .indicator-color-field input[type="color"] {
-        width: 100%;
+        flex: 1;
         min-height: 44px;
         padding: 6px;
         border-radius: 12px;
@@ -422,14 +429,42 @@
         border-radius: 8px;
       }
 
+      .indicator-color-picker-button {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        border: 1px solid rgba(53, 72, 110, 0.45);
+        background: #0d1426;
+        color: var(--muted);
+        box-shadow: none;
+      }
+
+      .indicator-color-picker-button:hover:not(:disabled) {
+        color: var(--text);
+        background: #142135;
+      }
+
+      .indicator-color-picker-button .color-picker-icon {
+        width: 18px;
+        height: 18px;
+        pointer-events: none;
+      }
+
       @media (prefers-color-scheme: light) {
-        .indicator-color-field input[type="color"] {
+        .indicator-color-field input[type="color"],
+        .indicator-color-picker-button {
           border-color: rgba(100, 130, 180, 0.35);
           background: #eef2f9;
         }
       }
 
-      html[data-default-mode="light"] .indicator-color-field input[type="color"] {
+      html[data-default-mode="light"] .indicator-color-field input[type="color"],
+      html[data-default-mode="light"] .indicator-color-picker-button {
         border-color: rgba(100, 130, 180, 0.35);
         background: #eef2f9;
       }
@@ -511,6 +546,17 @@
 
   function bindChangeHandlers(root) {
     if (!root || root.dataset.bound === "true") return;
+    const badgeColorInput = root.querySelector('input[name="badgeColor"]');
+    const colorPickerButton = root.querySelector(".indicator-color-picker-button");
+    if (badgeColorInput && colorPickerButton) {
+      colorPickerButton.addEventListener("click", () => {
+        if (typeof badgeColorInput.showPicker === "function") {
+          badgeColorInput.showPicker();
+        } else {
+          badgeColorInput.click();
+        }
+      });
+    }
     root.addEventListener("change", () => {
       const settings = readSettingsFromDom();
       syncGroupVisibility(settings.indicatorStyle);

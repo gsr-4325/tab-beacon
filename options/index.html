@@ -31,7 +31,21 @@
         <div class="section-header">
           <h2 data-i18n="rulesTitle">Rules</h2>
           <div class="section-header-actions">
-            <button id="addRule" type="button" class="action-button" data-i18n="addRule">Add rule</button>
+            <button
+              id="addRule"
+              type="button"
+              class="action-button add-icon-button"
+              data-i18n-title="addRule"
+              title="Add rule"
+              aria-label="Add rule"
+            >
+              <svg class="plus-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: flex;">
+                <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </g>
+              </svg>
+            </button>
           </div>
         </div>
         <div id="rulesContainer" class="rules"></div>
@@ -173,7 +187,20 @@
             <div class="section-header">
               <h3 data-i18n="conditionsTitle">Conditions</h3>
               <div class="section-header-actions">
-                <button type="button" class="action-button add-condition" data-i18n="addCondition">Add condition</button>
+                <button
+                  type="button"
+                  class="action-button add-condition add-icon-button add-icon-button-small"
+                  data-i18n-title="addCondition"
+                  title="Add condition"
+                  aria-label="Add condition"
+                >
+                  <svg class="plus-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: flex;">
+                    <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </g>
+                  </svg>
+                </button>
               </div>
             </div>
             <div class="conditions-container"></div>

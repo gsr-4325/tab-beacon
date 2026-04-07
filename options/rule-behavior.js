@@ -25,10 +25,29 @@
     </svg>
   `;
 
+  const plusIconSvg = () => `
+    <svg class="plus-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: flex;">
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </g>
+    </svg>
+  `;
+
   const behaviorMarkup = () => `
     <section class="behavior-panel">
       <div class="section-header">
         <h3>${t("behaviorTitle", "Behavior")}</h3>
+        <div class="section-header-actions">
+          <button
+            type="button"
+            class="action-button add-icon-button add-icon-button-small add-icon-button-spacer behavior-header-spacer"
+            tabindex="-1"
+            aria-hidden="true"
+          >
+            ${plusIconSvg()}
+          </button>
+        </div>
       </div>
       <div class="behavior-body">
         <div class="behavior-row">
@@ -163,6 +182,7 @@
       .behavior-panel > .section-header {
         margin: 0;
         padding: 12px 14px;
+        min-height: 49px;
         border-bottom: 1px solid rgba(53, 72, 110, 0.35);
         background: transparent;
       }

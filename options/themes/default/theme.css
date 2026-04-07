@@ -534,6 +534,7 @@ html[data-theme="default"] .conditions-panel {
 html[data-theme="default"] .conditions-panel > .section-header,
 html[data-theme="default"] .diagnostics-header {
   padding: 8px 12px;
+  min-height: 49px;
   align-items: center;
 }
 

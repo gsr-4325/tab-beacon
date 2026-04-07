@@ -370,6 +370,40 @@ button.action-button:hover:not(:disabled) {
   filter: brightness(1.05);
 }
 
+button.add-icon-button {
+  min-width: 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+button.add-icon-button .plus-icon {
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+}
+
+button.add-icon-button.add-icon-button-small {
+  min-width: 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+button.add-icon-button.add-icon-button-small .plus-icon {
+  width: 16px;
+  height: 16px;
+}
+
+button.add-icon-button.add-icon-button-spacer {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 html[data-theme="default"] button.action-button:hover:not(:disabled) {
   background-color: color-mix(in srgb, var(--button-bg) 60%, white 0.5%);
 }

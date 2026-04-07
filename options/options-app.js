@@ -192,6 +192,7 @@ let diagnosticTabSelect;
 let diagnosticSummary;
 let diagnosticsBody;
 const versionText = document.getElementById("versionText");
+const MOTION_MS = 180;
 
 init().catch((error) => {
   console.error("[TabBeacon] options init failed", error);
@@ -200,6 +201,7 @@ init().catch((error) => {
 async function init() {
   ensureDiagnosticsUi();
   I18N.apply(document);
+  syncIconButtonLabels();
   openPackagedSandboxButton.setAttribute("title", t("debugOpenPackagedSandbox"));
   versionText.textContent = `v${chrome.runtime.getManifest().version}`;
   const [rulesResult, uiStateResult] = await Promise.all([
@@ -244,6 +246,15 @@ async function init() {
   }
 }
 
+function syncIconButtonLabels() {
+  document.querySelectorAll(".add-icon-button").forEach((button) => {
+    const title = button.getAttribute("title");
+    if (title) {
+      button.setAttribute("aria-label", title);
+    }
+  });
+}
+
 function markDirty() {
   saveButton.disabled = false;
 }
@@ -256,9 +267,10 @@ function bindGlobalActions() {
   rulesContainer.addEventListener("input", markDirty);
   rulesContainer.addEventListener("change", markDirty);
 
-  addRuleButton.addEventListener("click", () => {
+  addRuleButton.addEventListener("click", async () => {
     const node = createRuleNode(createEmptyRule(), { collapsed: false });
     rulesContainer.prepend(node);
+    await animateElementEnter(node);
     node.querySelector(".rule-name")?.focus();
     markDirty();
   });
@@ -312,7 +324,7 @@ function bindGlobalActions() {
       chrome.storage.local.set({ [UI_STATE_KEY]: { ...uiState, debugMode: enabled } }),
       chrome.storage.local.set({ [STORAGE_KEY]: rules })
     ]);
-    renderRules(rules.map(normalizeRuleForEditor));
+    await reconcileRulesWithAnimation(rules.map(normalizeRuleForEditor));
     updateDebugPresetStatus(rules);
     setSaveButtonSavedState();
     if (isDebugSectionExpanded()) {
@@ -527,9 +539,11 @@ function createRuleNode(rule = createEmptyRule(), options = {}) {
 
   refreshConditionIndexes(conditionsContainer);
 
-  root.querySelector(".add-condition").addEventListener("click", () => {
-    conditionsContainer.appendChild(createConditionNode(undefined, rule.readonly));
+  root.querySelector(".add-condition").addEventListener("click", async () => {
+    const node = createConditionNode(undefined, rule.readonly);
+    conditionsContainer.appendChild(node);
     refreshConditionIndexes(conditionsContainer);
+    await animateElementEnter(node);
     markDirty();
   });
 
@@ -538,9 +552,9 @@ function createRuleNode(rule = createEmptyRule(), options = {}) {
   });
 
   removeRuleButton.disabled = !canRemoveRule(rule);
-  removeRuleButton.addEventListener("click", () => {
+  removeRuleButton.addEventListener("click", async () => {
     if (!canRemoveRule(rule)) return;
-    root.remove();
+    await animateElementExit(root);
     updateDebugPresetStatus(collectRulesFromDom());
     markDirty();
   });
@@ -645,12 +659,14 @@ function createConditionNode(condition = createEmptyCondition(), readonly = fals
 
   update();
 
-  removeConditionButton.addEventListener("click", () => {
+  removeConditionButton.addEventListener("click", async () => {
     if (readonly) return;
     const parent = root.parentElement;
-    root.remove();
+    await animateElementExit(root);
     if (parent && !parent.children.length) {
-      parent.appendChild(createConditionNode(undefined, readonly));
+      const replacement = createConditionNode(undefined, readonly);
+      parent.appendChild(replacement);
+      await animateElementEnter(replacement);
     }
     if (parent) {
       refreshConditionIndexes(parent);
@@ -777,6 +793,103 @@ function syncRulesWithDebugMode(rules, enabled) {
 
 function areRulesEqual(left, right) {
   return JSON.stringify(left) === JSON.stringify(right);
+}
+
+async function reconcileRulesWithAnimation(rules) {
+  const currentNodes = Array.from(rulesContainer.querySelectorAll(".rule"));
+  const currentById = new Map(currentNodes.map((node) => [node.dataset.ruleId, node]));
+  const nextIds = new Set(rules.map((rule) => rule.id));
+
+  const removals = currentNodes
+    .filter((node) => !nextIds.has(node.dataset.ruleId))
+    .map((node) => animateElementExit(node));
+
+  if (removals.length) {
+    await Promise.all(removals);
+  }
+
+  rules.forEach((rule) => {
+    if (currentById.has(rule.id)) return;
+    const node = createRuleNode(rule);
+    rulesContainer.appendChild(node);
+    void animateElementEnter(node);
+  });
+}
+
+function animateElementEnter(element) {
+  return animateElementHeight(element, "enter");
+}
+
+function animateElementExit(element) {
+  return animateElementHeight(element, "exit");
+}
+
+function animateElementHeight(element, direction) {
+  if (!element || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (direction === "exit") element?.remove();
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    const existing = element._tabBeaconMotionCleanup;
+    if (typeof existing === "function") existing();
+
+    const style = element.style;
+    const initialTransition = style.transition;
+    const initialOverflow = style.overflow;
+    const initialWillChange = style.willChange;
+    const initialOpacity = style.opacity;
+    const initialTransform = style.transform;
+    const initialMaxHeight = style.maxHeight;
+    const initialPointerEvents = style.pointerEvents;
+    const cleanup = () => {
+      style.transition = initialTransition;
+      style.overflow = initialOverflow;
+      style.willChange = initialWillChange;
+      style.opacity = initialOpacity;
+      style.transform = initialTransform;
+      style.maxHeight = initialMaxHeight;
+      style.pointerEvents = initialPointerEvents;
+      element._tabBeaconMotionCleanup = null;
+    };
+
+    element._tabBeaconMotionCleanup = cleanup;
+    style.overflow = "hidden";
+    style.willChange = "max-height, opacity, transform";
+    style.transition = `max-height ${MOTION_MS}ms ease, opacity ${MOTION_MS}ms ease, transform ${MOTION_MS}ms ease`;
+
+    if (direction === "enter") {
+      style.maxHeight = "0px";
+      style.opacity = "0";
+      style.transform = "translateY(-8px)";
+      requestAnimationFrame(() => {
+        const targetHeight = `${element.scrollHeight}px`;
+        style.maxHeight = targetHeight;
+        style.opacity = "1";
+        style.transform = "translateY(0)";
+      });
+      window.setTimeout(() => {
+        cleanup();
+        resolve();
+      }, MOTION_MS + 40);
+      return;
+    }
+
+    style.maxHeight = `${element.offsetHeight}px`;
+    style.opacity = "1";
+    style.transform = "translateY(0)";
+    style.pointerEvents = "none";
+    requestAnimationFrame(() => {
+      style.maxHeight = "0px";
+      style.opacity = "0";
+      style.transform = "translateY(-8px)";
+    });
+    window.setTimeout(() => {
+      cleanup();
+      element.remove();
+      resolve();
+    }, MOTION_MS + 40);
+  });
 }
 
 function setDebugModeSwitchState(enabled) {
