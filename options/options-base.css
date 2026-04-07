@@ -261,6 +261,21 @@ body {
   border-color: rgba(95, 108, 133, 0.24);
 }
 
+.rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) {
+  background: var(--system-rule-surface);
+  border-color: rgba(95, 108, 133, 0.38);
+}
+
+.rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) .conditions-panel {
+  background: var(--system-conditions-surface);
+  border-color: rgba(95, 108, 133, 0.28);
+}
+
+.rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) .condition {
+  background: var(--system-condition-surface);
+  border-color: rgba(95, 108, 133, 0.24);
+}
+
 .condition-header {
   gap: 12px;
 }

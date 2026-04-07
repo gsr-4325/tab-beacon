@@ -294,6 +294,10 @@
         background: var(--system-panel-bg);
       }
 
+      html[data-theme="default"] .rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) .behavior-panel {
+        background: var(--user-rule-off-panel);
+      }
+
       html[data-theme="default"] .behavior-panel > .section-header {
         padding: 8px 12px;
         border-bottom: 1px solid var(--panel-border);
@@ -327,6 +331,10 @@
         border-radius: 8px;
         border: 1px solid var(--field-border);
         background: var(--field-bg);
+      }
+
+      html[data-theme="default"] .rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) .behavior-number-input {
+        background: color-mix(in srgb, var(--user-rule-off-head) 18%, var(--field-bg) 82%);
       }
 
       html[data-theme="default"] .behavior-help-dialog {

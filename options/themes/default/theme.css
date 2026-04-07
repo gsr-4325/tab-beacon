@@ -24,6 +24,10 @@ html[data-theme="default"][data-default-mode="dark"] {
   --code-bg: rgba(6, 11, 23, 0.78);
   --user-rule-bg: rgba(18, 28, 54, 0.95);
   --user-rule-head: rgba(24, 37, 70, 0.98);
+  --user-rule-off-bg: rgba(36, 39, 46, 0.95);
+  --user-rule-off-head: rgba(44, 49, 59, 0.98);
+  --user-rule-off-panel: rgba(33, 37, 44, 0.95);
+  --user-rule-off-condition: rgba(39, 43, 51, 0.93);
   --system-rule-bg: rgba(35, 39, 47, 0.96);
   --system-rule-head: rgba(6, 8, 14, 0.98);
   --system-panel-bg: rgba(32, 36, 43, 0.95);
@@ -52,6 +56,10 @@ html[data-theme="default"][data-default-mode="light"] {
   --code-bg: rgba(247, 250, 255, 0.95);
   --user-rule-bg: rgba(255, 255, 255, 0.95);
   --user-rule-head: rgba(243, 247, 255, 0.98);
+  --user-rule-off-bg: rgba(244, 245, 247, 0.95);
+  --user-rule-off-head: rgba(243, 247, 255, 0.98);
+  --user-rule-off-panel: rgba(239, 241, 244, 0.98);
+  --user-rule-off-condition: rgba(244, 245, 248, 0.98);
   --system-rule-bg: rgba(246, 247, 250, 0.98);
   --system-rule-head: rgba(237, 239, 244, 0.98);
   --system-panel-bg: rgba(241, 243, 247, 0.98);
@@ -335,6 +343,14 @@ html[data-theme="default"] .rule[data-rule-origin="system"] .rule-head {
   background: var(--system-rule-head);
 }
 
+html[data-theme="default"] .rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) {
+  background: var(--user-rule-off-bg);
+}
+
+html[data-theme="default"] .rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) .rule-head {
+  background: var(--user-rule-off-head);
+}
+
 html[data-theme="default"] .rule-head:hover,
 html[data-theme="default"] .debug-card .section-header:not(.diagnostics-header):hover,
 html[data-theme="default"] .condition-header:hover {
@@ -343,6 +359,10 @@ html[data-theme="default"] .condition-header:hover {
 
 html[data-theme="default"] .rule[data-rule-origin="system"] .rule-head:hover {
   background: color-mix(in srgb, var(--system-rule-head) 92%, var(--hover-surface) 8%);
+}
+
+html[data-theme="default"] .rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) .rule-head:hover {
+  background: color-mix(in srgb, var(--user-rule-off-head) 92%, var(--hover-surface) 8%);
 }
 
 html[data-theme="default"] .rule.collapsed .rule-head {
@@ -530,8 +550,16 @@ html[data-theme="default"] .rule[data-rule-origin="system"] .conditions-panel {
   background: var(--system-panel-bg);
 }
 
+html[data-theme="default"] .rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) .conditions-panel {
+  background: var(--user-rule-off-panel);
+}
+
 html[data-theme="default"] .rule[data-rule-origin="system"] .condition {
   background: var(--system-condition-bg);
+}
+
+html[data-theme="default"] .rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) .condition {
+  background: var(--user-rule-off-condition);
 }
 
 html[data-theme="default"] .condition {

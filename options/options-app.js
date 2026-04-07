@@ -497,7 +497,9 @@ function createRuleNode(rule = createEmptyRule(), options = {}) {
   }
 
   nameInput.value = rule.name || "";
-  root.querySelector(".rule-enabled").checked = !!rule.enabled;
+  const enabledInput = root.querySelector(".rule-enabled");
+  enabledInput.checked = !!rule.enabled;
+  setRuleEnabledState(root, enabledInput.checked);
   root.querySelector(".rule-matches").value = (rule.matches || []).join("\n");
   root.querySelector(".rule-match-mode").value = rule.matchMode || "any";
   root.querySelector(".rule-smart-busy").checked = !!rule.useSmartBusySignals;
@@ -549,12 +551,23 @@ function createRuleNode(rule = createEmptyRule(), options = {}) {
     disableRuleEditing(root, { allowRemove: !!rule.removable });
   }
 
+  enabledInput.addEventListener("input", () => {
+    setRuleEnabledState(root, enabledInput.checked);
+  });
+  enabledInput.addEventListener("change", () => {
+    setRuleEnabledState(root, enabledInput.checked);
+  });
+
   setRuleCollapsed(root, collapsed);
   return root;
 }
 
 function canRemoveRule(rule) {
   return !rule.readonly || !!rule.removable;
+}
+
+function setRuleEnabledState(root, enabled) {
+  root.dataset.ruleEnabled = String(!!enabled);
 }
 
 function disableRuleEditing(root, { allowRemove = false } = {}) {
