@@ -177,6 +177,13 @@
         }
       }
 
+      html[data-win11-mode="light"] .indicator-choice-card,
+      html[data-win11-mode="light"] .indicator-preview-card {
+        border-color: rgba(100, 130, 180, 0.35);
+        background: #eef2f9;
+        color: #1a2540;
+      }
+
       .indicator-choice-card.compact {
         min-height: 100%;
       }
@@ -207,12 +214,37 @@
         }
       }
 
+      html[data-win11-mode="light"] .indicator-choice-card input[type="radio"],
+      html[data-win11-mode="light"] .indicator-preview-card input[type="radio"] {
+        border-color: rgba(80, 100, 150, 0.55);
+      }
+
       .indicator-choice-card input[type="radio"]:checked,
       .indicator-preview-card input[type="radio"]:checked {
         border-color: var(--primary, #3b82f6);
         background: radial-gradient(
           circle at center,
           color-mix(in srgb, var(--primary, #3b82f6), #ffffff 80%) 38%,
+          transparent 45%
+        );
+      }
+
+      @media (prefers-color-scheme: light) {
+        .indicator-choice-card input[type="radio"]:checked,
+        .indicator-preview-card input[type="radio"]:checked {
+          background: radial-gradient(
+            circle at center,
+            var(--primary, #3b82f6) 38%,
+            transparent 45%
+          );
+        }
+      }
+
+      html[data-win11-mode="light"] .indicator-choice-card input[type="radio"]:checked,
+      html[data-win11-mode="light"] .indicator-preview-card input[type="radio"]:checked {
+        background: radial-gradient(
+          circle at center,
+          var(--primary, #3b82f6) 38%,
           transparent 45%
         );
       }
@@ -229,6 +261,11 @@
         .indicator-preview-card:has(input:checked) {
           background: #dce5f5;
         }
+      }
+
+      html[data-win11-mode="light"] .indicator-choice-card:has(input:checked),
+      html[data-win11-mode="light"] .indicator-preview-card:has(input:checked) {
+        background: #dce5f5;
       }
 
       .indicator-choice-copy {
@@ -251,6 +288,10 @@
         .indicator-choice-description {
           color: #5a7090;
         }
+      }
+
+      html[data-win11-mode="light"] .indicator-choice-description {
+        color: #5a7090;
       }
 
       .indicator-preview {
