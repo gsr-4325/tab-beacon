@@ -192,7 +192,8 @@ let diagnosticTabSelect;
 let diagnosticSummary;
 let diagnosticsBody;
 const versionText = document.getElementById("versionText");
-const MOTION_MS = 180;
+const MOTION_FADE_MS = 220;
+const MOTION_SLIDE_MS = 170;
 
 init().catch((error) => {
   console.error("[TabBeacon] options init failed", error);
@@ -839,56 +840,61 @@ function animateElementHeight(element, direction) {
     const initialOverflow = style.overflow;
     const initialWillChange = style.willChange;
     const initialOpacity = style.opacity;
-    const initialTransform = style.transform;
-    const initialMaxHeight = style.maxHeight;
     const initialPointerEvents = style.pointerEvents;
+    const initialDisplay = style.display;
+    const initialMaxHeight = style.maxHeight;
     const cleanup = () => {
       style.transition = initialTransition;
       style.overflow = initialOverflow;
       style.willChange = initialWillChange;
       style.opacity = initialOpacity;
-      style.transform = initialTransform;
-      style.maxHeight = initialMaxHeight;
       style.pointerEvents = initialPointerEvents;
+      style.display = initialDisplay;
+      style.maxHeight = initialMaxHeight;
       element._tabBeaconMotionCleanup = null;
     };
 
     element._tabBeaconMotionCleanup = cleanup;
     style.overflow = "hidden";
-    style.willChange = "max-height, opacity, transform";
-    style.transition = `max-height ${MOTION_MS}ms ease, opacity ${MOTION_MS}ms ease, transform ${MOTION_MS}ms ease`;
+    style.willChange = "max-height, opacity";
 
     if (direction === "enter") {
+      const targetHeight = `${element.scrollHeight}px`;
+      style.display = "";
       style.maxHeight = "0px";
       style.opacity = "0";
-      style.transform = "translateY(-8px)";
       requestAnimationFrame(() => {
-        const targetHeight = `${element.scrollHeight}px`;
+        style.transition = `max-height ${MOTION_SLIDE_MS}ms ease`;
         style.maxHeight = targetHeight;
-        style.opacity = "1";
-        style.transform = "translateY(0)";
+        window.setTimeout(() => {
+          style.transition = `opacity ${MOTION_FADE_MS}ms ease`;
+          style.opacity = "1";
+        }, MOTION_SLIDE_MS);
       });
       window.setTimeout(() => {
         cleanup();
         resolve();
-      }, MOTION_MS + 40);
+      }, MOTION_SLIDE_MS + MOTION_FADE_MS + 60);
       return;
     }
 
     style.maxHeight = `${element.offsetHeight}px`;
     style.opacity = "1";
-    style.transform = "translateY(0)";
     style.pointerEvents = "none";
     requestAnimationFrame(() => {
-      style.maxHeight = "0px";
+      style.transition = `opacity ${MOTION_FADE_MS}ms ease`;
       style.opacity = "0";
-      style.transform = "translateY(-8px)";
     });
     window.setTimeout(() => {
-      cleanup();
-      element.remove();
-      resolve();
-    }, MOTION_MS + 40);
+      style.transition = `max-height ${MOTION_SLIDE_MS}ms ease`;
+      style.maxHeight = "0px";
+      window.setTimeout(() => {
+        style.display = "none";
+        cleanup();
+        element.remove();
+        resolve();
+      }, MOTION_SLIDE_MS + 40);
+    }, MOTION_FADE_MS);
   });
 }
 

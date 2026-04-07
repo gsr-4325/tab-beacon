@@ -108,12 +108,11 @@
               <input id="badgeColorInput" name="badgeColor" type="color" value="#3b82f6" />
               <button type="button" class="indicator-color-picker-button" aria-label="Open color picker" title="Open color picker">
                 <svg class="color-picker-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: flex;">
-                  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M14.5 5.5l5 5"></path>
-                    <path d="M19.5 10.5l-9.5 9.5-2.5-1-1-2.5 9.5-9.5 3.5 3.5z"></path>
-                    <path d="M14.5 5.5c2.5-2.5 5.5.5 3 3"></path>
-                    <path d="M12.5 7.5L16.5 11.5"></path>
-                    <path d="M4 19l2.5 2.5"></path>
+                  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" transform="translate(2 -1.5)">
+                    <path d="M12 9L3 18v3h3l9-9Z"></path>
+                    <path d="M2 22l1-1"></path>
+                    <path d="M11 8l5 5"></path>
+                    <path d="M15 12l2-2c2-2-1-5-3-3l-2 2"></path>
                   </g>
                 </svg>
               </button>
@@ -450,8 +449,8 @@
       }
 
       .indicator-color-picker-button .color-picker-icon {
-        width: 18px;
-        height: 18px;
+        width: 21px;
+        height: 21px;
         pointer-events: none;
       }
 
