@@ -292,6 +292,8 @@
 
       html[data-theme="default"] .rule[data-rule-origin="system"] .behavior-panel {
         background: var(--system-panel-bg);
+        border-style: dashed;
+        border-color: color-mix(in srgb, var(--system-rule-border) 85%, var(--panel-border) 15%);
       }
 
       html[data-theme="default"] .rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) .behavior-panel {

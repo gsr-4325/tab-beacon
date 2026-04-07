@@ -28,10 +28,12 @@ html[data-theme="default"][data-default-mode="dark"] {
   --user-rule-off-head: rgba(44, 49, 59, 0.98);
   --user-rule-off-panel: rgba(33, 37, 44, 0.95);
   --user-rule-off-condition: rgba(39, 43, 51, 0.93);
-  --system-rule-bg: rgba(35, 39, 47, 0.96);
-  --system-rule-head: rgba(6, 8, 14, 0.98);
-  --system-panel-bg: rgba(32, 36, 43, 0.95);
-  --system-condition-bg: rgba(28, 31, 37, 0.93);
+  --system-rule-bg: rgba(26, 30, 36, 0.96);
+  --system-rule-head: rgba(17, 20, 25, 0.98);
+  --system-panel-bg: rgba(29, 33, 39, 0.95);
+  --system-condition-bg: rgba(34, 38, 45, 0.93);
+  --system-rule-border: rgba(170, 179, 194, 0.26);
+  --system-rule-sheen: rgba(255, 255, 255, 0.035);
   --select-option-bg: #15243f;
   --select-option-text: #eef4ff;
   --hover-surface: rgba(255, 255, 255, 0.045);
@@ -60,10 +62,12 @@ html[data-theme="default"][data-default-mode="light"] {
   --user-rule-off-head: rgba(243, 247, 255, 0.98);
   --user-rule-off-panel: rgba(239, 241, 244, 0.98);
   --user-rule-off-condition: rgba(244, 245, 248, 0.98);
-  --system-rule-bg: rgba(246, 247, 250, 0.98);
-  --system-rule-head: rgba(237, 239, 244, 0.98);
-  --system-panel-bg: rgba(241, 243, 247, 0.98);
-  --system-condition-bg: rgba(245, 246, 249, 0.98);
+  --system-rule-bg: rgba(241, 243, 246, 0.98);
+  --system-rule-head: rgba(226, 230, 235, 0.98);
+  --system-panel-bg: rgba(236, 239, 243, 0.98);
+  --system-condition-bg: rgba(241, 243, 246, 0.98);
+  --system-rule-border: rgba(109, 122, 145, 0.24);
+  --system-rule-sheen: rgba(255, 255, 255, 0.42);
   --select-option-bg: #ffffff;
   --select-option-text: #18233a;
   --hover-surface: rgba(24, 35, 58, 0.06);
@@ -327,6 +331,9 @@ html[data-theme="default"] .rule {
 
 html[data-theme="default"] .rule[data-rule-origin="system"] {
   background: var(--system-rule-bg);
+  border-color: var(--system-rule-border);
+  border-style: dashed;
+  box-shadow: inset 0 1px 0 var(--system-rule-sheen);
 }
 
 html[data-theme="default"] .rule-head {
@@ -341,6 +348,7 @@ html[data-theme="default"] .rule-head {
 
 html[data-theme="default"] .rule[data-rule-origin="system"] .rule-head {
   background: var(--system-rule-head);
+  background-image: linear-gradient(180deg, var(--system-rule-sheen), transparent);
 }
 
 html[data-theme="default"] .rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) {
@@ -393,10 +401,6 @@ html[data-theme="default"] .rule-title-area {
   gap: 0;
   flex: 0 1 clamp(160px, 25%, 240px);
   max-width: clamp(160px, 25%, 240px);
-}
-
-html[data-theme="default"] .rule[data-rule-origin="system"] .rule-title-area {
-  gap: 6px;
 }
 
 html[data-theme="default"] .rule-name {
@@ -548,6 +552,8 @@ html[data-theme="default"] .conditions-container {
 
 html[data-theme="default"] .rule[data-rule-origin="system"] .conditions-panel {
   background: var(--system-panel-bg);
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--system-rule-border) 85%, var(--panel-border) 15%);
 }
 
 html[data-theme="default"] .rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) .conditions-panel {
@@ -556,6 +562,7 @@ html[data-theme="default"] .rule[data-rule-enabled="false"]:not([data-rule-origi
 
 html[data-theme="default"] .rule[data-rule-origin="system"] .condition {
   background: var(--system-condition-bg);
+  border-color: color-mix(in srgb, var(--system-rule-border) 70%, var(--panel-border) 30%);
 }
 
 html[data-theme="default"] .rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) .condition {
