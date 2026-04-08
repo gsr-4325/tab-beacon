@@ -1,5 +1,12 @@
+try {
+  importScripts("shared/tab-beacon-selector-utils.js");
+} catch (error) {
+  console.warn("[TabBeacon:bg] failed to load shared selector utils", error);
+}
+
 const STORAGE_KEY = "tabBeaconRules";
 const MAX_DIAGNOSTIC_ENTRIES = 80;
+const sharedSelectorUtils = globalThis.TabBeaconSelectorUtils || null;
 
 let rulesCache = [];
 const tabUrls = new Map();
@@ -88,7 +95,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   }
 
-  if (message.type === "tab-beacon/get-networkdiagnostics") {
+  if (message.type === "tab-beacon/get-network-diagnostics") {
     const tabId = resolveRequestedTabId(message, sender);
     if (tabId >= 0) {
       sendResponse({ diagnostics: buildDiagnosticsForTab(tabId) });
@@ -258,7 +265,7 @@ function normalizeRules(rules) {
           selectorType: normalized.selectorType,
           query: normalized.busyQuery
         }
-      ]; 
+      ];
     }
 
     normalized.busyWhen = normalized.busyWhen
@@ -375,7 +382,7 @@ function handleRequestFinished(requestId, finalStatus = "completed") {
   });
 
   if (counts.size) {
-    tabConditionCounts.set(record.tabId), counts);
+    tabConditionCounts.set(record.tabId, counts);
   } else {
     tabConditionCounts.delete(record.tabId);
   }
@@ -490,7 +497,7 @@ function buildDiagnosticsForTab(tabId) {
     activeRequestCount: entries.filter((entry) => entry.status === "inflight").length,
     matchedConditionCount: Array.from((tabConditionCounts.get(tabId) || new Map()).keys()).length,
     snapshot: buildSnapshotForTab(tabId),
-    entries: entries.map((entry) => ({{
+    entries: entries.map((entry) => ({
       id: entry.id,
       requestId: entry.requestId,
       url: entry.url,
@@ -530,8 +537,12 @@ function sendSnapshotToTab(tabId) {
 }
 
 function wildcardMatch(pattern, href) {
-  const escaped = pattern
-    .replace(/[.+>^${}()|[\]\\]/g, "\\$&")
+  if (typeof sharedSelectorUtils?.wildcardMatch === "function") {
+    return sharedSelectorUtils.wildcardMatch(pattern, href);
+  }
+
+  const escaped = String(pattern || "")
+    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
     .replace(/\*/g, ".*");
-  return new RegExp(`^${escaped}$`).test(href);
+  return new RegExp(`^${escaped}$`).test(String(href || ""));
 }
