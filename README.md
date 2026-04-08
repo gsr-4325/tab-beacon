@@ -40,23 +40,40 @@ These behaviors were confirmed directly during the conversation.
 - Removing an `aria-busy` element stops the busy overlay
 - Busy and idle favicon updates work correctly in the sandbox
 - The visual differentiation in the Rules section behaves as intended
-- The UTF-8 issue in `content.js` has already been hotfixed on `main`
+- The current content runtime is unified around `content-indicator-renderer.js`
 
 ## Main files
 
 - `manifest.json`: Manifest V3 definition
-- `background.js`: minimal per-tab and per-rule network monitoring implementation
+- `background.js`: per-tab and per-rule network monitoring, diagnostics, and broadcasting network state to content
 - `content-indicator-renderer.js`: DOM monitoring, smart busy detection, and favicon indicator rendering
+- `shared/tab-beacon-selector-utils.js`: shared selector helpers for wildcard matching and auto CCS / XPath resolution
 - `options/`: options UI shell, behaviors, themes, import / export, and diagnostics
 - `i18n.js`: i18n helper for the options UI
 - `_locales/en/messages.json` / `_locales/ja/messages.json`: locale strings
 - `manual-tests/tabbeacon-sandbox.html`: local manual test page
 - `ROADMAP.md`: implementation progress and remaining tasks
 
+## Current architecture
+
+Tab Beacon currently splits its responsibilities into three main runtime layers and one small shared utility layer.
+
+- `background.js` is the network runtime. It tracks in-flight requests, maintains diagnostics, and pushes pnet-match snapshots back to tabs.
+- `content-indicator-renderer.js` is the DOM and favicon runtime. It evaluates DOM-side conditions, applies smart busy detection, and renders the tab icon state.
+- `options/` is the editor and diagnostics surface. It owns schema-edge migration, rule editing, import / export, and diagnostics UI.
+
+- `shared/tab-beacon-selector-utils.js` is the first shared runtime utility. It holds low-risk pure helpers that multiple runtimes can reuse.
+
+## Responsibility boundaries
+
+- `background.js` does not touch page DOM or favicon rendering.
+- `content-indicator-renderer.js` does not own the network counters or diagnostics history. It consumes snapshots from `background.js`.
+- `options/` should remain the only place where schema-edge migrations and editor-specific normalization live.
+- `chared/` should only contain small, pure, read-only helpers with low environment coupling.
+
 ## Try it locally
 
 ### Load the extension
-
 1. Open `chrome://extensions` in Chrome or `edge://extensions` in Edge
 2. Turn on Developer mode
 3. Choose **Load unpacked**
@@ -91,13 +108,10 @@ To show the current local branch and HEAD SHA in the options footer during revie
 - No license has been chosen yet
 
 ## Handoff notes for the next AI
-
 - Start by checking `ROADMAP.md` to see what is complete and what is not
 - Issues may be older than the current implementation on `main`, so compare them against the current code and recent commits before starting work
-- Two important recent stabilization changes were:
-  - adding favicon restore fallback
-  - the UTF-8 hotfix in `content.js`
-- The most reasonable next order of work is content runtime consolidation, real-world ChatGPT measurement, then permission tightening
+- The current active runtime is `content-indicator-renderer.js` + `background.js`. The legacy `content.js` has been removed.
+- The most reasonable next order of work is content/options shared util consolidation, real-world ChatGPT measurement, then permission tightening
 
 ## Analyzing dynamic elements on web pages
 
