@@ -343,6 +343,39 @@
   "conditionsTitle": {
     "message": "Conditions"
   },
+  "scopeTitle": {
+    "message": "Scope"
+  },
+  "scopeModeLabel": {
+    "message": "Watch area"
+  },
+  "scopeModeAutomatic": {
+    "message": "Automatic"
+  },
+  "scopeModeWholePage": {
+    "message": "Whole page"
+  },
+  "scopeModeSpecificArea": {
+    "message": "Specific area"
+  },
+  "scopeModeSpecificAreas": {
+    "message": "Specific area(s)"
+  },
+  "scopeQueryLabel": {
+    "message": "Scope query"
+  },
+  "scopeAreaLabel": {
+    "message": "Area"
+  },
+  "scopeQueryPlaceholder": {
+    "message": "例: div[data-scroll-root] main#main または //main[@id=\"main\"]"
+  },
+  "scopeSpecificAreasNote": {
+    "message": "複数の領域を入れた場合は、一致したものを監視範囲として使います。"
+  },
+  "addScope": {
+    "message": "スコープを追加"
+  },
   "conditionLabel": {
     "message": "Condition"
   },
@@ -446,6 +479,21 @@
   },
   "hintSmartBusy": {
     "message": "Smart busy detection はルール全体の補助シグナルです。"
+  },
+  "hintScopeAutomatic": {
+    "message": "このルールの既定の監視範囲を使います。通常はこのままで大丈夫です。"
+  },
+  "hintScopeWholePage": {
+    "message": "ページ全体を対象に検索します。"
+  },
+  "hintScopeEmpty": {
+    "message": "監視したい領域のセレクタまたは XPath を入力してください。"
+  },
+  "hintScopeSpecificArea": {
+    "message": "一致した領域に監視範囲を絞ります。"
+  },
+  "hintScopeSpecificAreas": {
+    "message": "一覧のうち一致した領域を監視範囲として使います。"
   },
   "hintNetworkSummary": {
     "message": "Network 条件 / $MATCH$ / $METHOD$ / $KIND$ / $VALUE$",

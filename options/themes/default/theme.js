@@ -60,6 +60,15 @@
         <p>明示的な Conditions に加えて、拡張側の smart busy detection を補助シグナルとして使います。</p>
         <p>条件だけでは拾い切れない busy 状態を補完したいときに向いています。</p>
       `,
+      scope: `
+        <p>Scope では、DOM 条件や smart busy detection が参照する範囲を決めます。</p>
+        <ul>
+          <li><strong>Automatic</strong>: 通常向けの既定値です。</li>
+          <li><strong>Whole page</strong>: ページ全体を対象にします。</li>
+          <li><strong>Specific area(s)</strong>: CSS または XPath で複数の候補領域を指定できます。</li>
+        </ul>
+        <p>複数の候補を入れた場合は、一致した領域を監視対象として使います。</p>
+      `,
       indicatorStyleSpinner: `
         <p>タブアイコンの右下に、回転する busy インジケーターを表示します。</p>
         <p>進行中の処理をアニメーションで分かりやすく伝えたいときに向いています。</p>
@@ -108,6 +117,15 @@
       smartBusy: `
         <p>Also use the built-in smart busy detection as an additional signal for the rule.</p>
         <p>This is useful when your explicit conditions are helpful but still miss some busy states.</p>
+      `,
+      scope: `
+        <p>Scope defines where DOM conditions and smart busy detection should look.</p>
+        <ul>
+          <li><strong>Automatic</strong>: the safe default for most rules.</li>
+          <li><strong>Whole page</strong>: search across the full document.</li>
+          <li><strong>Specific area(s)</strong>: provide multiple CSS or XPath target areas.</li>
+        </ul>
+        <p>If more than one area is listed, any matching area can be used as the watch target.</p>
       `,
       indicatorStyleSpinner: `
         <p>Show a spinning busy indicator on the tab icon.</p>

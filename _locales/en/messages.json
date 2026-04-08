@@ -343,6 +343,39 @@
   "conditionsTitle": {
     "message": "Conditions"
   },
+  "scopeTitle": {
+    "message": "Scope"
+  },
+  "scopeModeLabel": {
+    "message": "Watch area"
+  },
+  "scopeModeAutomatic": {
+    "message": "Automatic"
+  },
+  "scopeModeWholePage": {
+    "message": "Whole page"
+  },
+  "scopeModeSpecificArea": {
+    "message": "Specific area"
+  },
+  "scopeModeSpecificAreas": {
+    "message": "Specific area(s)"
+  },
+  "scopeQueryLabel": {
+    "message": "Scope query"
+  },
+  "scopeAreaLabel": {
+    "message": "Area"
+  },
+  "scopeQueryPlaceholder": {
+    "message": "Example: div[data-scroll-root] main#main or //main[@id=\"main\"]"
+  },
+  "scopeSpecificAreasNote": {
+    "message": "If multiple areas are listed, Tab Beacon will use any matching area."
+  },
+  "addScope": {
+    "message": "Add scope"
+  },
   "conditionLabel": {
     "message": "Condition"
   },
@@ -446,6 +479,21 @@
   },
   "hintSmartBusy": {
     "message": "Smart busy detection acts as a rule-wide fallback signal."
+  },
+  "hintScopeAutomatic": {
+    "message": "Use the default watch area for this rule. Good for most cases."
+  },
+  "hintScopeWholePage": {
+    "message": "Search across the whole page."
+  },
+  "hintScopeEmpty": {
+    "message": "Enter a selector or XPath for the area you want to watch."
+  },
+  "hintScopeSpecificArea": {
+    "message": "Limit detection to the matching area."
+  },
+  "hintScopeSpecificAreas": {
+    "message": "Limit detection to any matching area in the list."
   },
   "hintNetworkSummary": {
     "message": "Network condition / $MATCH$ / $METHOD$ / $KIND$ / $VALUE$",

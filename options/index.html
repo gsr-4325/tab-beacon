@@ -441,6 +441,47 @@
             </div>
           </section>
 
+          <section class="scope-panel surface-panel">
+            <div class="section-header">
+              <h3 class="default-inline-label-row">
+                <span data-i18n="scopeTitle">Scope</span>
+                <button type="button" class="default-help-button" data-help-kind="scope" data-help-title-key="scopeTitle">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M9.4 9.2a2.7 2.7 0 1 1 4.8 1.7c-.6.7-1.4 1.1-1.9 1.7-.3.4-.4.7-.4 1.4"></path><circle cx="12" cy="17.2" r=".9"></circle></svg>
+                </button>
+              </h3>
+            </div>
+            <div class="scope-body">
+              <div class="scope-row">
+                <label class="scope-mode-field">
+                  <span data-i18n="scopeModeLabel">Watch area</span>
+                  <select class="rule-dom-scope-mode">
+                    <option value="auto" data-i18n="scopeModeAutomatic">Automatic</option>
+                    <option value="document" data-i18n="scopeModeWholePage">Whole page</option>
+                    <option value="selector" data-i18n="scopeModeSpecificAreas">Specific area(s)</option>
+                  </select>
+                </label>
+                <div class="scope-row-actions">
+                  <button type="button" class="action-button add-scope add-icon-button add-icon-button-small" data-i18n-title="addScope" title="Add scope">
+                    <svg class="plus-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                      </g>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="scope-selector-fields hidden">
+                <div class="scope-selector-header">
+                  <span class="scope-selector-note" data-i18n="scopeSpecificAreasNote">If multiple areas are listed, Tab Beacon will use any matching area.</span>
+                </div>
+                <div class="scope-list"></div>
+              </div>
+              <div class="hint rule-scope-hint"></div>
+            </div>
+          </section>
+
           <section class="conditions-panel surface-panel">
             <div class="section-header">
               <h3 class="default-inline-label-row">
@@ -544,6 +585,41 @@
             </div>
           </div>
           <div class="hint condition-hint"></div>
+        </div>
+      </div>
+    </template>
+
+    <template id="scopeTemplate">
+      <div class="scope-entry">
+        <div class="scope-entry-header collapse-area">
+          <button type="button" class="scope-toggle collapse-toggle-button" aria-expanded="true">
+            <span class="scope-toggle-icon">▾</span>
+            <span class="scope-entry-title">
+              <span data-i18n="scopeAreaLabel">Area</span>
+              <span class="scope-entry-index"></span>
+            </span>
+          </button>
+          <button type="button" class="remove-scope default-remove-icon-button" data-i18n-title="remove" title="Remove">
+            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8M12 4L4 12"></path></svg>
+          </button>
+        </div>
+        <div class="scope-entry-body">
+          <div class="scope-entry-row">
+            <label class="scope-selector-type-field">
+              <span data-i18n="selectorType">Selector type</span>
+              <select class="scope-selector-type">
+                <option value="auto" data-i18n="selectorTypeAuto">auto</option>
+                <option value="css" data-i18n="selectorTypeCss">css</option>
+                <option value="xpath" data-i18n="selectorTypeXpath">xpath</option>
+              </select>
+            </label>
+
+            <label class="scope-query-wrap">
+              <span data-i18n="scopeQueryLabel">Scope query</span>
+              <input class="scope-query" data-i18n-placeholder="scopeQueryPlaceholder" placeholder='Example: div[data-scroll-root] main#main or //main[@id="main"]' />
+            </label>
+          </div>
+          <div class="hint scope-entry-hint"></div>
         </div>
       </div>
     </template>
