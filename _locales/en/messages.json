@@ -12,7 +12,7 @@
     "message": "Tab Beacon Settings"
   },
   "optionsSubtitle": {
-    "message": "Configure DOM and network conditions to show a busy state on the tab icon."
+    "message": "Track busy DOM and network signals together so you can see which tabs still need attention at a glance."
   },
   "save": {
     "message": "Save"
@@ -75,16 +75,16 @@
     "message": "Principles"
   },
   "policyLine1": {
-    "message": "A single rule can have multiple conditions."
+    "message": "Mix DOM and network conditions inside the same rule."
   },
   "policyLine2": {
-    "message": "ANY matches when at least one condition is true. ALL matches when every condition is true."
+    "message": "Switch condition joins between ANY and ALL."
   },
   "policyLine3": {
-    "message": "You can mix DOM and network conditions in the same rule."
+    "message": "Use smart busy detection as a fallback signal."
   },
   "policyLine4": {
-    "message": "Smart busy detection acts as a rule-wide fallback signal."
+    "message": "Show a busy state on the tab icon with page-specific rules."
   },
   "debugTitle": {
     "message": "Debug"
@@ -94,6 +94,9 @@
   },
   "debugModeToggle": {
     "message": "Enable debug mode (logs to page console)"
+  },
+  "defaultModeToggle": {
+    "message": "Toggle light and dark mode"
   },
   "expandDebug": {
     "message": "Expand debug"
@@ -113,6 +116,9 @@
   "debugCopySettings": {
     "message": "Copy settings"
   },
+  "copiedSettings": {
+    "message": "Copied settings"
+  },
   "debugLocalFileHint": {
     "message": "For real file:// testing, open manual-tests/tabbeacon-sandbox.html from your local repo."
   },
@@ -127,6 +133,21 @@
   },
   "networkDiagnosticsDescription": {
     "message": "Inspect recent captured requests and see which ones matched your network conditions."
+  },
+  "debugRenderMethodTitle": {
+    "message": "Render method"
+  },
+  "debugRenderFramesTitle": {
+    "message": "Frames"
+  },
+  "debugRenderFramesDescription": {
+    "message": "Animate by swapping generated favicon frames with a timer."
+  },
+  "debugRenderGifTitle": {
+    "message": "GIF"
+  },
+  "debugRenderGifDescription": {
+    "message": "Animate with a prebuilt GIF favicon while busy."
   },
   "refreshTabList": {
     "message": "Refresh tab list"
@@ -240,6 +261,42 @@
   },
   "rulesTitle": {
     "message": "Rules"
+  },
+  "indicatorSettingsTitle": {
+    "message": "Indicator style"
+  },
+  "indicatorDisplayStyleTitle": {
+    "message": "Display style"
+  },
+  "indicatorSpinnerOptionTitle": {
+    "message": "Spinner animation"
+  },
+  "indicatorBadgeOptionTitle": {
+    "message": "Static badge"
+  },
+  "indicatorSpinnerStyleTitle": {
+    "message": "Spinner style"
+  },
+  "indicatorSpinnerStyleRing": {
+    "message": "Ring"
+  },
+  "indicatorBadgeStyleTitle": {
+    "message": "Badge style"
+  },
+  "indicatorBadgeStyleDot": {
+    "message": "Dot"
+  },
+  "indicatorBadgeStyleRing": {
+    "message": "Ring"
+  },
+  "indicatorBadgeStyleCorner": {
+    "message": "Corner"
+  },
+  "indicatorColorTitle": {
+    "message": "Color"
+  },
+  "indicatorColorPicker": {
+    "message": "Open color picker"
   },
   "addRule": {
     "message": "Add rule"

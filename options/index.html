@@ -16,12 +16,12 @@
             <img class="hero-app-icon" src="../icons/icon-32.png" alt="" width="32" height="32" aria-hidden="true" />
             <h1 data-i18n="appName">Tab Beacon</h1>
           </div>
-          <p class="subtitle" data-i18n="optionsSubtitle">Configure DOM and network conditions to show a busy state on the tab icon.</p>
+          <p class="subtitle" data-i18n="optionsSubtitle">Track busy DOM and network signals together so you can see which tabs still need attention at a glance.</p>
           <ul class="hero-principles">
-            <li data-i18n="policyLine1">A single rule can have multiple conditions.</li>
-            <li data-i18n="policyLine2">ANY matches when at least one condition is true. ALL matches when every condition is true.</li>
-            <li data-i18n="policyLine3">You can mix DOM and network conditions in the same rule.</li>
-            <li data-i18n="policyLine4">Smart busy detection acts as a rule-wide fallback signal.</li>
+            <li data-i18n="policyLine1">Mix DOM and network conditions inside the same rule.</li>
+            <li data-i18n="policyLine2">Switch condition joins between ANY and ALL.</li>
+            <li data-i18n="policyLine3">Use smart busy detection as a fallback signal.</li>
+            <li data-i18n="policyLine4">Show a busy state on the tab icon with page-specific rules.</li>
           </ul>
         </div>
         <div class="hero-actions">
@@ -45,7 +45,6 @@
                   stroke-width="2"
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  style="display: flex;"
                 >
                   <path d="M12 5V16.5" />
                   <path d="M8 9L12 5L16 9" />
@@ -69,7 +68,6 @@
                   stroke-width="2"
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  style="display: flex;"
                 >
                   <path d="M12 5V16.5" />
                   <path d="M8 12.5L12 16.5L16 12.5" />
@@ -96,7 +94,6 @@
                 stroke-width="2"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                style="display: flex;"
               >
                 <ellipse cx="12" cy="5" rx="9" ry="3" />
                 <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
@@ -105,22 +102,130 @@
             </button>
             <input id="importSettingsInput" type="file" accept=".json,application/json" class="hidden-file-input" />
           </div>
+          <div class="default-mode-switch">
+            <button type="button" class="default-mode-button" data-default-mode-button="dark" aria-pressed="false" title="Dark mode">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M14.6 3.8a8.8 8.8 0 1 0 5.6 15.6 8.2 8.2 0 0 1-3.5.7A8.8 8.8 0 0 1 14.6 3.8Z"></path>
+                <path d="M18.8 7.3l.5 1.2 1.2.5-1.2.5-.5 1.2-.5-1.2-1.2-.5 1.2-.5.5-1.2Z"></path>
+                <path d="M6.9 11.7l.4 1 .9.4-.9.4-.4 1-.4-1-.9-.4.9-.4.4-1Z"></path>
+              </svg>
+            </button>
+            <button type="button" class="default-mode-button" data-default-mode-button="light" aria-pressed="false" title="Light mode">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <circle cx="12" cy="12" r="4.4"></circle>
+                <path d="M12 2.6v2.2M12 19.2v2.2M21.4 12h-2.2M4.8 12H2.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6M18.8 18.8l-1.6-1.6M6.8 6.8 5.2 5.2"></path>
+              </svg>
+            </button>
+          </div>
         </div>
       </header>
 
-      <section class="card rules-card">
-        <div class="section-header">
-          <h2 data-i18n="rulesTitle">Rules</h2>
+      <section id="indicatorSettingsCard" class="card settings-section indicator-settings-card is-collapsible">
+        <div class="section-header collapse-area">
+          <button id="indicatorSettingsToggle" type="button" class="section-toggle collapse-toggle-button" aria-expanded="true" aria-controls="indicatorSettingsBody">
+            <span class="section-toggle-icon">▾</span>
+            <span data-i18n="indicatorSettingsTitle">Indicator style</span>
+          </button>
+        </div>
+        <div id="indicatorSettingsBody" class="section-body indicator-settings-body">
+          <section class="indicator-group">
+            <h3 class="indicator-group-title" data-i18n="indicatorDisplayStyleTitle">Display style</h3>
+            <div class="indicator-choice-grid" data-setting-group="indicatorStyle">
+              <label class="indicator-choice-card">
+                <input type="radio" name="indicatorStyle" value="spinner" />
+                <span class="indicator-choice-copy">
+                  <span class="default-inline-label-row">
+                    <span class="indicator-choice-title" data-i18n="indicatorSpinnerOptionTitle">Spinner animation</span>
+                    <button type="button" class="default-help-button" data-help-kind="indicatorStyleSpinner" data-help-title-key="indicatorSpinnerOptionTitle">
+                      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M9.4 9.2a2.7 2.7 0 1 1 4.8 1.7c-.6.7-1.4 1.1-1.9 1.7-.3.4-.4.7-.4 1.4"></path><circle cx="12" cy="17.2" r=".9"></circle></svg>
+                    </button>
+                  </span>
+                </span>
+              </label>
+              <label class="indicator-choice-card">
+                <input type="radio" name="indicatorStyle" value="static-badge" />
+                <span class="indicator-choice-copy">
+                  <span class="default-inline-label-row">
+                    <span class="indicator-choice-title" data-i18n="indicatorBadgeOptionTitle">Static badge</span>
+                    <button type="button" class="default-help-button" data-help-kind="indicatorStyleStaticBadge" data-help-title-key="indicatorBadgeOptionTitle">
+                      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M9.4 9.2a2.7 2.7 0 1 1 4.8 1.7c-.6.7-1.4 1.1-1.9 1.7-.3.4-.4.7-.4 1.4"></path><circle cx="12" cy="17.2" r=".9"></circle></svg>
+                    </button>
+                  </span>
+                </span>
+              </label>
+            </div>
+          </section>
+
+          <section class="indicator-group indicator-style-group" data-style-group="spinner">
+            <h3 class="indicator-group-title" data-i18n="indicatorSpinnerStyleTitle">Spinner style</h3>
+            <div class="indicator-choice-grid" data-setting-group="spinnerStyle">
+              <label class="indicator-preview-card">
+                <input type="radio" name="spinnerStyle" value="ring" />
+                <span class="indicator-preview indicator-preview-spinner">
+                  <span class="indicator-preview-spinner-ring"></span>
+                  <span class="indicator-preview-spinner-dot dot-1"></span>
+                  <span class="indicator-preview-spinner-dot dot-2"></span>
+                  <span class="indicator-preview-spinner-dot dot-3"></span>
+                  <span class="indicator-preview-spinner-dot dot-4"></span>
+                  <span class="indicator-preview-spinner-dot dot-5"></span>
+                  <span class="indicator-preview-spinner-dot dot-6"></span>
+                  <span class="indicator-preview-spinner-dot dot-7"></span>
+                  <span class="indicator-preview-spinner-dot dot-8"></span>
+                </span>
+                <span class="indicator-preview-label" data-i18n="indicatorSpinnerStyleRing">Ring</span>
+              </label>
+            </div>
+          </section>
+
+          <section class="indicator-group indicator-style-group" data-style-group="static-badge">
+            <h3 class="indicator-group-title" data-i18n="indicatorBadgeStyleTitle">Badge style</h3>
+            <div class="indicator-choice-grid" data-setting-group="badgeStyle">
+              <label class="indicator-preview-card">
+                <input type="radio" name="badgeStyle" value="dot" />
+                <span class="indicator-preview indicator-preview-badge"><span class="indicator-badge-sample indicator-badge-dot"></span></span>
+                <span class="indicator-preview-label" data-i18n="indicatorBadgeStyleDot">Dot</span>
+              </label>
+              <label class="indicator-preview-card">
+                <input type="radio" name="badgeStyle" value="ring" />
+                <span class="indicator-preview indicator-preview-badge"><span class="indicator-badge-sample indicator-badge-ring"></span></span>
+                <span class="indicator-preview-label" data-i18n="indicatorBadgeStyleRing">Ring</span>
+              </label>
+              <label class="indicator-preview-card">
+                <input type="radio" name="badgeStyle" value="corner" />
+                <span class="indicator-preview indicator-preview-badge"><span class="indicator-badge-sample indicator-badge-corner"></span></span>
+                <span class="indicator-preview-label" data-i18n="indicatorBadgeStyleCorner">Corner</span>
+              </label>
+            </div>
+          </section>
+
+          <section class="indicator-group indicator-style-group" data-style-group="static-badge">
+            <h3 class="indicator-group-title" data-i18n="indicatorColorTitle">Color</h3>
+            <div class="indicator-color-field">
+              <input id="badgeColorInput" name="badgeColor" type="color" value="#3b82f6" />
+              <button type="button" class="indicator-color-picker-button" data-i18n-title="indicatorColorPicker" title="Open color picker">
+                <svg class="color-picker-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" transform="translate(2 -1.5)">
+                    <path d="M12 9L3 18v3h3l9-9Z"></path>
+                    <path d="M2 22l1-1"></path>
+                    <path d="M11 8l5 5"></path>
+                    <path d="M15 12l2-2c2-2-1-5-3-3l-2 2"></path>
+                  </g>
+                </svg>
+              </button>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="card settings-section rules-card is-collapsible">
+        <div class="section-header collapse-area">
+          <button id="rulesToggle" type="button" class="section-toggle collapse-toggle-button" aria-expanded="true" aria-controls="rulesSectionBody">
+            <span class="section-toggle-icon">▾</span>
+            <span data-i18n="rulesTitle">Rules</span>
+          </button>
           <div class="section-header-actions">
-            <button
-              id="addRule"
-              type="button"
-              class="action-button add-icon-button"
-              data-i18n-title="addRule"
-              title="Add rule"
-              aria-label="Add rule"
-            >
-              <svg class="plus-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: flex;">
+            <button id="addRule" type="button" class="action-button add-icon-button" data-i18n-title="addRule" title="Add rule">
+              <svg class="plus-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19"></line>
                   <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -129,34 +234,49 @@
             </button>
           </div>
         </div>
-        <div id="rulesContainer" class="rules"></div>
+        <div id="rulesSectionBody" class="section-body">
+          <div id="rulesContainer" class="rules"></div>
+        </div>
       </section>
 
-      <section class="card debug-card">
-        <div class="section-header">
-          <button id="debugToggle" type="button" class="section-toggle" aria-expanded="false">
-            <span class="section-toggle-icon">▸</span>
+      <section class="card settings-section debug-card is-collapsible">
+        <div class="section-header collapse-area">
+          <button id="debugToggle" type="button" class="section-toggle collapse-toggle-button" aria-expanded="false" aria-controls="debugSectionBody">
+            <span class="section-toggle-icon">▾</span>
             <span data-i18n="debugTitle">Debug</span>
           </button>
           <div class="section-header-actions">
-            <button
-              id="debugModeSwitch"
-              type="button"
-              class="default-rule-enable-button"
-              aria-pressed="false"
-              aria-label="Enable debug mode (logs to page console)"
-            >
+            <button id="debugModeSwitch" type="button" class="default-rule-enable-button" aria-pressed="false" aria-label="Enable debug mode (logs to page console)">
               <span class="default-rule-switch-text">Off</span>
               <span class="default-switch-track"><span class="default-switch-thumb"></span></span>
             </button>
           </div>
         </div>
-        <div id="debugSectionBody" class="stack hidden">
+        <div id="debugSectionBody" class="section-body stack hidden">
           <div id="debugPanel" class="stack">
+            <section id="debugRenderMethodGroup" class="surface-panel surface-panel-plain debug-render-group">
+              <h3 class="debug-render-title" data-i18n="debugRenderMethodTitle">Render method</h3>
+              <div class="indicator-choice-grid" data-setting-group="renderMethod">
+                <label class="indicator-choice-card compact">
+                  <input type="radio" name="renderMethod" value="frames" />
+                  <span class="indicator-choice-copy">
+                    <span class="indicator-choice-title" data-i18n="debugRenderFramesTitle">Frames</span>
+                    <span class="indicator-choice-description" data-i18n="debugRenderFramesDescription">Animate by swapping generated favicon frames with a timer.</span>
+                  </span>
+                </label>
+                <label class="indicator-choice-card compact">
+                  <input type="radio" name="renderMethod" value="gif" />
+                  <span class="indicator-choice-copy">
+                    <span class="indicator-choice-title" data-i18n="debugRenderGifTitle">GIF</span>
+                    <span class="indicator-choice-description" data-i18n="debugRenderGifDescription">Animate with a prebuilt GIF favicon while busy.</span>
+                  </span>
+                </label>
+              </div>
+            </section>
             <p class="hint" data-i18n="debugDescription">When debug mode is on, the local sandbox preset is added automatically without overwriting your own rules.</p>
             <div class="button-cluster">
-              <button id="openPackagedSandbox" type="button" class="icon-button" title="Open packaged sandbox">
-                <svg class="external-link-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: flex;">
+              <button id="openPackagedSandbox" type="button" class="icon-button" data-i18n-title="debugOpenPackagedSandbox" title="Open packaged sandbox">
+                <svg class="external-link-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
                     <polyline points="15 3 21 3 21 9"></polyline>
@@ -164,14 +284,14 @@
                   </g>
                 </svg>
               </button>
-              <button id="copySettings" type="button" class="icon-button" title="Copy settings">
-                <svg class="copy-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: flex;">
+              <button id="copySettings" type="button" class="icon-button" data-i18n-title="debugCopySettings" title="Copy settings">
+                <svg class="copy-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M16 8h-7a3 3 0 0 0-3 3v7a3 3 0 0 0 3 3h7a3 3 0 0 0 3-3V11a3 3 0 0 0-3-3Z"></path>
                     <path d="M18 4h-7a3 3 0 0 0-3 3v7a3 3 0 0 0 3 3h7a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3Z" fill="white"></path>
                   </g>
                 </svg>
-                <svg class="check-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                <svg class="check-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 12l5 5L19 7"></path>
                   </g>
@@ -180,29 +300,48 @@
             </div>
             <p class="hint" data-i18n="debugLocalFileHint">For real file:// testing, open manual-tests/tabbeacon-sandbox.html from your local repo.</p>
             <div id="debugPresetStatus" class="hint"></div>
+            <section id="networkDiagnosticsPanel" class="surface-panel diagnostics-panel">
+              <div class="section-header diagnostics-header">
+                <div class="diagnostics-title-group">
+                  <h3 data-i18n="networkDiagnosticsTitle">Network diagnostics</h3>
+                  <button id="networkDiagnosticsHelp" type="button" class="default-help-button diagnostics-help-button" data-help-kind="networkDiagnostics" data-help-title-key="networkDiagnosticsTitle">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M9.4 9.2a2.7 2.7 0 1 1 4.8 1.7c-.6.7-1.4 1.1-1.9 1.7-.3.4-.4.7-.4 1.4"></path><circle cx="12" cy="17.2" r=".9"></circle></svg>
+                  </button>
+                </div>
+                <div class="row diagnostics-actions">
+                  <button id="refreshDiagnosticTabs" type="button" data-i18n="refreshTabList">Refresh tab list</button>
+                  <button id="refreshDiagnostics" type="button" data-i18n="refreshDiagnostics">Refresh diagnostics</button>
+                  <button id="clearDiagnostics" type="button" data-i18n="clearDiagnostics">Clear history</button>
+                </div>
+              </div>
+              <div class="diagnostics-body">
+                <div class="row diagnostics-target-row">
+                  <label class="diagnostic-target">
+                    <span data-i18n="diagnosticTargetTab">Target tab</span>
+                    <select id="diagnosticTabSelect"></select>
+                  </label>
+                </div>
+                <div id="diagnosticSummary" class="hint diagnostic-summary" data-i18n="networkDiagnosticsEmptyState">Select a tab and refresh diagnostics to inspect recent captured requests.</div>
+                <div class="diagnostics-table-wrap">
+                  <table class="diagnostics-table">
+                    <thead>
+                      <tr>
+                        <th data-i18n="diagnosticColumnStarted">Started</th>
+                        <th data-i18n="diagnosticColumnStatus">Status</th>
+                        <th data-i18n="diagnosticColumnRequest">Request</th>
+                        <th data-i18n="diagnosticColumnMatchedBy">Matched by</th>
+                      </tr>
+                    </thead>
+                    <tbody id="diagnosticsBody">
+                      <tr class="diagnostics-empty-row">
+                        <td colspan="4" data-i18n="networkDiagnosticsEmptyRows">No recent requests captured yet.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
           </div>
-        </div>
-      </section>
-
-      <section class="card">
-        <h2 data-i18n="examplesTitle">Examples</h2>
-        <div class="examples">
-          <article>
-            <h3 data-i18n="exampleDomTitle">DOM condition</h3>
-            <code>[aria-busy="true"]</code>
-            <code>//button[contains(@aria-label, "Stop")]
-            </code>
-          </article>
-          <article>
-            <h3 data-i18n="exampleNetworkTitle">Network condition</h3>
-            <code>urlContains: /backend-api/</code>
-            <code>pathPrefix: /backend-api/conversation</code>
-          </article>
-          <article>
-            <h3 data-i18n="exampleUrlTitle">URL pattern</h3>
-            <code>https://chatgpt.com/c/*</code>
-            <code>https://chatgpt.com/g/*/c/*</code>
-          </article>
         </div>
       </section>
     </main>
@@ -222,35 +361,49 @@
     </dialog>
 
     <template id="ruleTemplate">
-      <article class="rule">
-        <div class="rule-head">
+      <article class="rule surface-tone" data-surface-tone="accent" data-surface-state="active">
+        <div class="rule-head collapse-area">
           <div class="rule-head-start">
-            <button type="button" class="rule-toggle" aria-expanded="true">
+            <button type="button" class="rule-toggle collapse-toggle-button" aria-expanded="true">
               <span class="rule-toggle-icon">▾</span>
             </button>
             <div class="rule-title-area">
               <input class="rule-name" data-i18n-placeholder="ruleNamePlaceholder" placeholder="Rule name" />
-              <div class="rule-meta">
-                <span class="rule-origin-badge"></span>
-              </div>
             </div>
           </div>
           <div class="rule-head-actions">
-            <label class="inline"><input type="checkbox" class="rule-enabled" /><span data-i18n="enabled">Enabled</span></label>
-            <button type="button" class="danger remove-rule" data-i18n="remove">Remove</button>
+            <label class="inline default-enable-label"><input type="checkbox" class="rule-enabled" /><span data-i18n="enabled">Enabled</span></label>
+            <button type="button" class="default-rule-enable-button rule-enable-switch" aria-pressed="false">
+              <span class="default-rule-switch-text">Off</span>
+              <span class="default-switch-track"><span class="default-switch-thumb"></span></span>
+            </button>
+            <button type="button" class="remove-rule default-remove-icon-button" data-i18n-title="remove" title="Remove">
+              <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8M12 4L4 12"></path></svg>
+            </button>
           </div>
         </div>
 
         <div class="rule-body">
+          <span class="rule-origin-badge"></span>
           <p class="rule-readonly-note hidden" data-i18n="ruleReadonlyNotice">This preset is managed by the extension and is read-only.</p>
           <label>
-            <span data-i18n="urlPatterns">URL patterns</span>
+            <span class="default-inline-label-row">
+              <span data-i18n="urlPatterns">URL patterns</span>
+              <button type="button" class="default-help-button" data-help-kind="urlPatterns" data-help-title-key="urlPatterns">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M9.4 9.2a2.7 2.7 0 1 1 4.8 1.7c-.6.7-1.4 1.1-1.9 1.7-.3.4-.4.7-.4 1.4"></path><circle cx="12" cy="17.2" r=".9"></circle></svg>
+              </button>
+            </span>
             <textarea class="rule-matches" rows="3" data-i18n-placeholder="urlPatternsPlaceholder" placeholder="Enter one pattern per line"></textarea>
           </label>
 
           <div class="row rule-controls">
             <label>
-              <span data-i18n="matchMode">Condition join</span>
+              <span class="default-inline-label-row">
+                <span data-i18n="matchMode">Condition join</span>
+                <button type="button" class="default-help-button" data-help-kind="matchMode" data-help-title-key="matchMode">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M9.4 9.2a2.7 2.7 0 1 1 4.8 1.7c-.6.7-1.4 1.1-1.9 1.7-.3.4-.4.7-.4 1.4"></path><circle cx="12" cy="17.2" r=".9"></circle></svg>
+                </button>
+              </span>
               <select class="rule-match-mode">
                 <option value="any" data-i18n="matchModeAny">ANY</option>
                 <option value="all" data-i18n="matchModeAll">ALL</option>
@@ -260,22 +413,45 @@
             <div class="smart-toggle-group">
               <span data-i18n="smartBusyToggle">Use smart busy detection</span>
               <input type="checkbox" class="rule-smart-busy" />
-              <button type="button" class="smart-busy-help-button" aria-label="Help for smart busy detection" title="Help for smart busy detection"></button>
+              <button type="button" class="smart-busy-help-button" data-help-kind="smartBusy" data-help-title-key="smartBusyToggle">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M9.4 9.2a2.7 2.7 0 1 1 4.8 1.7c-.6.7-1.4 1.1-1.9 1.7-.3.4-.4.7-.4 1.4"></path><circle cx="12" cy="17.2" r=".9"></circle></svg>
+              </button>
             </div>
           </div>
 
-          <section class="conditions-panel">
+          <section class="behavior-panel surface-panel">
             <div class="section-header">
-              <h3 data-i18n="conditionsTitle">Conditions</h3>
+              <h3 data-i18n="behaviorTitle">Behavior</h3>
+            </div>
+            <div class="behavior-body">
+              <div class="behavior-row">
+                <label class="behavior-grace-field">
+                  <span class="behavior-inline-label">
+                    <span data-i18n="busyEndGracePeriod">End grace period</span>
+                    <button type="button" class="behavior-help-button" data-help-kind="busyEndGracePeriod" data-help-title-key="busyEndGracePeriod">
+                      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M9.4 9.2a2.7 2.7 0 1 1 4.8 1.7c-.6.7-1.4 1.1-1.9 1.7-.3.4-.4.7-.4 1.4"></path><circle cx="12" cy="17.2" r=".9"></circle></svg>
+                    </button>
+                  </span>
+                  <div class="behavior-grace-input">
+                    <input type="number" min="0" max="300" step="0.5" inputmode="decimal" class="rule-busy-end-grace-seconds behavior-number-input" />
+                    <span class="hint" data-i18n="secondsUnit">seconds</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </section>
+
+          <section class="conditions-panel surface-panel">
+            <div class="section-header">
+              <h3 class="default-inline-label-row">
+                <span data-i18n="conditionsTitle">Conditions</span>
+                <button type="button" class="default-help-button" data-help-kind="conditions" data-help-title-key="conditionsTitle">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M9.4 9.2a2.7 2.7 0 1 1 4.8 1.7c-.6.7-1.4 1.1-1.9 1.7-.3.4-.4.7-.4 1.4"></path><circle cx="12" cy="17.2" r=".9"></circle></svg>
+                </button>
+              </h3>
               <div class="section-header-actions">
-                <button
-                  type="button"
-                  class="action-button add-condition add-icon-button add-icon-button-small"
-                  data-i18n-title="addCondition"
-                  title="Add condition"
-                  aria-label="Add condition"
-                >
-                  <svg class="plus-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: flex;">
+                <button type="button" class="action-button add-condition add-icon-button add-icon-button-small" data-i18n-title="addCondition" title="Add condition">
+                  <svg class="plus-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <line x1="12" y1="5" x2="12" y2="19"></line>
                       <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -292,14 +468,16 @@
 
     <template id="conditionTemplate">
       <div class="condition">
-        <div class="condition-header">
-          <button type="button" class="condition-toggle">
+        <div class="condition-header collapse-area">
+          <button type="button" class="condition-toggle collapse-toggle-button" aria-expanded="true">
             <span class="condition-toggle-icon">▾</span>
             <span class="condition-title-text">Condition</span>
             <span class="condition-index"></span>
           </button>
           <span class="condition-summary"></span>
-          <button type="button" class="danger remove-condition" data-i18n="remove">Remove</button>
+          <button type="button" class="remove-condition default-remove-icon-button" data-i18n-title="remove" title="Remove">
+            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8M12 4L4 12"></path></svg>
+          </button>
         </div>
         <div class="condition-body">
           <div class="condition-row">
