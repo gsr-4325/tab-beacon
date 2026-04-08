@@ -36,7 +36,7 @@ async function injectIntoExistingTabs() {
       url.startsWith("chrome-extension://") ||
       url.startsWith("devtools://")
     ) continue;
-    chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["content-indicator-renderer.js"] })
+    chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["shared/tab-beacon-selector-utils.js", "content-indicator-renderer.js"] })
       .catch(() => {});
   }
 }
@@ -88,7 +88,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   }
 
-  if (message.type === "tab-beacon/get-network-diagnostics") {
+  if (message.type === "tab-beacon/get-networkdiagnostics") {
     const tabId = resolveRequestedTabId(message, sender);
     if (tabId >= 0) {
       sendResponse({ diagnostics: buildDiagnosticsForTab(tabId) });
@@ -258,7 +258,7 @@ function normalizeRules(rules) {
           selectorType: normalized.selectorType,
           query: normalized.busyQuery
         }
-      ];
+      ]; 
     }
 
     normalized.busyWhen = normalized.busyWhen
@@ -375,7 +375,7 @@ function handleRequestFinished(requestId, finalStatus = "completed") {
   });
 
   if (counts.size) {
-    tabConditionCounts.set(record.tabId, counts);
+    tabConditionCounts.set(record.tabId), counts);
   } else {
     tabConditionCounts.delete(record.tabId);
   }
@@ -490,7 +490,7 @@ function buildDiagnosticsForTab(tabId) {
     activeRequestCount: entries.filter((entry) => entry.status === "inflight").length,
     matchedConditionCount: Array.from((tabConditionCounts.get(tabId) || new Map()).keys()).length,
     snapshot: buildSnapshotForTab(tabId),
-    entries: entries.map((entry) => ({
+    entries: entries.map((entry) => ({{
       id: entry.id,
       requestId: entry.requestId,
       url: entry.url,
@@ -531,7 +531,7 @@ function sendSnapshotToTab(tabId) {
 
 function wildcardMatch(pattern, href) {
   const escaped = pattern
-    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+    .replace(/[.+>^${}()|[\]\\]/g, "\\$&")
     .replace(/\*/g, ".*");
   return new RegExp(`^${escaped}$`).test(href);
 }
