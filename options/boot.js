@@ -113,6 +113,7 @@
     }
 
     await loadScript("../i18n.js");
+    await loadScript("../shared/tab-beacon-selector-utils.js");
     await loadScript("./options-app.js");
     await loadScript("./rule-behavior.js");
     await loadScript("./indicator-style.js");
