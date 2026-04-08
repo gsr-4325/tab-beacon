@@ -20,7 +20,7 @@
   const OBSERVER_DISCOVERY_OPTIONS = {
     childList: true,
     subtree: true,
-    attributes: false,
+    attributes: true,
     characterData: false
   };
 
@@ -322,7 +322,7 @@
       scheduleReevaluate();
       const needsScopedRefresh = hasScopedDomObservationRules();
       for (const mutation of mutations) {
-        if (needsScopedRefresh && mutation.type === "childList") {
+        if (needsScopedRefresh) {
           scheduleObserverRebuild();
         }
         for (const node of mutation.addedNodes) {
