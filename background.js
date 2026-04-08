@@ -49,7 +49,8 @@ chrome.runtime.onStartup.addListener(() => {
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName !== "local" || !changes[STORAGE_KEY]) return;
-  initialize().catch((error) => console.error("[TabBeacon:bg] storage init failed", error));
+  initialize({ preserveRuntimeState: true })
+    .catch((error) => console.error("[TabBeacon:bg] storage init failed", error));
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {
@@ -126,11 +127,101 @@ chrome.webRequest.onErrorOccurred.addListener(
   { urls: ["<all_urls>"] }
 );
 
-async function initialize() {
+async function initialize({ preserveRuntimeState = false } = {}) {
   rulesCache = normalizeRules(await loadRules());
+  if (!preserveRuntimeState) {
+    clearRuntimeState();
+    return;
+  }
+
+  reconcileRuntimeStateWithRules();
+  broadcastSnapshotsToTrackedTabs();
+}
+
+function clearRuntimeState() {
   requestMatches.clear();
   tabConditionCounts.clear();
   tabDiagnosticEntries.clear();
+}
+
+function reconcileRuntimeStateWithRules() {
+  const ruleById = new Map(rulesCache.map((rule) => [rule.id, rule]));
+  const validConditionKeys = new Set();
+
+  rulesCache.forEach((rule) => {
+    rule.busyWhen.forEach((condition) => {
+      validConditionKeys.add(`${rule.id}:${condition.originalIndex}`);
+    });
+  });
+
+  for (const [requestId, record] of requestMatches.entries()) {
+    const nextMatches = filterRelevantMatches(record.tabId, record.matches, ruleById, validConditionKeys);
+    if (!nextMatches.length) {
+      requestMatches.delete(requestId);
+      continue;
+    }
+    record.matches = nextMatches;
+  }
+
+  for (const [tabId, entries] of tabDiagnosticEntries.entries()) {
+    const nextEntries = entries
+      .map((entry) => ({
+        ...entry,
+        matches: filterRelevantMatches(tabId, entry.matches, ruleById, validConditionKeys)
+      }))
+      .filter((entry) => entry.matches.length);
+
+    if (nextEntries.length) {
+      tabDiagnosticEntries.set(tabId, nextEntries);
+    } else {
+      tabDiagnosticEntries.delete(tabId);
+    }
+  }
+
+  rebuildConditionCountsFromRequestMatches();
+}
+
+function filterRelevantMatches(tabId, matches, ruleById, validConditionKeys) {
+  const tabUrl = tabUrls.get(tabId) || "";
+  return (matches || []).filter((match) => {
+    const key = `${match.ruleId}:${match.conditionIndex}`;
+    if (!validConditionKeys.has(key)) return false;
+
+    const rule = ruleById.get(match.ruleId);
+    if (!rule?.enabled) return false;
+    if (!tabUrl) return true;
+
+    return rule.matches.some((pattern) => wildcardMatch(pattern, tabUrl));
+  });
+}
+
+function rebuildConditionCountsFromRequestMatches() {
+  tabConditionCounts.clear();
+
+  for (const record of requestMatches.values()) {
+    if (!record?.matches?.length) continue;
+
+    const counts = tabConditionCounts.get(record.tabId) || new Map();
+    record.matches.forEach(({ ruleId, conditionIndex }) => {
+      const key = `${ruleId}:${conditionIndex}`;
+      counts.set(key, (counts.get(key) || 0) + 1);
+    });
+    tabConditionCounts.set(record.tabId, counts);
+  }
+}
+
+function broadcastSnapshotsToTrackedTabs() {
+  const tabIds = new Set([
+    ...tabUrls.keys(),
+    ...tabConditionCounts.keys(),
+    ...Array.from(requestMatches.values(), (record) => record.tabId)
+  ]);
+
+  tabIds.forEach((tabId) => {
+    if (typeof tabId === "number" && tabId >= 0) {
+      sendSnapshotToTab(tabId);
+    }
+  });
 }
 
 async function rebuildTabUrls() {
