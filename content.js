@@ -9,7 +9,20 @@
   const FRAME_INTERVAL_MS = 250;
   const EVALUATE_DEBOUNCE_MS = 120;
   const EVALUATE_MAX_WAIT_MS = 400;
+  const OBSERVER_REBUILD_DEBOUNCE_MS = 120;
   const EXT_NAME = "TabBeacon";
+  const OBSERVER_DETAIL_OPTIONS = {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    characterData: false
+  };
+  const OBSERVER_DISCOVERY_OPTIONS = {
+    childList: true,
+    subtree: true,
+    attributes: false,
+    characterData: false
+  };
 
   const extensionApi = typeof chrome !== "undefined" ? chrome : null;
   const hasStorageApi = !!extensionApi?.storage?.local;
@@ -25,6 +38,7 @@
     animationFrameIndex: 0,
     baseIconDataUrl: null,
     observer: null,
+    observerRebuildTimer: null,
     reevaluateTimer: null,
     reevaluateMaxWaitTimer: null,
     historyHooked: false,
@@ -129,12 +143,27 @@
   }
 
   function normalizeRule(rule, index = 0) {
+    const legacyDomScopeQuery = typeof rule.domScopeQuery === "string"
+      ? rule.domScopeQuery
+      : (typeof rule.domScopeSelector === "string" ? rule.domScopeSelector : "");
+    const domScopes = Array.isArray(rule.domScopes) && rule.domScopes.length
+      ? rule.domScopes
+      : legacyDomScopeQuery
+        ? [{
+            selectorType: rule.domScopeSelectorType || "auto",
+            query: legacyDomScopeQuery
+          }]
+        : [];
     const normalized = {
       id: rule.id || `rule-${index}`,
       enabled: rule.enabled !== false,
       matches: Array.isArray(rule.matches) ? rule.matches : [],
       matchMode: rule.matchMode === "all" ? "all" : "any",
       busyWhen: [],
+      domScopeMode: ["auto", "document", "selector"].includes(rule.domScopeMode)
+        ? rule.domScopeMode
+        : (domScopes.length ? "selector" : "auto"),
+      domScopes: [],
       useSmartBusySignals: rule.useSmartBusySignals !== false,
       busyEndGraceMs: normalizeBusyEndGraceMs(rule.busyEndGraceMs),
       iconMode: rule.iconMode || "overlaySpinner"
@@ -163,6 +192,13 @@
         resourceKind: condition.resourceKind || "any"
       }))
       .filter((condition) => (condition.source === "network" ? condition.value : condition.query));
+
+    normalized.domScopes = domScopes
+      .map((scope) => ({
+        selectorType: scope.selectorType || "auto",
+        query: typeof scope.query === "string" ? scope.query.trim() : ""
+      }))
+      .filter((scope) => scope.query);
 
     return normalized;
   }
@@ -284,38 +320,102 @@
 
     state.observer = new MutationObserver((mutations) => {
       scheduleReevaluate();
+      const needsScopedRefresh = hasScopedDomObservationRules();
       for (const mutation of mutations) {
+        if (needsScopedRefresh && mutation.type === "childList") {
+          scheduleObserverRebuild();
+        }
         for (const node of mutation.addedNodes) {
-          if (node.nodeType === Node.ELEMENT_NODE) {
-            observeShadowRoots(node);
+          if (!needsScopedRefresh && node.nodeType === Node.ELEMENT_NODE) {
+            observeShadowRoots(node, OBSERVER_DETAIL_OPTIONS);
           }
         }
       }
     });
 
-    state.observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      characterData: false
-    });
-    observeShadowRoots(document.body);
+    rebuildObservers();
     window.addEventListener("beforeunload", cleanup, { once: true });
   }
 
-  function observeShadowRoots(root) {
+  function scheduleObserverRebuild() {
+    if (!state.observer) return;
+    clearTimeout(state.observerRebuildTimer);
+    state.observerRebuildTimer = setTimeout(() => {
+      state.observerRebuildTimer = null;
+      rebuildObservers();
+    }, OBSERVER_REBUILD_DEBOUNCE_MS);
+  }
+
+  function rebuildObservers() {
+    if (!state.observer || !document.body) return;
+    state.observer.disconnect();
+
+    for (const target of buildObservationTargets()) {
+      const options = target.mode === "discovery"
+        ? OBSERVER_DISCOVERY_OPTIONS
+        : OBSERVER_DETAIL_OPTIONS;
+      state.observer.observe(target.root, options);
+      observeShadowRoots(target.root, options);
+    }
+  }
+
+  function buildObservationTargets() {
+    const targets = new Map();
+    let needsBodyDetail = false;
+    let needsBodyDiscovery = false;
+
+    for (const rule of state.activeRules) {
+      if (!ruleNeedsDomObservation(rule)) continue;
+
+      if (rule.domScopeMode === "selector") {
+        needsBodyDiscovery = true;
+        for (const root of getDomSearchRoots(rule)) {
+          addObservationTarget(targets, root, "detail");
+        }
+        continue;
+      }
+
+      needsBodyDetail = true;
+    }
+
+    if (needsBodyDetail && document.body) {
+      addObservationTarget(targets, document.body, "detail");
+    } else if (needsBodyDiscovery && document.body) {
+      addObservationTarget(targets, document.body, "discovery");
+    }
+
+    return Array.from(targets.entries()).map(([root, mode]) => ({ root, mode }));
+  }
+
+  function addObservationTarget(targets, root, mode) {
+    if (!root) return;
+    const current = targets.get(root);
+    if (current === "detail" || mode === current) return;
+    targets.set(root, mode === "detail" ? "detail" : (current || "discovery"));
+  }
+
+  function ruleNeedsDomObservation(rule) {
+    return rule.useSmartBusySignals || rule.busyWhen.some((condition) => condition.source === "dom");
+  }
+
+  function hasScopedDomObservationRules() {
+    return state.activeRules.some((rule) => ruleNeedsDomObservation(rule) && rule.domScopeMode === "selector");
+  }
+
+  function observeShadowRoots(root, options) {
+    const rootShadow = root instanceof Element ? getShadowRoot(root) : null;
+    if (rootShadow) {
+      state.observer.observe(rootShadow, options);
+      observeShadowRoots(rootShadow, options);
+    }
+
     const iter = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
     let node = iter.nextNode();
     while (node) {
       const shadow = getShadowRoot(node);
       if (shadow) {
-        state.observer.observe(shadow, {
-          childList: true,
-          subtree: true,
-          attributes: true,
-          characterData: false
-        });
-        observeShadowRoots(shadow);
+        state.observer.observe(shadow, options);
+        observeShadowRoots(shadow, options);
       }
       node = iter.nextNode();
     }
@@ -384,15 +484,16 @@
   }
 
   function evaluateRuleBusy(rule) {
+    const domRoots = getDomSearchRoots(rule);
     const explicitResults = rule.busyWhen.map((condition, index) =>
-      evaluateCondition(rule, condition, index)
+      evaluateCondition(rule, condition, index, domRoots)
     );
     const explicitMatch = explicitResults.length
       ? rule.matchMode === "all"
         ? explicitResults.every(Boolean)
         : explicitResults.some(Boolean)
       : false;
-    const smartSignalsMatch = rule.useSmartBusySignals && detectSmartBusySignals();
+    const smartSignalsMatch = rule.useSmartBusySignals && detectSmartBusySignals(rule, domRoots);
     const result = explicitMatch || smartSignalsMatch;
 
     if (debugMode) {
@@ -412,7 +513,7 @@
     return result;
   }
 
-  function evaluateCondition(rule, condition, conditionIndex) {
+  function evaluateCondition(rule, condition, conditionIndex, domRoots = getDomSearchRoots(rule)) {
     if (condition.source === "network") {
       const snap = state.networkSnapshot?.[rule.id];
       const val = !!snap?.[String(conditionIndex)];
@@ -422,25 +523,108 @@
       return val;
     }
 
-    const el = queryExistsElement(condition.query, condition.selectorType);
+    const el = queryExistsElement(condition.query, condition.selectorType, domRoots);
     if (debugMode) dbg(`dom[${conditionIndex}] "${condition.query}" → ${el ? el.tagName : "null"}`);
     return !!el;
   }
 
-  function queryExistsElement(query, selectorType = "auto") {
+  function getDomSearchRoots(rule) {
+    if (rule?.domScopeMode !== "selector") {
+      return [document];
+    }
+    return resolveDomScopeRoots(rule);
+  }
+
+  function resolveDomScopeRoots(rule) {
+    const roots = [];
+    const seen = new Set();
+
+    for (const scope of rule.domScopes || []) {
+      for (const node of queryScopeRoots(scope.query, scope.selectorType)) {
+        if (!(node instanceof Element) || !node.isConnected || seen.has(node)) continue;
+        seen.add(node);
+        roots.push(node);
+      }
+    }
+
+    return roots;
+  }
+
+  function queryScopeRoots(query, selectorType = "auto") {
     try {
       const type = resolveSelectorType(query, selectorType);
       if (type === "css") {
-        return document.querySelector(query) || searchShadowDom(document, query);
+        return collectElementsIncludingShadow(document, query);
       }
       if (type === "xpath") {
-        return document.evaluate(
-          query,
-          document,
-          null,
-          XPathResult.FIRST_ORDERED_NODE_TYPE,
-          null
-        ).singleNodeValue;
+        return evaluateXPathElements(query, document);
+      }
+    } catch (error) {
+      console.warn("[TabBeacon] scope query evaluation failed", { query, selectorType, error });
+    }
+    return [];
+  }
+
+  function collectElementsIncludingShadow(root, selector, results = [], seen = new Set()) {
+    for (const el of root.querySelectorAll(selector)) {
+      if (seen.has(el)) continue;
+      seen.add(el);
+      results.push(el);
+    }
+
+    const rootShadow = root instanceof Element ? getShadowRoot(root) : null;
+    if (rootShadow) {
+      collectElementsIncludingShadow(rootShadow, selector, results, seen);
+    }
+
+    const iter = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+    let node = iter.nextNode();
+    while (node) {
+      const shadow = getShadowRoot(node);
+      if (shadow) {
+        collectElementsIncludingShadow(shadow, selector, results, seen);
+      }
+      node = iter.nextNode();
+    }
+
+    return results;
+  }
+
+  function evaluateXPathElements(query, contextNode) {
+    const snapshot = document.evaluate(
+      query,
+      contextNode,
+      null,
+      XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+      null
+    );
+    const results = [];
+    for (let i = 0; i < snapshot.snapshotLength; i += 1) {
+      const node = snapshot.snapshotItem(i);
+      if (node instanceof Element) results.push(node);
+    }
+    return results;
+  }
+
+  function queryExistsElement(query, selectorType = "auto", roots = [document]) {
+    try {
+      const type = resolveSelectorType(query, selectorType);
+      for (const root of roots) {
+        if (type === "css") {
+          const found = root.querySelector(query) || searchShadowDom(root, query);
+          if (found) return found;
+          continue;
+        }
+        if (type === "xpath") {
+          const found = document.evaluate(
+            query,
+            root,
+            null,
+            XPathResult.FIRST_ORDERED_NODE_TYPE,
+            null
+          ).singleNodeValue;
+          if (found) return found;
+        }
       }
     } catch (error) {
       console.warn("[TabBeacon] query evaluation failed", { query, selectorType, error });
@@ -474,6 +658,12 @@
   }
 
   function searchShadowDom(root, selector) {
+    const rootShadow = root instanceof Element ? getShadowRoot(root) : null;
+    if (rootShadow) {
+      const found = rootShadow.querySelector(selector) || searchShadowDom(rootShadow, selector);
+      if (found) return found;
+    }
+
     for (const el of root.querySelectorAll("*")) {
       const shadow = getShadowRoot(el);
       if (!shadow) continue;
@@ -483,9 +673,13 @@
     return null;
   }
 
-  function detectSmartBusySignals() {
-    if (document.querySelector('[aria-busy="true"]') || searchShadowDom(document, '[aria-busy="true"]')) {
-      return true;
+  function detectSmartBusySignals(rule, roots = getDomSearchRoots(rule)) {
+    if (!roots.length) return false;
+
+    for (const root of roots) {
+      if (root.querySelector('[aria-busy="true"]') || searchShadowDom(root, '[aria-busy="true"]')) {
+        return true;
+      }
     }
 
     const stopLikePattern = /(\bstop\b|\bcancel\b|\binterrupt\b|停止|中断|生成を停止)/i;
@@ -504,21 +698,44 @@
       return !!label && stopLikePattern.test(label);
     };
 
-    if (Array.from(document.querySelectorAll("button,[role='button'],a")).slice(0, 120).some(isStopLike)) {
-      return true;
+    let remaining = 120;
+    for (const root of roots) {
+      const candidates = Array.from(root.querySelectorAll("button,[role='button'],a")).slice(0, remaining);
+      if (candidates.some(isStopLike)) return true;
+      remaining -= candidates.length;
+      if (remaining <= 0) break;
     }
 
-    const shadowMatch = collectShadowElements(document, "button,[role='button'],a", 120).some(isStopLike);
-    if (shadowMatch) return true;
+    remaining = 120;
+    for (const root of roots) {
+      const shadowCandidates = collectShadowElements(root, "button,[role='button'],a", remaining);
+      if (shadowCandidates.some(isStopLike)) return true;
+      remaining -= shadowCandidates.length;
+      if (remaining <= 0) break;
+    }
 
-    return !!(
-      document.querySelector('[aria-live][aria-busy="true"]') ||
-      searchShadowDom(document, '[aria-live][aria-busy="true"]')
-    );
+    for (const root of roots) {
+      if (root.querySelector('[aria-live][aria-busy="true"]') || searchShadowDom(root, '[aria-live][aria-busy="true"]')) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   function collectShadowElements(root, selector, limit) {
     const results = [];
+    const rootShadow = root instanceof Element ? getShadowRoot(root) : null;
+    if (rootShadow) {
+      for (const el of rootShadow.querySelectorAll(selector)) {
+        if (results.length >= limit) break;
+        results.push(el);
+      }
+      for (const el of collectShadowElements(rootShadow, selector, limit - results.length)) {
+        if (results.length >= limit) break;
+        results.push(el);
+      }
+    }
     const iter = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
     let node = iter.nextNode();
 
@@ -731,8 +948,10 @@
   }
 
   function cleanup(resetRules = true) {
+    clearTimeout(state.observerRebuildTimer);
     clearTimeout(state.reevaluateTimer);
     clearTimeout(state.reevaluateMaxWaitTimer);
+    state.observerRebuildTimer = null;
     state.reevaluateTimer = null;
     state.reevaluateMaxWaitTimer = null;
     cancelAllRuleIdleTimers();

@@ -87,6 +87,7 @@ select {
 .indicator-group,
 .debug-render-group,
 .behavior-body,
+.scope-body,
 .diagnostics-panel {
   display: grid;
   gap: var(--space-3);
@@ -109,6 +110,11 @@ select {
 .condition-row,
 .condition-dom-fields,
 .condition-network-fields,
+.scope-row,
+.scope-row-actions,
+.scope-selector-header,
+.scope-entry-header,
+.scope-entry-row,
 .default-inline-label-row,
 .smart-toggle-group,
 .behavior-inline-label,
@@ -236,7 +242,8 @@ select {
 
 .section-toggle,
 .rule-toggle,
-.condition-toggle {
+.condition-toggle,
+.scope-toggle {
   padding: 0;
   border: 0;
   background: transparent;
@@ -263,13 +270,15 @@ select {
 
 .section-toggle-icon,
 .rule-toggle-icon,
-.condition-toggle-icon {
+.condition-toggle-icon,
+.scope-toggle-icon {
   display: inline-flex;
   transition: transform 0.14s ease;
 }
 
 .rule.collapsed .rule-toggle-icon,
 .condition.collapsed .condition-toggle-icon,
+.scope-entry.collapsed .scope-toggle-icon,
 .section-toggle[aria-expanded="false"] .section-toggle-icon {
   transform: rotate(-90deg);
 }
@@ -358,7 +367,8 @@ label {
 }
 
 .rule-head,
-.condition-header {
+.condition-header,
+.scope-entry-header {
   justify-content: space-between;
   padding: 14px var(--space-4);
   min-width: 0;
@@ -374,8 +384,18 @@ label {
   padding-block: 4px;
 }
 
+.scope-entry-header {
+  min-height: 40px;
+  max-height: none;
+  padding-top: 0;
+  padding-bottom: 0;
+  display: flex;
+  align-items: center;
+}
+
 .rule-head-start,
 .condition-toggle,
+.scope-toggle,
 .rule-title-area {
   min-width: 0;
 }
@@ -556,18 +576,21 @@ label {
 .surface-tone .condition-header,
 .surface-tone .conditions-panel,
 .surface-tone .behavior-panel,
+.surface-tone .scope-panel,
 .surface-tone .condition {
   color: var(--surface-tone-text);
 }
 
 .surface-tone[data-surface-state="muted"] .rule-head,
 .surface-tone[data-surface-state="muted"] .rule-body,
-.surface-tone[data-surface-state="muted"] .condition-header {
+.surface-tone[data-surface-state="muted"] .condition-header,
+.surface-tone[data-surface-state="muted"] .scope-panel {
   opacity: var(--surface-tone-content-opacity);
 }
 
 .surface-tone .conditions-panel,
-.surface-tone .behavior-panel {
+.surface-tone .behavior-panel,
+.surface-tone .scope-panel {
   background: var(--surface-tone-section);
   border-color: var(--surface-tone-border);
 }
@@ -585,19 +608,22 @@ label {
 
 .conditions-panel,
 .behavior-panel,
+.scope-panel,
 .diagnostics-panel {
   background: var(--surface-3);
 }
 
 .conditions-panel .section-header,
 .behavior-panel .section-header,
+.scope-panel .section-header,
 .diagnostics-panel .section-header {
   min-height: 52px;
   padding-inline: var(--space-3);
 }
 
 .conditions-container,
-.behavior-body {
+.behavior-body,
+.scope-body {
   padding: var(--space-3);
 }
 
@@ -617,8 +643,22 @@ label {
   justify-content: flex-start;
 }
 
+.scope-toggle {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 40px;
+  height: 40px;
+  line-height: 1;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 .condition-toggle:hover:not(:disabled),
-.condition-toggle:focus-visible {
+.condition-toggle:focus-visible,
+.scope-toggle:hover:not(:disabled),
+.scope-toggle:focus-visible {
   background: transparent;
   outline: none;
 }
@@ -633,14 +673,20 @@ label {
 .condition-dom-fields,
 .condition-network-fields,
 .rule-controls,
-.behavior-row {
-  align-items: end;
+.behavior-row,
+.scope-row,
+.scope-selector-fields,
+.scope-entry-row,
+.scope-selector-header,
+.scope-entry-header {
+  align-items: center;
   flex-wrap: wrap;
   row-gap: var(--space-3);
   column-gap: var(--space-3);
 }
 
 .behavior-body,
+.scope-body,
 .diagnostics-panel {
   gap: var(--space-4);
 }
@@ -655,9 +701,126 @@ label {
 .condition-value-wrap,
 .condition-dom-fields,
 .condition-network-fields,
+.scope-query-wrap,
+.scope-selector-fields,
+.scope-list,
 .diagnostic-target {
   flex: 1;
   min-width: min(100%, 220px);
+}
+
+.scope-mode-field {
+  flex: 0 0 16.6667%;
+  min-width: 120px;
+  max-width: 180px;
+}
+
+.scope-mode-field,
+.scope-row-actions {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+}
+
+.scope-selector-fields,
+.scope-list {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.scope-selector-fields {
+  width: 100%;
+}
+
+.scope-selector-header {
+  justify-content: flex-start;
+}
+
+.scope-selector-note {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.scope-entry {
+  background: var(--surface-4);
+  border: 1px solid color-mix(in srgb, var(--surface-tone-border, var(--border)) 88%, transparent);
+  border-radius: calc(var(--radius-md) - 2px);
+}
+
+.condition {
+  border-radius: calc(var(--radius-md) - 2px);
+}
+
+.surface-tone .scope-entry {
+  background: var(--surface-tone-section-strong);
+  border-color: color-mix(in srgb, var(--surface-tone-border) 88%, transparent);
+}
+
+.scope-entry-header {
+  justify-content: space-between;
+  min-height: 40px;
+  padding: 4px var(--space-4);
+  border-bottom: 1px solid color-mix(in srgb, var(--surface-tone-border, var(--border)) 88%, transparent);
+  background: var(--surface-tone-header, var(--surface-3));
+  color: var(--surface-tone-text, var(--text));
+}
+
+.scope-entry-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.scope-entry-header .remove-scope {
+  min-height: 40px;
+  height: 40px;
+  align-self: center;
+}
+
+.scope-entry-body {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.scope-selector-type-field {
+  flex: 0 0 112px;
+  min-width: 112px;
+  max-width: 112px;
+}
+
+.scope-entry-row > .scope-query-wrap {
+  flex: 1;
+  min-width: min(100%, 220px);
+  max-width: 420px;
+}
+
+.scope-entry-hint {
+  margin-top: 0;
+}
+
+.scope-row-actions {
+  margin-left: auto;
+  min-width: 0;
+  justify-content: flex-end;
+  flex: 1 1 auto;
+}
+
+.scope-row-actions::before {
+  content: "";
+  display: block;
+  min-height: 20px;
+}
+
+.scope-row-actions .add-scope {
+  width: var(--control-height-sm);
+  min-width: var(--control-height-sm);
+  max-width: var(--control-height-sm);
+  justify-self: end;
+  align-self: center;
+  padding-inline: 0;
 }
 
 .behavior-number-input {
@@ -744,6 +907,12 @@ label {
   min-height: var(--control-height-sm);
   flex: 0 0 var(--control-height-sm);
 }
+
+.add-condition.add-icon-button.add-icon-button-small,
+.add-scope.add-icon-button.add-icon-button-small {
+  border-radius: calc(var(--radius-sm) - 2px);
+}
+
 
 .default-remove-icon-button svg {
   width: 14px;

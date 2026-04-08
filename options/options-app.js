@@ -38,6 +38,17 @@ function buildDefaultRules() {
           resourceKind: "fetch-xhr"
         }
       ],
+      domScopeMode: "selector",
+      domScopes: [
+        {
+          selectorType: "css",
+          query: "#thread"
+        },
+        {
+          selectorType: "css",
+          query: 'div[data-scroll-root] main#main'
+        }
+      ],
       useSmartBusySignals: true,
       iconMode: "overlaySpinner"
     },
@@ -167,6 +178,7 @@ const rulesSectionBody = document.getElementById("rulesSectionBody");
 const rulesContainer = document.getElementById("rulesContainer");
 const ruleTemplate = document.getElementById("ruleTemplate");
 const conditionTemplate = document.getElementById("conditionTemplate");
+const scopeTemplate = document.getElementById("scopeTemplate");
 const resetButton = document.getElementById("resetAll");
 const resetConfirmModal = document.getElementById("resetConfirmModal");
 const resetConfirmOkButton = document.getElementById("resetConfirmOk");
@@ -825,6 +837,20 @@ function migrateRules(rules) {
 }
 
 function normalizeRuleForEditor(rule) {
+  const legacyDomScopeQuery = typeof rule.domScopeQuery === "string"
+    ? rule.domScopeQuery
+    : (typeof rule.domScopeSelector === "string" ? rule.domScopeSelector : "");
+  const domScopeMode = ["auto", "document", "selector"].includes(rule.domScopeMode)
+    ? rule.domScopeMode
+    : ((Array.isArray(rule.domScopes) && rule.domScopes.length) || legacyDomScopeQuery ? "selector" : "auto");
+  const domScopes = Array.isArray(rule.domScopes) && rule.domScopes.length
+    ? rule.domScopes
+    : legacyDomScopeQuery
+      ? [{
+          selectorType: ["auto", "css", "xpath"].includes(rule.domScopeSelectorType) ? rule.domScopeSelectorType : "auto",
+          query: legacyDomScopeQuery
+        }]
+      : [createEmptyScope()];
   const busyWhen = Array.isArray(rule.busyWhen) && rule.busyWhen.length
     ? rule.busyWhen
     : rule.busyQuery
@@ -855,6 +881,11 @@ function normalizeRuleForEditor(rule) {
       value: condition.value || "",
       method: condition.method || "ANY",
       resourceKind: condition.resourceKind || "any"
+    })),
+    domScopeMode,
+    domScopes: domScopes.map((scope) => ({
+      selectorType: ["auto", "css", "xpath"].includes(scope.selectorType) ? scope.selectorType : "auto",
+      query: typeof scope.query === "string" ? scope.query : ""
     })),
     useSmartBusySignals: rule.useSmartBusySignals !== false,
     iconMode: rule.iconMode || "overlaySpinner"
@@ -903,6 +934,43 @@ function createRuleNode(rule = createEmptyRule(), options = {}) {
   root.querySelector(".rule-matches").value = (rule.matches || []).join("\n");
   root.querySelector(".rule-match-mode").value = rule.matchMode || "any";
   root.querySelector(".rule-smart-busy").checked = !!rule.useSmartBusySignals;
+  const scopeModeEl = root.querySelector(".rule-dom-scope-mode");
+  const scopeSelectorFieldsEl = root.querySelector(".scope-selector-fields");
+  const scopeListEl = root.querySelector(".scope-list");
+  const addScopeButton = root.querySelector(".add-scope");
+  const scopeHintEl = root.querySelector(".rule-scope-hint");
+
+  scopeModeEl.value = rule.domScopeMode || "auto";
+  (rule.domScopes || []).forEach((scope) => {
+    scopeListEl.appendChild(createScopeNode(scope, rule.readonly));
+  });
+  if (!scopeListEl.children.length) {
+    scopeListEl.appendChild(createScopeNode(undefined, rule.readonly));
+  }
+  refreshScopeIndexes(scopeListEl);
+
+  const updateScopeUi = () => {
+    const mode = scopeModeEl.value;
+    scopeSelectorFieldsEl.classList.toggle("hidden", mode !== "selector");
+
+    if (mode === "auto") {
+      scopeHintEl.textContent = t("hintScopeAutomatic");
+      return;
+    }
+
+    if (mode === "document") {
+      scopeHintEl.textContent = t("hintScopeWholePage");
+      return;
+    }
+
+    const filledScopes = collectScopesFromRuleRoot(root).filter((scope) => scope.query);
+    if (!filledScopes.length) {
+      scopeHintEl.textContent = t("hintScopeEmpty");
+      return;
+    }
+
+    scopeHintEl.textContent = t("hintScopeSpecificAreas");
+  };
 
   originBadge.textContent = rule.origin === SYSTEM_ORIGIN ? t("ruleOriginSystem") : t("ruleOriginUser");
   readonlyNote.classList.toggle("hidden", !rule.readonly);
@@ -924,6 +992,22 @@ function createRuleNode(rule = createEmptyRule(), options = {}) {
     await animateElementEnter(node);
     markDirty();
   });
+
+  addScopeButton.addEventListener("click", async () => {
+    if (rule.readonly) return;
+    const node = createScopeNode(undefined, rule.readonly);
+    scopeListEl.appendChild(node);
+    refreshScopeIndexes(scopeListEl);
+    await animateElementEnter(node);
+    updateScopeUi();
+    markDirty();
+  });
+
+  [scopeModeEl, scopeListEl].forEach((el) => {
+    el.addEventListener("input", updateScopeUi);
+    el.addEventListener("change", updateScopeUi);
+  });
+  updateScopeUi();
 
   ruleToggleButton.addEventListener("click", () => {
     setRuleCollapsed(root, !root.classList.contains("collapsed"));
@@ -977,11 +1061,11 @@ function setRuleEnabledState(root, enabled) {
 }
 
 function disableRuleEditing(root, { allowRemove = false } = {}) {
-  root.querySelectorAll(".rule-enabled, .rule-enable-switch, .rule-matches, .rule-match-mode, .rule-smart-busy, .add-condition").forEach((el) => {
+  root.querySelectorAll(".rule-enabled, .rule-enable-switch, .rule-matches, .rule-match-mode, .rule-smart-busy, .add-condition, .rule-dom-scope-mode, .add-scope, .scope-selector-type, .scope-query").forEach((el) => {
     el.disabled = true;
   });
   if (!allowRemove) {
-    root.querySelectorAll(".remove-rule").forEach((el) => {
+    root.querySelectorAll(".remove-rule, .remove-scope").forEach((el) => {
       el.disabled = true;
     });
   }
@@ -1088,6 +1172,91 @@ function refreshConditionIndexes(container) {
   });
 }
 
+function refreshScopeIndexes(container) {
+  Array.from(container.querySelectorAll(".scope-entry")).forEach((scopeRoot, index) => {
+    const indexEl = scopeRoot.querySelector(".scope-entry-index");
+    if (indexEl) {
+      indexEl.textContent = String(index + 1);
+    }
+  });
+}
+
+function createScopeNode(scope = createEmptyScope(), readonly = false) {
+  const fragment = scopeTemplate.content.cloneNode(true);
+  const root = fragment.querySelector(".scope-entry");
+  const selectorTypeEl = root.querySelector(".scope-selector-type");
+  const queryEl = root.querySelector(".scope-query");
+  const hintEl = root.querySelector(".scope-entry-hint");
+  const removeButton = root.querySelector(".remove-scope");
+  const toggleButton = root.querySelector(".scope-toggle");
+
+  I18N.apply(root);
+  syncIconButtonLabels(root);
+
+  selectorTypeEl.value = scope.selectorType || "auto";
+  queryEl.value = scope.query || "";
+
+  const update = () => {
+    const query = queryEl.value.trim();
+    if (!query) {
+      hintEl.textContent = t("hintScopeEmpty");
+      return;
+    }
+    const detectedType = resolveSelectorType(query, selectorTypeEl.value);
+    hintEl.textContent = `${t("hintCurrentInterpretation", [detectedType])} / ${t("hintScopeSpecificArea")}`;
+  };
+
+  [selectorTypeEl, queryEl].forEach((el) => {
+    el.addEventListener("input", update);
+    el.addEventListener("change", update);
+  });
+
+  toggleButton.addEventListener("click", () => {
+    const collapsed = !root.classList.contains("collapsed");
+    setScopeCollapsed(root, collapsed);
+  });
+
+  removeButton.addEventListener("click", async () => {
+    if (readonly) return;
+    const parent = root.parentElement;
+    await animateElementExit(root);
+    if (parent && !parent.children.length) {
+      const replacement = createScopeNode(undefined, readonly);
+      parent.appendChild(replacement);
+      await animateElementEnter(replacement);
+    }
+    if (parent) {
+      refreshScopeIndexes(parent);
+    }
+    markDirty();
+  });
+
+  if (readonly) {
+    [selectorTypeEl, queryEl, removeButton].forEach((el) => {
+      el.disabled = true;
+      if ("readOnly" in el) el.readOnly = true;
+    });
+  }
+
+  update();
+  setScopeCollapsed(root, false);
+  return root;
+}
+
+function createEmptyScope() {
+  return {
+    selectorType: "auto",
+    query: ""
+  };
+}
+
+function collectScopesFromRuleRoot(root) {
+  return Array.from(root.querySelectorAll(".scope-entry")).map((scopeRoot) => ({
+    selectorType: scopeRoot.querySelector(".scope-selector-type").value,
+    query: scopeRoot.querySelector(".scope-query").value.trim()
+  }));
+}
+
 function setRuleCollapsed(root, collapsed) {
   root.classList.toggle("collapsed", collapsed);
   const toggleButton = root.querySelector(".rule-toggle");
@@ -1103,6 +1272,19 @@ function setConditionCollapsed(root, collapsed) {
   if (toggleButton) {
     toggleButton.setAttribute("aria-expanded", String(!collapsed));
     toggleButton.setAttribute("title", collapsed ? t("expandCondition") : t("collapseCondition"));
+  }
+}
+
+function setScopeCollapsed(root, collapsed) {
+  root.classList.toggle("collapsed", collapsed);
+  const toggleButton = root.querySelector(".scope-toggle");
+  const body = root.querySelector(".scope-entry-body");
+  if (toggleButton) {
+    toggleButton.setAttribute("aria-expanded", String(!collapsed));
+    toggleButton.setAttribute("title", collapsed ? t("expandCondition") : t("collapseCondition"));
+  }
+  if (body) {
+    body.classList.toggle("hidden", collapsed);
   }
 }
 
@@ -1137,6 +1319,8 @@ function createEmptyRule() {
     matches: [],
     matchMode: "any",
     busyWhen: [createEmptyCondition()],
+    domScopeMode: "auto",
+    domScopes: [createEmptyScope()],
     useSmartBusySignals: true,
     iconMode: "overlaySpinner"
   };
@@ -1386,6 +1570,8 @@ function collectRulesFromDom() {
           query: conditionRoot.querySelector(".condition-query").value.trim()
         };
       }).filter((condition) => (condition.source === "network" ? condition.value : condition.query)),
+      domScopeMode: root.querySelector(".rule-dom-scope-mode").value,
+      domScopes: collectScopesFromRuleRoot(root).filter((scope) => scope.query),
       useSmartBusySignals: root.querySelector(".rule-smart-busy").checked,
       iconMode: "overlaySpinner"
     };
