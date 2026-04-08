@@ -1,769 +1,286 @@
 html[data-theme="default"] {
   color-scheme: light dark;
   --wallpaper:
-    radial-gradient(circle at 80% 10%, rgba(52, 108, 255, 0.06), transparent 74%),
-    radial-gradient(circle at 14% 86%, rgba(36, 84, 214, 0.045), transparent 78%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.014), rgba(255, 255, 255, 0));
+    radial-gradient(circle at 80% 8%, rgba(74, 118, 255, 0.08), transparent 36%),
+    radial-gradient(circle at 12% 100%, rgba(74, 118, 255, 0.06), transparent 30%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0));
 }
 
 html[data-theme="default"][data-default-mode="dark"] {
-  --bg: #010611;
-  --section-card-bg: rgba(10, 18, 34, 0.52);
-  --panel: rgba(14, 22, 42, 0.78);
-  --panel-strong: rgba(16, 26, 50, 0.9);
-  --panel-border: rgba(255, 255, 255, 0.08);
-  --text: #eef4ff;
-  --muted: #b8c6e0;
-  --button-bg: rgba(255, 255, 255, 0.08);
-  --button-border: rgba(255, 255, 255, 0.11);
-  --field-bg: rgba(255, 255, 255, 0.05);
-  --field-border: rgba(255, 255, 255, 0.12);
-  --switch-off: #5c6373;
-  --switch-on: #48b5f7;
-  --hero-subtle: rgba(255, 255, 255, 0.04);
-  --code-bg: rgba(6, 11, 23, 0.78);
-  --user-rule-bg: rgba(18, 28, 54, 0.95);
-  --user-rule-head: rgba(24, 37, 70, 0.98);
-  --user-rule-off-bg: rgba(36, 39, 46, 0.95);
-  --user-rule-off-head: rgba(44, 49, 59, 0.98);
-  --user-rule-off-panel: rgba(33, 37, 44, 0.95);
-  --user-rule-off-condition: rgba(39, 43, 51, 0.93);
-  --system-rule-bg: rgba(26, 30, 36, 0.96);
-  --system-rule-head: rgba(17, 20, 25, 0.98);
-  --system-panel-bg: rgba(29, 33, 39, 0.95);
-  --system-condition-bg: rgba(34, 38, 45, 0.93);
-  --system-rule-border: rgba(170, 179, 194, 0.26);
-  --system-rule-sheen: rgba(255, 255, 255, 0.035);
-  --select-option-bg: #15243f;
-  --select-option-text: #eef4ff;
-  --hover-surface: rgba(255, 255, 255, 0.045);
-  --hover-button: rgba(255, 255, 255, 0.065);
+  --bg: #040a15;
+  --text: #eef3ff;
+  --muted: #97a8c7;
+  --primary: #66a7ff;
+  --surface-1: rgba(9, 16, 31, 0.78);
+  --surface-2: rgba(15, 25, 47, 0.92);
+  --surface-3: rgba(20, 31, 58, 0.96);
+  --surface-4: rgba(10, 17, 31, 0.96);
+  --surface-system: rgba(28, 34, 46, 0.94);
+  --surface-disabled: rgba(33, 39, 52, 0.94);
+  --border: rgba(149, 166, 197, 0.14);
+  --border-strong: rgba(149, 166, 197, 0.22);
+  --field-bg: rgba(255, 255, 255, 0.045);
+  --field-border: rgba(149, 166, 197, 0.16);
+  --button-bg: rgba(255, 255, 255, 0.06);
+  --button-border: rgba(149, 166, 197, 0.14);
+  --button-hover: rgba(255, 255, 255, 0.1);
+  --shadow: 0 20px 48px rgba(0, 0, 0, 0.2);
+  --focus-ring: rgba(102, 167, 255, 0.72);
+  --switch-off: #626b7d;
+  --switch-on: #66a7ff;
+  --switch-shell-bg: rgba(19, 30, 53, 0.86);
+  --switch-shell-border: rgba(149, 166, 197, 0.22);
 }
 
 html[data-theme="default"][data-default-mode="light"] {
-  --bg: #d7e6ff;
-  --section-card-bg: rgba(255, 255, 255, 0.62);
-  --panel: rgba(255, 255, 255, 0.78);
-  --panel-strong: rgba(255, 255, 255, 0.9);
-  --panel-border: rgba(129, 152, 190, 0.24);
-  --text: #18233a;
-  --muted: #61708b;
-  --button-bg: rgba(255, 255, 255, 0.85);
-  --button-border: rgba(129, 152, 190, 0.28);
+  --bg: #d9e6ff;
+  --text: #1b2740;
+  --muted: #61718d;
+  --primary: #3d7dff;
+  --surface-1: rgba(255, 255, 255, 0.72);
+  --surface-2: rgba(247, 250, 255, 0.94);
+  --surface-3: rgba(242, 246, 255, 0.98);
+  --surface-4: rgba(255, 255, 255, 0.98);
+  --surface-system: rgba(234, 238, 244, 0.98);
+  --surface-disabled: rgba(239, 242, 247, 0.98);
+  --border: rgba(103, 123, 156, 0.16);
+  --border-strong: rgba(103, 123, 156, 0.26);
   --field-bg: rgba(255, 255, 255, 0.92);
-  --field-border: rgba(129, 152, 190, 0.28);
-  --switch-off: #77829a;
-  --switch-on: #48b5f7;
-  --hero-subtle: rgba(255, 255, 255, 0.35);
-  --code-bg: rgba(247, 250, 255, 0.95);
-  --user-rule-bg: rgba(246, 250, 255, 0.97);
-  --user-rule-head: rgba(228, 236, 249, 0.99);
-  --user-rule-off-bg: rgba(240, 242, 246, 0.97);
-  --user-rule-off-head: rgba(225, 229, 236, 0.99);
-  --user-rule-off-panel: rgba(234, 237, 241, 0.98);
-  --user-rule-off-condition: rgba(239, 241, 245, 0.98);
-  --system-rule-bg: rgba(232, 236, 242, 0.98);
-  --system-rule-head: rgba(216, 222, 230, 0.99);
-  --system-panel-bg: rgba(227, 232, 238, 0.98);
-  --system-condition-bg: rgba(234, 238, 243, 0.98);
-  --system-rule-border: rgba(109, 122, 145, 0.24);
-  --system-rule-sheen: rgba(255, 255, 255, 0.42);
-  --select-option-bg: #ffffff;
-  --select-option-text: #18233a;
-  --hover-surface: rgba(24, 35, 58, 0.06);
-  --hover-button: rgba(24, 35, 58, 0.08);
+  --field-border: rgba(103, 123, 156, 0.18);
+  --button-bg: rgba(255, 255, 255, 0.86);
+  --button-border: rgba(103, 123, 156, 0.16);
+  --button-hover: rgba(61, 125, 255, 0.08);
+  --shadow: 0 16px 40px rgba(90, 117, 166, 0.14);
+  --focus-ring: rgba(61, 125, 255, 0.42);
+  --switch-off: #9097a8;
+  --switch-on: #3d7dff;
+  --switch-shell-bg: rgba(241, 245, 255, 0.96);
+  --switch-shell-border: rgba(103, 123, 156, 0.18);
 }
 
 html[data-theme="default"] body {
   min-height: 100vh;
-  background: var(--wallpaper), linear-gradient(180deg, var(--bg), color-mix(in srgb, var(--bg) 94%, #000 6%));
-  color: var(--text);
+  background: var(--wallpaper), linear-gradient(180deg, var(--bg), color-mix(in srgb, var(--bg) 92%, #000 8%));
   font-family: "Segoe UI", system-ui, sans-serif;
 }
 
 html[data-theme="default"] .page {
-  max-width: 1120px;
-  padding: 20px 18px 28px;
+  padding-top: 20px;
+  padding-bottom: 24px;
 }
 
 html[data-theme="default"] .hero {
-  margin: 0 0 14px;
-  padding: 0;
+  margin-bottom: 4px;
   background: transparent;
   border: 0;
   box-shadow: none;
-  gap: 12px;
-  align-items: flex-start;
-}
-
-html[data-theme="default"] .hero-copy {
-  gap: 8px;
-}
-
-html[data-theme="default"] .hero-copy h1 {
-  margin: 0;
-  font-size: 2.15rem;
-  line-height: 1.15;
-  letter-spacing: -0.03em;
 }
 
 html[data-theme="default"] .subtitle {
-  margin: 0;
-  color: var(--muted);
   max-width: 760px;
+  margin: 6px 0 10px;
 }
 
-html[data-theme="default"] .default-hidden-principles,
-html[data-theme="default"] .default-hidden-section {
-  display: none !important;
-}
-
-html[data-theme="default"] .hero-actions {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-}
-
-html[data-theme="default"] .settings-data-button {
-  border: 1px solid var(--button-border);
-  background: var(--button-bg);
-  color: var(--text);
-  border-radius: 999px;
-  box-shadow: none;
-}
-
-html[data-theme="default"] .settings-data-button:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--button-bg) 60%, white 0.5%);
-}
-
-html[data-theme="default"] .settings-data-actions {
-  padding: 4px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--panel) 86%, var(--field-bg) 14%);
-  border: 1px solid var(--button-border);
-  backdrop-filter: blur(14px) saturate(125%);
-  -webkit-backdrop-filter: blur(14px) saturate(125%);
-  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.16);
-}
-
-html[data-theme="default"] .settings-data-button .database-icon-base {
-  opacity: 0.62;
-}
-
-html[data-theme="default"] .settings-data-button .database-icon-arrow-cutout {
-  stroke: color-mix(in srgb, var(--button-bg) 78%, var(--panel) 22%);
-}
-
-html[data-theme="default"] .settings-data-button .database-icon-arrow {
-  stroke: var(--switch-on);
-  filter: drop-shadow(0 0 1.5px color-mix(in srgb, var(--panel) 92%, black 8%));
-}
-
-html[data-theme="default"] .default-mode-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  height: 40px;
-  padding: 2px;
-  border-radius: 999px;
-  background: var(--button-bg);
-  border: 1px solid var(--button-border);
-  cursor: pointer;
-}
-
-html[data-theme="default"] .default-mode-button,
-html[data-theme="default"] .hero-actions > button {
-  height: 40px;
-  min-width: 76px;
-  padding: 0 14px;
-  border-radius: 999px;
-  font-weight: 500;
-}
-
-html[data-theme="default"] .default-mode-button {
-  min-width: 34px;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--muted);
-  box-shadow: none;
-  pointer-events: none;
-}
-
-html[data-theme="default"] .default-mode-button.active {
-  background: linear-gradient(135deg, rgba(96, 165, 250, 0.96), rgba(59, 130, 246, 0.98));
-  border-color: rgba(255, 255, 255, 0.18);
-  color: #ffffff;
-}
-
-html[data-theme="default"] .default-mode-button svg {
-  width: 18px;
-  height: 18px;
-  stroke: currentColor;
-  stroke-width: 1.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
-  pointer-events: none;
-}
-
-html[data-theme="default"] .default-mode-button svg circle:first-child {
-  fill: currentColor;
-  stroke: none;
-}
-
-html[data-theme="default"] .hero-actions > button {
-  background: var(--button-bg);
-  border: 1px solid var(--button-border);
-  color: var(--text);
-}
-
-html[data-theme="default"] .hero-actions > button.primary {
-  background: linear-gradient(135deg, rgba(96, 165, 250, 0.96), rgba(59, 130, 246, 0.98));
-  border-color: transparent;
-  color: #ffffff;
+html[data-theme="default"] .hero-app-icon {
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
 }
 
 html[data-theme="default"] .card,
-html[data-theme="default"] .rule,
-html[data-theme="default"] .condition,
-html[data-theme="default"] .conditions-panel,
-html[data-theme="default"] .diagnostics-panel,
-html[data-theme="default"] .confirm-modal {
-  border-radius: 8px;
+html[data-theme="default"] .confirm-modal,
+html[data-theme="default"] .default-help-dialog,
+html[data-theme="default"] .diagnostics-help-dialog,
+html[data-theme="default"] .autosave-toast {
   backdrop-filter: blur(16px) saturate(125%);
   -webkit-backdrop-filter: blur(16px) saturate(125%);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
 }
 
-html[data-theme="default"] .card {
-  margin-top: 14px;
-  padding: 0;
-  background: var(--section-card-bg);
-  border: 1px solid var(--panel-border);
-  overflow: hidden;
+html[data-theme="default"] .settings-section,
+html[data-theme="default"] .confirm-modal,
+html[data-theme="default"] .default-help-dialog,
+html[data-theme="default"] .diagnostics-help-dialog,
+html[data-theme="default"] .autosave-toast {
+  background: var(--surface-1);
 }
 
-html[data-theme="default"] .confirm-modal {
-  padding: 20px 22px;
-  background: var(--panel);
-  border: 1px solid var(--panel-border);
-  overflow: hidden;
+html[data-theme="default"] .surface-panel,
+html[data-theme="default"] .conditions-panel,
+html[data-theme="default"] .behavior-panel,
+html[data-theme="default"] .diagnostics-panel,
+html[data-theme="default"] .indicator-choice-card,
+html[data-theme="default"] .indicator-preview-card {
+  background: var(--surface-2);
 }
 
-html[data-theme="default"] .confirm-modal h2 {
-  margin: 0 0 12px;
-}
-
-html[data-theme="default"] .confirm-modal p {
-  margin: 0 0 18px;
-}
-
-html[data-theme="default"] .section-header {
-  margin: 0;
-  min-height: 0;
-  padding: 12px 14px;
-  gap: 12px;
-  border-bottom: 1px solid var(--panel-border);
+html[data-theme="default"] .surface-panel.surface-panel-plain {
   background: transparent;
-}
-
-html[data-theme="default"] .rules-card > .section-header,
-html[data-theme="default"] .debug-card > .section-header,
-html[data-theme="default"] .indicator-settings-card > .section-header {
-  min-height: 64px;
-}
-
-html[data-theme="default"] .section-header > h2,
-html[data-theme="default"] .conditions-panel > .section-header > h3 {
-  margin: 0;
-  padding: 0;
-  font-size: 1.05rem;
-  line-height: 1.2;
-}
-
-html[data-theme="default"] .section-header-actions,
-html[data-theme="default"] .button-cluster {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-html[data-theme="default"] .section-header-actions {
-  margin-left: auto;
-  justify-content: flex-end;
-}
-
-html[data-theme="default"] .section-header-actions > .action-button,
-html[data-theme="default"] .button-cluster > .action-button {
-  flex: 0 0 auto;
-  width: auto;
-}
-
-html[data-theme="default"] #debugToggle {
-  flex: 1 1 auto;
-  width: auto;
-  min-width: 0;
-  justify-content: flex-start;
-  gap: 8px;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: var(--text);
+  border-color: transparent;
   box-shadow: none;
-  font-size: 1.05rem;
-  font-weight: 600;
 }
 
-html[data-theme="default"] .debug-card .section-header .default-rule-enable-button {
-  flex-shrink: 0;
+html[data-theme="default"] .surface-tone[data-surface-tone="accent"] {
+  --surface-tone-accent: var(--primary);
 }
 
-html[data-theme="default"] #debugToggle .section-toggle-icon {
-  transition: transform 0.15s ease;
+html[data-theme="default"] .surface-tone[data-surface-tone="neutral"] {
+  --surface-tone-accent: color-mix(in srgb, var(--text) 18%, var(--muted) 82%);
+  --primary: color-mix(in srgb, var(--text) 16%, var(--muted) 84%);
+  --focus-ring: color-mix(in srgb, var(--muted) 56%, transparent);
+  --surface-tone-panel: color-mix(in srgb, var(--surface-system) 90%, black 10%);
+  --surface-tone-section: color-mix(in srgb, var(--surface-system) 78%, black 22%);
+  --surface-tone-section-strong: color-mix(in srgb, var(--surface-system) 68%, black 32%);
+  --surface-tone-header: color-mix(in srgb, var(--surface-system) 72%, black 28%);
+  --surface-tone-header-hover: color-mix(in srgb, var(--surface-system) 66%, black 34%);
+  --field-bg: color-mix(in srgb, var(--surface-system) 62%, black 38%);
+  --field-border: color-mix(in srgb, var(--muted) 24%, transparent);
+  --button-bg: color-mix(in srgb, var(--surface-system) 70%, black 30%);
+  --button-border: color-mix(in srgb, var(--muted) 18%, transparent);
+  --button-hover: color-mix(in srgb, var(--surface-system) 58%, black 42%);
+  --switch-on: color-mix(in srgb, var(--text) 18%, var(--muted) 82%);
+  --switch-off: color-mix(in srgb, var(--muted) 70%, black 30%);
 }
 
-html[data-theme="default"] #debugToggle[aria-expanded="true"] .section-toggle-icon,
-html[data-theme="default"] .rule-toggle[aria-expanded="true"] .rule-toggle-icon,
-html[data-theme="default"] .condition-toggle[aria-expanded="true"] .condition-toggle-icon {
-  transform: rotate(0deg);
-}
-
-html[data-theme="default"] #debugToggle[aria-expanded="false"] .section-toggle-icon,
-html[data-theme="default"] .rule-toggle[aria-expanded="false"] .rule-toggle-icon,
-html[data-theme="default"] .condition-toggle[aria-expanded="false"] .condition-toggle-icon {
-  transform: rotate(-90deg);
-}
-
-html[data-theme="default"] .rule-toggle-icon,
-html[data-theme="default"] .condition-toggle-icon,
-html[data-theme="default"] .section-toggle-icon {
-  display: inline-flex;
-  transition: transform 0.15s ease;
-}
-
-html[data-theme="default"] .rules,
-html[data-theme="default"] #debugSectionBody {
-  padding: 14px;
-}
-
-html[data-theme="default"] .rules {
-  margin-top: 0;
-  background: transparent;
-  border: 0;
-  gap: 12px;
-}
-
-html[data-theme="default"] .rule {
-  padding: 0;
-  background: var(--user-rule-bg);
-  border: 1px solid var(--panel-border);
-  overflow: hidden;
-}
-
-html[data-theme="default"] .rule[data-rule-origin="system"] {
-  background: var(--system-rule-bg);
-  border-color: var(--system-rule-border);
+html[data-theme="default"] .surface-tone[data-surface-tone="neutral"],
+html[data-theme="default"] .readonly-rule,
+html[data-theme="default"] .readonly-condition {
   border-style: dashed;
-  box-shadow: inset 0 1px 0 var(--system-rule-sheen);
 }
 
-html[data-theme="default"] .rule-head {
-  display: flex;
-  align-items: center;
-  padding: 12px 14px;
-  background: var(--user-rule-head);
-  border-bottom: 1px solid var(--panel-border);
-  cursor: pointer;
-  transition: background-color 0.14s ease;
+html[data-theme="default"] .surface-tone[data-surface-tone="neutral"] .behavior-panel,
+html[data-theme="default"] .surface-tone[data-surface-tone="neutral"] .conditions-panel {
+  background: color-mix(in srgb, #181818 88%, black 12%);
 }
 
-html[data-theme="default"] .rule[data-rule-origin="system"] .rule-head {
-  background: var(--system-rule-head);
-  background-image: linear-gradient(180deg, var(--system-rule-sheen), transparent);
-}
-
-html[data-theme="default"] .rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) {
-  background: var(--user-rule-off-bg);
-}
-
-html[data-theme="default"] .rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) .rule-head {
-  background: var(--user-rule-off-head);
-}
-
-html[data-theme="default"] .rule-head:hover,
-html[data-theme="default"] .debug-card .section-header:not(.diagnostics-header):hover,
-html[data-theme="default"] .condition-header:hover {
-  background: color-mix(in srgb, var(--hover-surface) 100%, transparent);
-}
-
-html[data-theme="default"] .rule[data-rule-origin="system"] .rule-head:hover {
-  background: color-mix(in srgb, var(--system-rule-head) 92%, var(--hover-surface) 8%);
-}
-
-html[data-theme="default"] .rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) .rule-head:hover {
-  background: color-mix(in srgb, var(--user-rule-off-head) 92%, var(--hover-surface) 8%);
-}
-
-html[data-theme="default"][data-default-mode="light"] .rule-head:hover {
-  background: color-mix(in srgb, var(--user-rule-head) 76%, #ffffff 24%);
-}
-
-html[data-theme="default"][data-default-mode="light"] .rule[data-rule-origin="system"] .rule-head:hover {
-  background: color-mix(in srgb, var(--system-rule-head) 80%, #ffffff 20%);
-}
-
-html[data-theme="default"][data-default-mode="light"] .rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) .rule-head:hover {
-  background: color-mix(in srgb, var(--user-rule-off-head) 72%, #ffffff 28%);
-}
-
-html[data-theme="default"] .rule.collapsed .rule-head {
+html[data-theme="default"] .rule.collapsed .rule-head,
+html[data-theme="default"] .condition.collapsed .condition-header {
   border-bottom: 0;
 }
 
-html[data-theme="default"] .rule-head-start,
-html[data-theme="default"] .rule-head-actions {
-  gap: 10px;
-}
-
-html[data-theme="default"] .rule-head-start {
-  display: flex;
-  align-items: center;
-  align-self: center;
-  flex: 1;
-  min-width: 0;
-}
-
-html[data-theme="default"] .rule-head-actions {
-  flex-shrink: 0;
-  margin-left: auto;
-  align-self: center;
-}
-
-html[data-theme="default"] .rule-title-area {
-  align-self: center;
-  gap: 0;
-  flex: 0 1 clamp(160px, 25%, 240px);
-  max-width: clamp(160px, 25%, 240px);
+html[data-theme="default"] .section-header {
+  background: transparent;
 }
 
 html[data-theme="default"] .rule-name {
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  font-size: 1rem;
-  font-weight: 600;
-  min-width: 0;
+  min-height: 0;
+  padding: 6px 10px;
+  border-color: color-mix(in srgb, var(--primary) 52%, var(--field-border) 48%);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--surface-3) 72%, transparent);
 }
 
-html[data-theme="default"] .rule-meta {
-  gap: 8px;
-}
-
-html[data-theme="default"] .rule-origin-badge {
-  display: none;
-}
-
-html[data-theme="default"] .rule-readonly-note,
-html[data-theme="default"] .condition-summary,
-html[data-theme="default"] .hint,
-html[data-theme="default"] .diagnostic-summary,
-html[data-theme="default"] .diagnostic-request-meta,
-html[data-theme="default"] .diagnostic-finished-at,
-html[data-theme="default"] .diagnostics-empty-row td,
-html[data-theme="default"] .app-footer,
-html[data-theme="default"] .theme-debug-title {
-  color: var(--muted);
-}
-
-html[data-theme="default"] .rule-body {
-  padding: 14px;
-}
-
-html[data-theme="default"] .default-enable-label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  border: 0;
-}
-
-html[data-theme="default"] .default-rule-enable-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  height: 32px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  box-shadow: none;
-}
-
-html[data-theme="default"] .default-rule-enable-button.disabled {
-  opacity: 0.6;
-}
-
-html[data-theme="default"] .default-rule-switch-text {
-  min-width: 22px;
-  text-align: right;
-  font-weight: 600;
-}
-
-html[data-theme="default"] .default-switch-track {
-  position: relative;
-  width: 40px;
-  height: 22px;
-  border-radius: 999px;
-  background: var(--switch-off);
-  transition: background 0.16s ease;
-}
-
-html[data-theme="default"] .default-switch-thumb {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 16px;
-  height: 16px;
-  border-radius: 999px;
-  background: #ffffff;
-  transition: transform 0.16s ease;
-}
-
-html[data-theme="default"] .default-rule-enable-button.active .default-switch-track {
-  background: var(--switch-on);
-}
-
-html[data-theme="default"] .default-rule-enable-button.active .default-switch-thumb {
-  transform: translateX(18px);
-}
-
-html[data-theme="default"] .rule-toggle {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  box-shadow: none;
-  font-size: 1.05rem;
-  font-weight: 600;
-  line-height: 1;
-}
-
-html[data-theme="default"] .condition-toggle {
-  padding: 4px;
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  box-shadow: none;
-}
-
-html[data-theme="default"] .conditions-panel,
-html[data-theme="default"] .condition,
-html[data-theme="default"] .diagnostics-panel,
-html[data-theme="default"] .confirm-modal {
-  background: var(--panel);
-  border: 1px solid var(--panel-border);
-}
-
-html[data-theme="default"] .conditions-panel {
-  padding: 0;
-  overflow: hidden;
-}
-
-html[data-theme="default"] .conditions-panel > .section-header,
-html[data-theme="default"] .diagnostics-header {
-  padding: 8px 12px;
-  min-height: 49px;
-  align-items: center;
-}
-
-html[data-theme="default"] .conditions-panel > .section-header > h3,
-html[data-theme="default"] .default-inline-label-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-html[data-theme="default"] .conditions-container {
-  display: grid;
-  gap: 12px;
-  padding: 12px;
-}
-
-html[data-theme="default"] .rule[data-rule-origin="system"] .conditions-panel {
-  background: var(--system-panel-bg);
-  border-style: dashed;
-  border-color: color-mix(in srgb, var(--system-rule-border) 85%, var(--panel-border) 15%);
-}
-
-html[data-theme="default"] .rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) .conditions-panel {
-  background: var(--user-rule-off-panel);
-}
-
-html[data-theme="default"] .rule[data-rule-origin="system"] .condition {
-  background: var(--system-condition-bg);
-  border-color: color-mix(in srgb, var(--system-rule-border) 70%, var(--panel-border) 30%);
-}
-
-html[data-theme="default"] .rule[data-rule-enabled="false"]:not([data-rule-origin="system"]) .condition {
-  background: var(--user-rule-off-condition);
-}
-
-html[data-theme="default"] .condition {
-  padding: 0;
-}
-
-html[data-theme="default"] .condition-header {
-  gap: 10px;
-  align-items: center;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--panel-border);
-  cursor: pointer;
-  transition: background-color 0.14s ease;
-}
-
-html[data-theme="default"] .condition-toggle {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  box-shadow: none;
-  border-radius: 0;
-}
-
-html[data-theme="default"] .condition-title-text,
-html[data-theme="default"] .condition-index {
-  font-weight: 600;
-}
-
-html[data-theme="default"] .condition-body {
-  margin: 12px 14px 14px;
-}
-
-html[data-theme="default"] label {
-  color: var(--text);
-}
-
-html[data-theme="default"] input[type="text"],
-html[data-theme="default"] input:not([type]),
-html[data-theme="default"] textarea,
-html[data-theme="default"] select {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--field-border);
+html[data-theme="default"] .surface-tone[data-surface-tone="neutral"] .rule-name {
+  border-color: var(--field-border);
   background: var(--field-bg);
-  color: var(--text);
 }
 
-html[data-theme="default"] select {
-  padding-right: 12px;
-  background-position: right 8px center;
+html[data-theme="default"] .rule-name:focus-visible {
+  border-color: color-mix(in srgb, var(--primary) 76%, white 8%);
+  outline: none;
 }
 
-html[data-theme="default"] select option {
-  color: var(--select-option-text);
-  background: var(--select-option-bg);
-}
-
-html[data-theme="default"] input[type="text"]:focus,
-html[data-theme="default"] input:not([type]):focus,
-html[data-theme="default"] textarea:focus,
-html[data-theme="default"] select:focus,
-html[data-theme="default"] button:focus-visible,
-html[data-theme="default"] .default-mode-switch:focus-visible {
-  outline: 2px solid rgba(96, 165, 250, 0.72);
-  outline-offset: 1px;
-}
-
-html[data-theme="default"] button {
-  border-radius: 8px;
-  border: 1px solid var(--button-border);
-  background: var(--button-bg);
-  color: var(--text);
+html[data-theme="default"] .surface-tone[data-surface-tone="neutral"] .rule-name:focus-visible {
+  border-color: color-mix(in srgb, var(--field-border) 74%, var(--text) 26%);
 }
 
 html[data-theme="default"] button.primary {
-  background: linear-gradient(135deg, rgba(96, 165, 250, 0.96), rgba(59, 130, 246, 0.98));
-  border-color: transparent;
-  color: #ffffff;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 92%, white 8%), var(--primary));
 }
 
+html[data-theme="default"] .default-mode-switch,
+html[data-theme="default"] .settings-data-actions {
+  background: color-mix(in srgb, var(--surface-2) 82%, var(--field-bg) 18%);
+}
+
+html[data-theme="default"] .default-mode-button,
+html[data-theme="default"] .default-help-button,
 html[data-theme="default"] .default-remove-icon-button,
-html[data-theme="default"] .default-help-button {
-  min-width: 28px;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  background: transparent;
+html[data-theme="default"] .smart-busy-help-button,
+html[data-theme="default"] .behavior-help-button,
+html[data-theme="default"] .diagnostics-help-button {
   color: var(--muted);
-  box-shadow: none;
 }
 
-html[data-theme="default"] .default-remove-icon-button:hover,
-html[data-theme="default"] .default-help-button:hover {
+html[data-theme="default"] .default-help-button:hover:not(:disabled),
+html[data-theme="default"] .default-remove-icon-button:hover:not(:disabled),
+html[data-theme="default"] .smart-busy-help-button:hover:not(:disabled),
+html[data-theme="default"] .behavior-help-button:hover:not(:disabled),
+html[data-theme="default"] .diagnostics-help-button:hover:not(:disabled) {
+  background: transparent;
   color: var(--text);
 }
 
-html[data-theme="default"] .default-remove-icon-button svg,
-html[data-theme="default"] .default-help-button svg {
-  width: 14px;
-  height: 14px;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
-  pointer-events: none;
+html[data-theme="default"] .default-mode-button.active {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 88%, white 12%), var(--primary));
+  color: #fff;
 }
 
-html[data-theme="default"] .theme-debug-control {
-  display: grid;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding: 12px;
-  border-radius: 8px;
-  background: var(--field-bg);
-  border: 1px solid var(--field-border);
+html[data-theme="default"] .default-rule-enable-button {
+  background: transparent;
+  border-color: transparent;
 }
 
-html[data-theme="default"] .theme-debug-label {
-  display: grid;
-  gap: 8px;
-}
-
-html[data-theme="default"] .diagnostic-summary,
-html[data-theme="default"] .diagnostics-table-wrap {
-  border-radius: 8px;
-  background: var(--field-bg);
-  border: 1px solid var(--field-border);
-}
-
-html[data-theme="default"] .diagnostics-table {
+html[data-theme="default"] .default-rule-enable-button:hover:not(:disabled) {
   background: transparent;
 }
 
-html[data-theme="default"] .diagnostics-table th,
-html[data-theme="default"] .diagnostics-table td {
-  border-bottom: 1px solid var(--panel-border);
+html[data-theme="default"] .indicator-settings-card {
+  --indicator-badge-color: var(--primary);
+}
+
+html[data-theme="default"] .indicator-choice-card input[type="radio"],
+html[data-theme="default"] .indicator-preview-card input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  margin: 0;
+  border-radius: 999px;
+  border: 2px solid color-mix(in srgb, var(--muted) 70%, transparent);
+  background: transparent;
+}
+
+html[data-theme="default"] .indicator-choice-card input[type="radio"]:checked,
+html[data-theme="default"] .indicator-preview-card input[type="radio"]:checked {
+  border-color: var(--primary);
+  background: radial-gradient(circle at center, color-mix(in srgb, var(--primary) 85%, white 15%) 38%, transparent 45%);
+}
+
+html[data-theme="default"] .indicator-choice-card:has(input:checked),
+html[data-theme="default"] .indicator-preview-card:has(input:checked) {
+  border-color: color-mix(in srgb, var(--primary) 72%, var(--border) 28%);
+  background: color-mix(in srgb, var(--surface-3) 86%, var(--primary) 14%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 38%, transparent);
+}
+
+html[data-theme="default"] .debug-render-group .indicator-choice-card {
+  background: transparent;
+}
+
+html[data-theme="default"] .debug-render-group .indicator-choice-card:has(input:checked) {
+  background: transparent;
+}
+
+html[data-theme="default"] .indicator-badge-dot,
+html[data-theme="default"] .indicator-badge-corner {
+  background: var(--indicator-badge-color);
+  border: 2px solid rgba(255, 255, 255, 0.92);
+}
+
+html[data-theme="default"] .indicator-badge-ring {
+  color: var(--indicator-badge-color);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.92);
+}
+
+html[data-theme="default"] .indicator-color-picker-button:hover:not(:disabled),
+html[data-theme="default"] .icon-button:hover:not(:disabled),
+html[data-theme="default"] .settings-data-button:hover:not(:disabled),
+html[data-theme="default"] .add-icon-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--button-bg) 78%, white 2%);
+}
+
+html[data-theme="default"] .diagnostics-table th {
+  background: color-mix(in srgb, var(--surface-3) 92%, transparent);
 }
 
 html[data-theme="default"] .diagnostic-status {
@@ -771,234 +288,35 @@ html[data-theme="default"] .diagnostic-status {
 }
 
 html[data-theme="default"] .diagnostic-status-inflight {
-  background: rgba(72, 181, 247, 0.18);
+  background: rgba(102, 167, 255, 0.18);
 }
 
 html[data-theme="default"] .diagnostic-status-completed {
-  background: rgba(74, 222, 128, 0.15);
+  background: rgba(74, 222, 128, 0.16);
 }
 
 html[data-theme="default"] .diagnostic-status-error {
   background: rgba(248, 113, 113, 0.16);
 }
 
-html[data-theme="default"] .autosave-toast {
-  border-radius: 12px;
-  border-color: var(--panel-border);
-  background: color-mix(in srgb, var(--panel) 88%, var(--field-bg) 12%);
-  backdrop-filter: blur(16px) saturate(125%);
-  -webkit-backdrop-filter: blur(16px) saturate(125%);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
-}
-
 html[data-theme="default"] .autosave-toast[data-state="saving"] {
-  border-color: color-mix(in srgb, var(--primary) 38%, var(--panel-border) 62%);
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border) 60%);
 }
 
 html[data-theme="default"] .autosave-toast[data-state="saved"] {
-  border-color: rgba(74, 222, 128, 0.32);
+  border-color: rgba(74, 222, 128, 0.34);
 }
 
 html[data-theme="default"] .autosave-toast[data-state="error"] {
-  border-color: rgba(248, 113, 113, 0.36);
-}
-
-html[data-theme="default"] .default-help-dialog {
-  width: min(640px, calc(100vw - 32px));
-  padding: 18px 20px;
-  border-radius: 12px;
-  border: 1px solid var(--panel-border);
-  background: var(--panel);
-  color: var(--text);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  border-color: rgba(248, 113, 113, 0.34);
 }
 
 html[data-theme="default"] .default-help-dialog::backdrop,
+html[data-theme="default"] .diagnostics-help-dialog::backdrop,
 html[data-theme="default"] .confirm-modal::backdrop {
   background: rgba(3, 8, 20, 0.58);
 }
 
-html[data-theme="default"] .default-help-dialog-title {
-  margin: 0 0 12px;
-  font-size: 1.05rem;
-}
-
-html[data-theme="default"] .default-help-dialog-content {
-  user-select: text;
-  line-height: 1.6;
-}
-
-html[data-theme="default"] .default-help-dialog-content h3 {
-  margin: 16px 0 8px;
-  font-size: 0.98rem;
-}
-
-html[data-theme="default"] .default-help-dialog-content p,
-html[data-theme="default"] .default-help-dialog-content ul {
-  margin: 0 0 10px;
-}
-
-html[data-theme="default"] .default-help-dialog-content ul {
-  padding-left: 20px;
-}
-
-html[data-theme="default"] .default-help-dialog-content code {
-  display: inline-block;
-  padding: 1px 6px;
-  border-radius: 6px;
-  background: var(--code-bg);
-  border: 1px solid var(--panel-border);
-}
-
-html[data-theme="default"] .diagnostics-title-group {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-html[data-theme="default"] .diagnostics-help-button {
-  min-width: 28px;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  box-shadow: none;
-  flex-shrink: 0;
-}
-
-html[data-theme="default"] .diagnostics-help-button:hover:not(:disabled) {
-  color: var(--text);
-  background: transparent;
-}
-
-html[data-theme="default"] .diagnostics-help-button svg {
-  width: 14px;
-  height: 14px;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
-  pointer-events: none;
-}
-
-html[data-theme="default"] .diagnostics-help-dialog {
-  width: min(640px, calc(100vw - 32px));
-  padding: 18px 20px;
-  border-radius: 12px;
-  border: 1px solid var(--panel-border);
-  background: var(--panel);
-  color: var(--text);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
-}
-
-html[data-theme="default"] .diagnostics-help-dialog::backdrop {
-  background: rgba(3, 8, 20, 0.58);
-}
-
-html[data-theme="default"] .diagnostics-help-dialog-title {
-  margin: 0 0 12px;
-  font-size: 1.05rem;
-}
-
-html[data-theme="default"] .diagnostics-help-dialog-text {
-  margin: 0;
-  color: var(--muted);
-  line-height: 1.6;
-}
-
-html[data-theme="default"] .smart-toggle-group {
-  gap: 10px;
-}
-
-html[data-theme="default"] .smart-toggle-group input[type="checkbox"] {
-  margin: 0;
-  flex-shrink: 0;
-}
-
-html[data-theme="default"] .smart-busy-help-button {
-  min-width: 28px;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  box-shadow: none;
-}
-
-html[data-theme="default"] .smart-busy-help-button:hover:not(:disabled) {
-  background: transparent;
-  color: var(--text);
-}
-
-html[data-theme="default"] .smart-busy-help-button svg {
-  width: 14px;
-  height: 14px;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
-  pointer-events: none;
-}
-
-html[data-theme="default"] .action-button,
-html[data-theme="default"] .default-hover-button {
-  transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease, filter 0.14s ease;
-}
-
-html[data-theme="default"] button.action-button:hover:not(:disabled),
-html[data-theme="default"] button.default-hover-button:hover:not(:disabled) {
-  background-color: color-mix(in srgb, var(--button-bg) 60%, white 0.5%);
-}
-
-html[data-theme="default"] button.primary.default-hover-button:hover:not(:disabled) {
-  filter: brightness(1.3);
-  background: linear-gradient(135deg, rgba(108, 174, 255, 0.98), rgba(69, 141, 250, 1));
-}
-
-html[data-theme="default"] .default-footer {
-  padding: 10px 4px 0;
-  text-align: left;
-}
-
-@media (max-width: 760px) {
-  html[data-theme="default"] .hero,
-  html[data-theme="default"] .hero-actions,
-  html[data-theme="default"] .rule-head,
-  html[data-theme="default"] .rule-head-start,
-  html[data-theme="default"] .rule-head-actions,
-  html[data-theme="default"] .section-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  html[data-theme="default"] .hero-actions,
-  html[data-theme="default"] .section-header-actions,
-  html[data-theme="default"] .button-cluster {
-    width: 100%;
-  }
-
-  html[data-theme="default"] .rule-head-actions,
-  html[data-theme="default"] .section-header-actions,
-  html[data-theme="default"] .button-cluster,
-  html[data-theme="default"] .rule-title-area {
-    margin-left: 0;
-    max-width: none;
-    flex-basis: auto;
-  }
-
-  html[data-theme="default"] .section-header-actions,
-  html[data-theme="default"] .button-cluster {
-    justify-content: flex-start;
-  }
+html[data-theme="default"] .app-footer {
+  padding-top: 4px;
 }

@@ -12,7 +12,7 @@
     "message": "Tab Beacon Settings"
   },
   "optionsSubtitle": {
-    "message": "DOM 条件と network 条件を設定して、タブアイコンに busy 状態を表示します。"
+    "message": "DOM と network の busy シグナルをまとめて監視し、今どのタブが忙しいかをひと目で把握できます。"
   },
   "save": {
     "message": "保存"
@@ -75,16 +75,16 @@
     "message": "Principles"
   },
   "policyLine1": {
-    "message": "1つのルールには複数の条件を持てます。"
+    "message": "1 つのルールの中で DOM 条件と network 条件を混在できます。"
   },
   "policyLine2": {
-    "message": "ANY はどれか1つが真なら一致、ALL はすべて真なら一致です。"
+    "message": "ANY / ALL で条件の結合方法を切り替えられます。"
   },
   "policyLine3": {
-    "message": "1つのルールの中で DOM 条件と network 条件を混在できます。"
+    "message": "smart busy detection を補助シグナルとして使えます。"
   },
   "policyLine4": {
-    "message": "Smart busy detection はルール全体の補助シグナルです。"
+    "message": "ページごとにルールを設定してタブアイコンに busy 状態を表示します。"
   },
   "debugTitle": {
     "message": "Debug"
@@ -94,6 +94,9 @@
   },
   "debugModeToggle": {
     "message": "デバッグモードを有効にする（ページ console にログ出力）"
+  },
+  "defaultModeToggle": {
+    "message": "ライトモードとダークモードを切り替える"
   },
   "expandDebug": {
     "message": "Debug を開く"
@@ -113,6 +116,9 @@
   "debugCopySettings": {
     "message": "設定をコピー"
   },
+  "copiedSettings": {
+    "message": "設定をコピーしました"
+  },
   "debugLocalFileHint": {
     "message": "本当の file:// テストは、ローカル repo の manual-tests/tabbeacon-sandbox.html を開いてください。"
   },
@@ -127,6 +133,21 @@
   },
   "networkDiagnosticsDescription": {
     "message": "最近観測した request を見ながら、どれが network 条件に一致したかを確認します。"
+  },
+  "debugRenderMethodTitle": {
+    "message": "描画方式"
+  },
+  "debugRenderFramesTitle": {
+    "message": "Frames"
+  },
+  "debugRenderFramesDescription": {
+    "message": "生成した favicon フレームをタイマーで差し替えてアニメーションします。"
+  },
+  "debugRenderGifTitle": {
+    "message": "GIF"
+  },
+  "debugRenderGifDescription": {
+    "message": "busy 中だけ事前生成した GIF favicon を使ってアニメーションします。"
   },
   "refreshTabList": {
     "message": "タブ一覧を更新"
@@ -240,6 +261,42 @@
   },
   "rulesTitle": {
     "message": "Rules"
+  },
+  "indicatorSettingsTitle": {
+    "message": "Indicator style"
+  },
+  "indicatorDisplayStyleTitle": {
+    "message": "表示スタイル"
+  },
+  "indicatorSpinnerOptionTitle": {
+    "message": "Spinner animation"
+  },
+  "indicatorBadgeOptionTitle": {
+    "message": "Static badge"
+  },
+  "indicatorSpinnerStyleTitle": {
+    "message": "スピナースタイル"
+  },
+  "indicatorSpinnerStyleRing": {
+    "message": "Ring"
+  },
+  "indicatorBadgeStyleTitle": {
+    "message": "バッジスタイル"
+  },
+  "indicatorBadgeStyleDot": {
+    "message": "Dot"
+  },
+  "indicatorBadgeStyleRing": {
+    "message": "Ring"
+  },
+  "indicatorBadgeStyleCorner": {
+    "message": "Corner"
+  },
+  "indicatorColorTitle": {
+    "message": "色"
+  },
+  "indicatorColorPicker": {
+    "message": "カラーピッカーを開く"
   },
   "addRule": {
     "message": "ルールを追加"

@@ -160,16 +160,10 @@ const DEBUG_LOCAL_SANDBOX_PRESET = {
   iconMode: "overlaySpinner"
 };
 
-function helpIconSvg() {
-  return `
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <circle cx="12" cy="12" r="9"></circle>
-      <path d="M9.4 9.2a2.7 2.7 0 1 1 4.8 1.7c-.6.7-1.4 1.1-1.9 1.7-.3.4-.4.7-.4 1.4"></path>
-      <circle cx="12" cy="17.2" r=".9"></circle>
-    </svg>
-  `;
-}
-
+const indicatorSettingsToggleButton = document.getElementById("indicatorSettingsToggle");
+const indicatorSettingsBody = document.getElementById("indicatorSettingsBody");
+const rulesToggleButton = document.getElementById("rulesToggle");
+const rulesSectionBody = document.getElementById("rulesSectionBody");
 const rulesContainer = document.getElementById("rulesContainer");
 const ruleTemplate = document.getElementById("ruleTemplate");
 const conditionTemplate = document.getElementById("conditionTemplate");
@@ -199,6 +193,8 @@ const versionText = document.getElementById("versionText");
 const autosaveToast = document.getElementById("autosaveToast");
 const autosaveToastIcon = autosaveToast?.querySelector(".autosave-toast-icon");
 const autosaveToastText = autosaveToast?.querySelector(".autosave-toast-text");
+const COLLAPSE_AREA_SELECTOR = ".collapse-area";
+const COLLAPSE_TOGGLE_BUTTON_SELECTOR = ".collapse-toggle-button";
 const MOTION_FADE_MS = 220;
 const MOTION_SLIDE_MS = 170;
 const AUTOSAVE_DEBOUNCE_MS = 1500;
@@ -218,8 +214,10 @@ init().catch((error) => {
 async function init() {
   ensureDiagnosticsUi();
   I18N.apply(document);
-  syncIconButtonLabels();
+  setSectionExpanded(indicatorSettingsToggleButton, indicatorSettingsBody, indicatorSettingsToggleButton?.getAttribute("aria-expanded") !== "false");
+  setSectionExpanded(rulesToggleButton, rulesSectionBody, rulesToggleButton?.getAttribute("aria-expanded") !== "false");
   openPackagedSandboxButton.setAttribute("title", t("debugOpenPackagedSandbox"));
+  syncIconButtonLabels();
   versionText.textContent = `v${chrome.runtime.getManifest().version}`;
   const [rulesResult, uiStateResult] = await Promise.all([
     chrome.storage.local.get(STORAGE_KEY),
@@ -263,8 +261,8 @@ async function init() {
   }
 }
 
-function syncIconButtonLabels() {
-  document.querySelectorAll(".add-icon-button, .settings-data-button").forEach((button) => {
+function syncIconButtonLabels(root = document) {
+  root.querySelectorAll("button[title]").forEach((button) => {
     const title = button.getAttribute("title");
     if (title) {
       button.setAttribute("aria-label", title);
@@ -321,6 +319,36 @@ function hideAutosaveToast() {
 function messageText(key, fallbackText) {
   const translated = t(key);
   return translated === key ? fallbackText : translated;
+}
+
+function setSwitchButtonState(button, enabled, { disabled = false } = {}) {
+  if (!button) return;
+  const switchText = button.querySelector(".default-rule-switch-text");
+  button.classList.toggle("active", !!enabled);
+  button.classList.toggle("disabled", !!disabled);
+  button.disabled = !!disabled;
+  button.setAttribute("aria-pressed", String(!!enabled));
+  if (switchText) {
+    switchText.textContent = enabled ? t("win11SwitchOn") : t("win11SwitchOff");
+  }
+}
+
+function setSectionExpanded(toggleButton, body, expanded) {
+  if (!toggleButton || !body) return;
+  body.classList.toggle("hidden", !expanded);
+  toggleButton.setAttribute("aria-expanded", String(expanded));
+}
+
+function shouldIgnoreCollapseAreaClick(target) {
+  return !!target.closest("button, input, textarea, select, a, label, [contenteditable='true']");
+}
+
+function handleCollapseAreaClick(event) {
+  const area = event.target.closest(COLLAPSE_AREA_SELECTOR);
+  if (!area || shouldIgnoreCollapseAreaClick(event.target)) return;
+  const toggleButton = area.querySelector(COLLAPSE_TOGGLE_BUTTON_SELECTOR);
+  if (!toggleButton) return;
+  toggleButton.click();
 }
 
 function showAutosaveToast(state, messageKey, fallbackText) {
@@ -556,6 +584,17 @@ async function flushAutosave() {
 function bindGlobalActions() {
   rulesContainer.addEventListener("input", markDirty);
   rulesContainer.addEventListener("change", markDirty);
+  document.addEventListener("click", handleCollapseAreaClick);
+
+  indicatorSettingsToggleButton?.addEventListener("click", () => {
+    const expanded = indicatorSettingsToggleButton.getAttribute("aria-expanded") !== "true";
+    setSectionExpanded(indicatorSettingsToggleButton, indicatorSettingsBody, expanded);
+  });
+
+  rulesToggleButton?.addEventListener("click", () => {
+    const expanded = rulesToggleButton.getAttribute("aria-expanded") !== "true";
+    setSectionExpanded(rulesToggleButton, rulesSectionBody, expanded);
+  });
 
   addRuleButton.addEventListener("click", async () => {
     const node = createRuleNode(createEmptyRule(), { collapsed: false });
@@ -691,15 +730,19 @@ function bindGlobalActions() {
     // Show check icon for 3.5 seconds
     const copyIcon = copySettingsButton.querySelector(".copy-icon");
     const checkIcon = copySettingsButton.querySelector(".check-icon");
+    const copiedTitle = t("copiedSettings");
+    const defaultTitle = t("debugCopySettings");
 
     copyIcon.style.display = "none";
     checkIcon.style.display = "flex";
-    copySettingsButton.setAttribute("title", "Copied!");
+    copySettingsButton.setAttribute("title", copiedTitle);
+    copySettingsButton.setAttribute("aria-label", copiedTitle);
 
     setTimeout(() => {
       copyIcon.style.display = "flex";
       checkIcon.style.display = "none";
-      copySettingsButton.setAttribute("title", "Copy settings");
+      copySettingsButton.setAttribute("title", defaultTitle);
+      copySettingsButton.setAttribute("aria-label", defaultTitle);
     }, 3500);
   });
 
@@ -839,33 +882,27 @@ function createRuleNode(rule = createEmptyRule(), options = {}) {
   const ruleToggleButton = root.querySelector(".rule-toggle");
 
   I18N.apply(root);
+  syncIconButtonLabels(root);
 
   root.dataset.ruleId = rule.id;
   root.dataset.ruleSlug = rule.slug;
   root.dataset.ruleOrigin = rule.origin;
   root.dataset.readonly = String(!!rule.readonly);
   root.dataset.removable = String(!!rule.removable);
+  root.dataset.surfaceTone = rule.origin === SYSTEM_ORIGIN ? "neutral" : "accent";
   if (rule.nameKey) {
     root.dataset.ruleNameKey = rule.nameKey;
   }
 
   nameInput.value = rule.name || "";
   const enabledInput = root.querySelector(".rule-enabled");
+  const enableSwitchButton = root.querySelector(".rule-enable-switch");
   enabledInput.checked = !!rule.enabled;
   setRuleEnabledState(root, enabledInput.checked);
+  setSwitchButtonState(enableSwitchButton, enabledInput.checked);
   root.querySelector(".rule-matches").value = (rule.matches || []).join("\n");
   root.querySelector(".rule-match-mode").value = rule.matchMode || "any";
   root.querySelector(".rule-smart-busy").checked = !!rule.useSmartBusySignals;
-
-  // Set up smart busy help button
-  const smartBusyHelpButton = root.querySelector(".smart-busy-help-button");
-  if (smartBusyHelpButton) {
-    smartBusyHelpButton.innerHTML = helpIconSvg();
-    smartBusyHelpButton.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-    });
-  }
 
   originBadge.textContent = rule.origin === SYSTEM_ORIGIN ? t("ruleOriginSystem") : t("ruleOriginUser");
   readonlyNote.classList.toggle("hidden", !rule.readonly);
@@ -906,11 +943,24 @@ function createRuleNode(rule = createEmptyRule(), options = {}) {
     disableRuleEditing(root, { allowRemove: !!rule.removable });
   }
 
+  setSwitchButtonState(enableSwitchButton, enabledInput.checked, { disabled: enabledInput.disabled });
+
+  enableSwitchButton?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (enableSwitchButton.disabled) return;
+    enabledInput.checked = !enabledInput.checked;
+    enabledInput.dispatchEvent(new Event("input", { bubbles: true }));
+    enabledInput.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+
   enabledInput.addEventListener("input", () => {
     setRuleEnabledState(root, enabledInput.checked);
+    setSwitchButtonState(enableSwitchButton, enabledInput.checked, { disabled: enabledInput.disabled });
   });
   enabledInput.addEventListener("change", () => {
     setRuleEnabledState(root, enabledInput.checked);
+    setSwitchButtonState(enableSwitchButton, enabledInput.checked, { disabled: enabledInput.disabled });
   });
 
   setRuleCollapsed(root, collapsed);
@@ -923,10 +973,11 @@ function canRemoveRule(rule) {
 
 function setRuleEnabledState(root, enabled) {
   root.dataset.ruleEnabled = String(!!enabled);
+  root.dataset.surfaceState = enabled ? "active" : "muted";
 }
 
 function disableRuleEditing(root, { allowRemove = false } = {}) {
-  root.querySelectorAll(".rule-enabled, .rule-matches, .rule-match-mode, .rule-smart-busy, .add-condition").forEach((el) => {
+  root.querySelectorAll(".rule-enabled, .rule-enable-switch, .rule-matches, .rule-match-mode, .rule-smart-busy, .add-condition").forEach((el) => {
     el.disabled = true;
   });
   if (!allowRemove) {
@@ -954,6 +1005,7 @@ function createConditionNode(condition = createEmptyCondition(), readonly = fals
   const summaryEl = root.querySelector(".condition-summary");
 
   I18N.apply(root);
+  syncIconButtonLabels(root);
 
   sourceEl.value = condition.source || "dom";
   selectorTypeEl.value = condition.selectorType || "auto";
@@ -1055,8 +1107,7 @@ function setConditionCollapsed(root, collapsed) {
 }
 
 function setDebugSectionExpanded(expanded) {
-  debugSectionBody.classList.toggle("hidden", !expanded);
-  debugToggleButton.setAttribute("aria-expanded", String(expanded));
+  setSectionExpanded(debugToggleButton, debugSectionBody, expanded);
   debugToggleButton.setAttribute("title", expanded ? t("collapseDebug") : t("expandDebug"));
 }
 
@@ -1240,17 +1291,12 @@ function animateElementHeight(element, direction) {
 
 function setDebugModeSwitchState(enabled) {
   if (!debugModeSwitchButton) return;
-  const switchText = debugModeSwitchButton.querySelector(".default-rule-switch-text");
-  debugModeSwitchButton.classList.toggle("active", enabled);
-  debugModeSwitchButton.setAttribute("aria-pressed", String(enabled));
+  setSwitchButtonState(debugModeSwitchButton, enabled);
   debugModeSwitchButton.setAttribute("aria-label", t("debugModeToggle"));
   debugModeSwitchButton.setAttribute("title", t("debugModeToggle"));
   if (openPackagedSandboxButton) {
     openPackagedSandboxButton.disabled = !enabled;
     openPackagedSandboxButton.setAttribute("aria-disabled", String(!enabled));
-  }
-  if (switchText) {
-    switchText.textContent = enabled ? t("win11SwitchOn") : t("win11SwitchOff");
   }
 }
 
@@ -1625,315 +1671,12 @@ function isInspectableTabUrl(url) {
 }
 
 function ensureDiagnosticsUi() {
-  injectDiagnosticsStyles();
-
-  let panel = document.getElementById("networkDiagnosticsPanel");
-  if (!panel) {
-    panel = document.createElement("section");
-    panel.id = "networkDiagnosticsPanel";
-    panel.className = "diagnostics-panel";
-    panel.innerHTML = `
-      <div class="section-header diagnostics-header">
-        <div class="diagnostics-title-group">
-          <h3 data-i18n="networkDiagnosticsTitle">Network diagnostics</h3>
-          <button id="networkDiagnosticsHelp" type="button" class="diagnostics-help-button" aria-label="Help for network diagnostics" title="Help for network diagnostics">
-            ${helpIconSvg()}
-          </button>
-        </div>
-        <div class="row diagnostics-actions">
-          <button id="refreshDiagnosticTabs" type="button" data-i18n="refreshTabList">Refresh tab list</button>
-          <button id="refreshDiagnostics" type="button" data-i18n="refreshDiagnostics">Refresh diagnostics</button>
-          <button id="clearDiagnostics" type="button" data-i18n="clearDiagnostics">Clear history</button>
-        </div>
-      </div>
-      <div class="row diagnostics-target-row">
-        <label class="diagnostic-target">
-          <span data-i18n="diagnosticTargetTab">Target tab</span>
-          <select id="diagnosticTabSelect"></select>
-        </label>
-      </div>
-      <div id="diagnosticSummary" class="hint diagnostic-summary" data-i18n="networkDiagnosticsEmptyState">
-        Select a tab and refresh diagnostics to inspect matched requests.
-      </div>
-      <div class="diagnostics-table-wrap">
-        <table class="diagnostics-table">
-          <thead>
-            <tr>
-              <th data-i18n="diagnosticColumnStarted">Started</th>
-              <th data-i18n="diagnosticColumnStatus">Status</th>
-              <th data-i18n="diagnosticColumnRequest">Request</th>
-              <th data-i18n="diagnosticColumnMatchedBy">Matched by</th>
-            </tr>
-          </thead>
-          <tbody id="diagnosticsBody">
-            <tr class="diagnostics-empty-row">
-              <td colspan="4" data-i18n="networkDiagnosticsEmptyRows">No matched requests captured yet.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    `;
-    debugPanel.appendChild(panel);
-    I18N.apply(panel);
-  }
-
   refreshDiagnosticTabsButton = document.getElementById("refreshDiagnosticTabs");
   refreshDiagnosticsButton = document.getElementById("refreshDiagnostics");
   clearDiagnosticsButton = document.getElementById("clearDiagnostics");
   diagnosticTabSelect = document.getElementById("diagnosticTabSelect");
   diagnosticSummary = document.getElementById("diagnosticSummary");
   diagnosticsBody = document.getElementById("diagnosticsBody");
-
-  // Wire up help button
-  const networkDiagnosticsHelpButton = document.getElementById("networkDiagnosticsHelp");
-  if (networkDiagnosticsHelpButton) {
-    networkDiagnosticsHelpButton.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      showNetworkDiagnosticsHelp();
-    });
-  }
-}
-
-function injectDiagnosticsStyles() {
-  if (document.getElementById("tabBeaconDiagnosticsStyle")) return;
-
-  const style = document.createElement("style");
-  style.id = "tabBeaconDiagnosticsStyle";
-  style.textContent = `
-    .diagnostics-panel {
-      padding: 16px;
-      display: grid;
-      gap: 14px;
-      background: #10182a;
-      border: 1px solid var(--panel-border);
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
-    }
-
-    .diagnostics-header {
-      align-items: flex-start;
-    }
-
-    .diagnostics-actions {
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      margin-left: auto;
-    }
-
-    .diagnostics-target-row {
-      justify-content: flex-start;
-    }
-
-    .diagnostic-target {
-      min-width: min(100%, 420px);
-    }
-
-    .diagnostic-summary {
-      padding: 10px 12px;
-      border: 1px solid rgba(53, 72, 110, 0.45);
-      border-radius: 12px;
-      background: rgba(9, 16, 29, 0.65);
-    }
-
-    .diagnostics-table-wrap {
-      overflow: auto;
-      border: 1px solid rgba(53, 72, 110, 0.45);
-      border-radius: 14px;
-    }
-
-    .diagnostics-table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 760px;
-      background: #0d1426;
-    }
-
-    .diagnostics-table th,
-    .diagnostics-table td {
-      padding: 12px 14px;
-      text-align: left;
-      vertical-align: top;
-      border-bottom: 1px solid rgba(53, 72, 110, 0.35);
-    }
-
-    .diagnostics-table th {
-      color: var(--muted);
-      font-size: 0.9rem;
-      font-weight: 700;
-      background: rgba(9, 16, 29, 0.9);
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
-
-    .diagnostics-empty-row td {
-      color: var(--muted);
-    }
-
-    .diagnostic-request-block {
-      display: grid;
-      gap: 6px;
-    }
-
-    .diagnostic-request-meta,
-    .diagnostic-finished-at {
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .diagnostic-url {
-      display: inline-block;
-      white-space: normal;
-      overflow-wrap: anywhere;
-      background: #09101d;
-      border-radius: 8px;
-      padding: 6px 8px;
-    }
-
-    .diagnostic-match-list {
-      margin: 0;
-      padding-left: 18px;
-      display: grid;
-      gap: 6px;
-    }
-
-    .diagnostic-status {
-      display: inline-flex;
-      align-items: center;
-      border-radius: 999px;
-      padding: 4px 10px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-    }
-
-    .diagnostic-status-inflight {
-      background: rgba(59, 130, 246, 0.18);
-    }
-
-    .diagnostic-status-completed {
-      background: rgba(34, 197, 94, 0.16);
-    }
-
-    .diagnostic-status-error {
-      background: rgba(239, 68, 68, 0.18);
-    }
-
-    .diagnostics-title-group {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .diagnostics-help-button {
-      min-width: 22px;
-      width: 22px;
-      height: 22px;
-      padding: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 0;
-      border-radius: 4px;
-      background: transparent;
-      color: var(--muted);
-      box-shadow: none;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    .diagnostics-help-button:hover:not(:disabled) {
-      color: var(--text);
-      background: rgba(255, 255, 255, 0.04);
-    }
-
-    .diagnostics-help-button svg {
-      width: 14px;
-      height: 14px;
-      stroke: currentColor;
-      stroke-width: 1.8;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      fill: none;
-      pointer-events: none;
-    }
-
-    .diagnostics-help-dialog {
-      width: min(420px, calc(100vw - 32px));
-      padding: 22px 24px;
-      border-radius: 14px;
-      border: 1px solid rgba(53, 72, 110, 0.45);
-      background: #10182a;
-      color: var(--text);
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
-    }
-
-    .diagnostics-help-dialog::backdrop {
-      background: rgba(0, 0, 0, 0.6);
-    }
-
-    .diagnostics-help-dialog-title {
-      margin: 0 0 12px;
-      font-size: 1.05rem;
-    }
-
-    .diagnostics-help-dialog-text {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-
-    @media (max-width: 900px) {
-      .diagnostics-header {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .diagnostics-actions {
-        justify-content: stretch;
-      }
-    }
-  `;
-  document.head.appendChild(style);
-}
-
-function ensureNetworkDiagnosticsHelpDialog() {
-  const HELP_DIALOG_ID = "networkDiagnosticsHelpDialog";
-  let dialog = document.getElementById(HELP_DIALOG_ID);
-  if (dialog) return dialog;
-
-  dialog = document.createElement("dialog");
-  dialog.id = HELP_DIALOG_ID;
-  dialog.className = "diagnostics-help-dialog";
-  dialog.innerHTML = `
-    <h2 class="diagnostics-help-dialog-title"></h2>
-    <p class="diagnostics-help-dialog-text"></p>
-  `;
-
-  dialog.addEventListener("click", (event) => {
-    if (event.target === dialog) {
-      dialog.close();
-    }
-  });
-
-  document.body.appendChild(dialog);
-  return dialog;
-}
-
-function showNetworkDiagnosticsHelp() {
-  const dialog = ensureNetworkDiagnosticsHelpDialog();
-  dialog.querySelector(".diagnostics-help-dialog-title").textContent = t("networkDiagnosticsTitle", "Network diagnostics");
-  dialog.querySelector(".diagnostics-help-dialog-text").textContent = t(
-    "networkDiagnosticsDescription",
-    "Inspect recent captured requests and see which ones matched your network conditions."
-  );
-
-  if (dialog.open) {
-    dialog.close();
-  } else {
-    dialog.showModal();
-  }
 }
 
 function generateUserSlug(name, id) {
