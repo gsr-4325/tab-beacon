@@ -17,12 +17,15 @@ The current manifest version is `0.3.2`.
   - `aria-busy="true"`
   - UI text such as Stop / Cancel / Interrupt / 停止 / 中断
 - Animated busy overlay on the favicon
+- Static badge indicator style
 - Fallback icon restore even on pages that do not provide an original favicon
 - Rule editing from the options page
 - Collapsible condition cards
 - Collapsible rule cards, collapsed by default
 - Distinction between `user` and `system preset`
 - Debug preset for the local sandbox
+- Import / export from the options page
+- Network diagnostics UI in the options page
 - Base locale files for `_locales/en` and `_locales/ja`
 - Version display in the options page footer
 - Collapsible Debug section
@@ -43,8 +46,8 @@ These behaviors were confirmed directly during the conversation.
 
 - `manifest.json`: Manifest V3 definition
 - `background.js`: minimal per-tab and per-rule network monitoring implementation
-- `content.js`: DOM monitoring, smart busy detection, and favicon updates
-- `options/`: options UI shell, behaviors, and themes
+- `content-indicator-renderer.js`: DOM monitoring, smart busy detection, and favicon indicator rendering
+- `options/`: options UI shell, behaviors, themes, import / export, and diagnostics
 - `i18n.js`: i18n helper for the options UI
 - `_locales/en/messages.json` / `_locales/ja/messages.json`: locale strings
 - `manual-tests/tabbeacon-sandbox.html`: local manual test page
@@ -85,7 +88,6 @@ To show the current local branch and HEAD SHA in the options footer during revie
 - Smart busy detection is still heuristic-based and has not yet been optimized strictly per site
 - Network monitoring is still a minimal foundation, with cooldowns and exclusion strategies not yet implemented
 - i18n for user-facing strings in `content` and `background` is still incomplete
-- Import / export, an element picker, and diagnostics UI are not yet implemented
 - No license has been chosen yet
 
 ## Handoff notes for the next AI
@@ -95,7 +97,7 @@ To show the current local branch and HEAD SHA in the options footer during revie
 - Two important recent stabilization changes were:
   - adding favicon restore fallback
   - the UTF-8 hotfix in `content.js`
-- The most reasonable next order of work is diagnostics UI for network conditions, real-world ChatGPT measurement, then permission tightening
+- The most reasonable next order of work is content runtime consolidation, real-world ChatGPT measurement, then permission tightening
 
 ## Analyzing dynamic elements on web pages
 

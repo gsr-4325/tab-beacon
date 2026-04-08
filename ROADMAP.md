@@ -51,7 +51,7 @@ AI チャットや Web アプリの「処理中」を、通知音やデスクト
 - [ ] request 終了後のクールダウンを実装
 - [ ] 関係ない通信を避けるための除外戦略を整理
 - [ ] WebSocket / streaming fetch / SSE の扱い方針を整理
-- [ ] network 条件の診断 UI を追加
+- [x] network 条件の診断 UI を追加
 
 ## Phase 5: 設定体験の改善
 

@@ -36,7 +36,7 @@ async function injectIntoExistingTabs() {
       url.startsWith("chrome-extension://") ||
       url.startsWith("devtools://")
     ) continue;
-    chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["content.js"] })
+    chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["content-indicator-renderer.js"] })
       .catch(() => {});
   }
 }
