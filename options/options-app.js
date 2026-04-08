@@ -17,7 +17,11 @@ function buildDefaultRules() {
       readonly: false,
       name: "ChatGPT",
       enabled: true,
-      matches: ["https://chatgpt.com/c/*", "https://chatgpt.com/g/*/c/*"],
+      matches: [
+        "https://chatgpt.com/c/*",
+        "https://chatgpt.com/g/*/c/*",
+        "https://chatgpt.com/g/*/project*"
+      ],
       matchMode: "any",
       busyWhen: [
         {
@@ -826,9 +830,21 @@ function migrateRules(rules) {
     const removable = !!rule.removable;
     // Rename legacy content-script fallback rule name
     const name = rule.name === "ChatGPT (starter)" ? "ChatGPT" : rule.name;
-    if (filtered.length === rule.busyWhen.length && removable === !!rule.removable && name === rule.name) return rule;
+    const matches = Array.isArray(rule.matches) ? [...rule.matches] : [];
+    const shouldAddChatGptProjectMatch = name === "ChatGPT"
+      && matches.some((m) => typeof m === "string" && m.includes("chatgpt.com"))
+      && !matches.includes("https://chatgpt.com/g/*/project*");
+    if (shouldAddChatGptProjectMatch) {
+      matches.push("https://chatgpt.com/g/*/project*");
+    }
+    if (
+      filtered.length === rule.busyWhen.length
+      && removable === !!rule.removable
+      && name === rule.name
+      && !shouldAddChatGptProjectMatch
+    ) return rule;
     changed = true;
-    return { ...rule, name, busyWhen: filtered, removable };
+    return { ...rule, name, busyWhen: filtered, removable, matches };
   });
   if (changed) {
     chrome.storage.local.set({ [STORAGE_KEY]: migrated });
