@@ -277,22 +277,32 @@ function normalizeRules(rules) {
 }
 
 // When a Service Worker makes a fetch on behalf of a page, Chrome assigns
-// tabId = -1 to the request.  We recover the real tab by matching the SW's
-// origin (details.initiator) against the URLs we track in tabUrls.
-function findFirstTabByOrigin(origin) {
+// tabId = -1 to the request.  We only recover the real tab when the SW's
+// origin (details.initiator) maps to exactly one tracked tab.  If multiple
+// same-origin tabs are open, keeping the request unassigned is safer than
+// attributing it to the wrong tab.
+function findUniqueTabByOrigin(origin) {
+  const matchingTabIds = [];
+
   for (const [tabId, tabUrl] of tabUrls.entries()) {
     try {
-      if (new URL(tabUrl).origin === origin) return tabId;
+      if (new URL(tabUrl).origin === origin) {
+        matchingTabIds.push(tabId);
+        if (matchingTabIds.length > 1) {
+          return -1;
+        }
+      }
     } catch {}
   }
-  return -1;
+
+  return matchingTabIds.length === 1 ? matchingTabIds[0] : -1;
 }
 
 async function handleRequestStarted(details) {
   let tabId = details.tabId;
 
   if (tabId < 0 && details.initiator) {
-    tabId = findFirstTabByOrigin(details.initiator);
+    tabId = findUniqueTabByOrigin(details.initiator);
   }
   if (tabId < 0) return;
 
