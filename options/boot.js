@@ -117,6 +117,7 @@
     await loadScript("./options-app.js");
     await loadScript("./selector-utils-bridge.js");
     await loadScript("./diagnostics-cooldown-bridge.js");
+    await loadScript("./diagnostics-attribution-bridge.js");
     await loadScript("./rule-behavior.js");
     await loadScript("./indicator-style.js");
     await loadScript("./options-packaged-sandbox.js");

@@ -45,8 +45,10 @@ async function injectIntoExistingTabs() {
       url.startsWith("chrome-extension://") ||
       url.startsWith("devtools://")
     ) continue;
-    chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["shared/tab-beacon-selector-utils.js", "content-indicator-renderer.js"] })
-      .catch(() => {});
+    chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ["shared/tab-beacon-selector-utils.js", "content-indicator-renderer.js"]
+    }).catch(() => {});
   }
 }
 
@@ -66,12 +68,14 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   tabUrls.delete(tabId);
   tabConditionCounts.delete(tabId);
   tabDiagnosticEntries.delete(tabId);
+
   for (const [cooldownId, record] of cooldownMatches.entries()) {
     if (record.tabId === tabId) {
       clearTimeout(record.timerId);
       cooldownMatches.delete(cooldownId);
     }
   }
+
   for (const [requestId, record] of requestMatches.entries()) {
     if (record.tabId === tabId) {
       requestMatches.delete(requestId);
@@ -96,7 +100,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   }
 
-  if (message.type === "tab-beacon/get-networkstate") {
+  if (message.type === "tab-beacon/get-networkstate" || message.type === "tab-beacon/get-network-state") {
     if (sender.tab?.id >= 0) {
       sendResponse({ snapshot: buildSnapshotForTab(sender.tab.id) });
       return true;
@@ -194,11 +198,16 @@ function reconcileRuntimeStateWithRules() {
 
   for (const [tabId, entries] of tabDiagnosticEntries.entries()) {
     const nextEntries = entries
-      .map((entry) => ({{
-        ...entry,
-        matches: filterRelevantMatches(tabId, entry.matches, ruleById, validConditionKeys)
-      }))
-      .filter((entry) => entry.matches.length);
+      .map((entry) => {
+        if (entry.kind === "ignored") {
+          return entry;
+        }
+        return {
+          ...entry,
+          matches: filterRelevantMatches(tabId, entry.matches, ruleById, validConditionKeys)
+        };
+      })
+      .filter((entry) => entry.kind === "ignored" || entry.matches.length);
 
     if (nextEntries.length) {
       tabDiagnosticEntries.set(tabId, nextEntries);
@@ -300,42 +309,93 @@ function normalizeRules(rules) {
     }
 
     normalized.busyWhen = normalized.busyWhen
-      .map((condition, originalIndex) => ({\n        source: condition.source === "network" ? "network" : "dom",\n        originalIndex,\n        matchType: condition.matchType || "urlContains",\n        value: typeof condition.value === "string" ? condition.value.trim() : "",\n        method: condition.method || "ANY",\n        resourceKind: condition.resourceKind || "any"\n      }))\n      .filter((condition) => condition.source === "network" && condition.value);
+      .map((condition, originalIndex) => ({
+        source: condition.source === "network" ? "network" : "dom",
+        originalIndex,
+        matchType: condition.matchType || "urlContains",
+        value: typeof condition.value === "string" ? condition.value.trim() : "",
+        method: condition.method || "ANY",
+        resourceKind: condition.resourceKind || "any"
+      }))
+      .filter((condition) => condition.source === "network" && condition.value);
 
     return normalized;
   });
 }
 
-// When a Service Worker makes a fetch on behalf of a page, Chrome assigns
-// tabId = -1 to the request.  We only recover the real tab when the SW's
-// origin (details.initiator) maps to exactly one tracked tab.  If multiple
-// same-origin tabs are open, keeping the request unassigned is safer than
-// attributing it to the wrong tab.
-function findUniqueTabByOrigin(origin) {
+function findTabsByOrigin(origin) {
   const matchingTabIds = [];
 
   for (const [tabId, tabUrl] of tabUrls.entries()) {
     try {
       if (new URL(tabUrl).origin === origin) {
         matchingTabIds.push(tabId);
-        if (matchingTabIds.length > 1) {
-          return -1;
-        }
       }
     } catch {}
   }
 
-  return matchingTabIds.length === 1 ? matchingTabIds[0] : -1;
+  return matchingTabIds;
+}
+
+function resolveRequestAttribution(details) {
+  if (details.tabId >= 0) {
+    return {
+      tabId: details.tabId,
+      source: "direct-tab-id",
+      note: "Attributed directly from webRequest tabId.",
+      candidateTabIds: []
+    };
+  }
+
+  if (!details.initiator) {
+    return {
+      tabId: -1,
+      source: "missing-tab-context",
+      note: "Skipped attribution because the request had no tabId and no initiator.",
+      candidateTabIds: []
+    };
+  }
+
+  const candidateTabIds = findTabsByOrigin(details.initiator);
+  if (candidateTabIds.length === 1) {
+    return {
+      tabId: candidateTabIds[0],
+      source: "initiator-origin",
+      note: "Recovered tab from a unique initiator origin match.",
+      candidateTabIds
+    };
+  }
+
+  if (candidateTabIds.length > 1) {
+    return {
+      tabId: -1,
+      source: "ambiguous-initiator-origin",
+      note: "Skipped attribution because multiple tracked tabs share this initiator origin.",
+      candidateTabIds
+    };
+  }
+
+  return {
+    tabId: -1,
+    source: "untracked-initiator-origin",
+    note: "Skipped attribution because no tracked tab matched the initiator origin.",
+    candidateTabIds: []
+  };
 }
 
 async function handleRequestStarted(details) {
-  let tabId = details.tabId;
+  const attribution = resolveRequestAttribution(details);
 
-  if (tabId < 0 && details.initiator) {
-    tabId = findUniqueTabByOrigin(details.initiator);
+  if (attribution.tabId < 0) {
+    if (attribution.source === "ambiguous-initiator-origin" && attribution.candidateTabIds.length) {
+      attribution.candidateTabIds.forEach((candidateTabId) => {
+        appendIgnoredDiagnosticEntry(candidateTabId, details, attribution);
+      });
+    }
+    return;
   }
-  if (tabId < 0) return;
 
+  const tabId = attribution.tabId;
   let tabUrl = tabUrls.get(tabId);
   if (!tabUrl) {
     try {
@@ -345,16 +405,34 @@ async function handleRequestStarted(details) {
         tabUrls.set(tabId, tabUrl);
       }
     } catch {
+      appendIgnoredDiagnosticEntry(tabId, details, {
+        ...attribution,
+        note: "Skipped diagnostics because the tab URL could not be resolved."
+      });
       return;
     }
-    if (!tabUrl) return;
+    if (!tabUrl) {
+      appendIgnoredDiagnosticEntry(tabId, details, {
+        ...attribution,
+        note: "Skipped diagnostics because the tab URL could not be resolved."
+      });
+      return;
+    }
+  }
+
+  const candidateRules = rulesCache.filter((rule) => {
+    return rule.enabled && rule.matches.some((pattern) => wildcardMatch(pattern, tabUrl));
+  });
+  const candidateNetworkRules = candidateRules.filter((rule) => {
+    return rule.busyWhen.some((condition) => condition.source === "network");
+  });
+
+  if (!candidateNetworkRules.length) {
+    return;
   }
 
   const matchingConditions = [];
-  for (const rule of rulesCache) {
-    if (!rule.enabled) continue;
-    if (!rule.matches.some((pattern) => wildcardMatch(pattern, tabUrl))) continue;
-
+  for (const rule of candidateNetworkRules) {
     rule.busyWhen.forEach((condition) => {
       if (networkConditionMatches(condition, details)) {
         matchingConditions.push({
@@ -365,9 +443,22 @@ async function handleRequestStarted(details) {
     });
   }
 
-  if (!matchingConditions.length) return;
+  if (!matchingConditions.length) {
+    appendIgnoredDiagnosticEntry(tabId, details, {
+      ...attribution,
+      note: `${attribution.note} No enabled network condition matched this request.`
+    });
+    return;
+  }
 
-  const diagnosticEntryId = appendDiagnosticEntry(tabId, details, matchingConditions);
+  const diagnosticEntryId = appendDiagnosticEntry(tabId, details, matchingConditions, {
+    kind: "match",
+    attributionSource: attribution.source,
+    attributionNote: attribution.note,
+    initiator: details.initiator || "",
+    originalTabId: typeof details.tabId === "number" ? details.tabId : null,
+    candidateTabIds: attribution.candidateTabIds
+  });
 
   requestMatches.set(details.requestId, {
     tabId,
@@ -389,7 +480,11 @@ function handleRequestFinished(requestId, finalStatus = "completed") {
   if (!record) return;
   requestMatches.delete(requestId);
 
-  updateDiagnosticEntry(record.tabId, record.diagnosticEntryId, finalStatus);
+  const cooldownUntil = finalStatus !== "error" && NETWORK_IDLE_COOLDOWN_MS > 0
+    ? Date.now() + NETWORK_IDLE_COOLDOWN_MS
+    : null;
+
+  updateDiagnosticEntry(record.tabId, record.diagnosticEntryId, finalStatus, { cooldownUntil });
 
   if (!record.matches?.length) {
     sendSnapshotToTab(record.tabId);
@@ -437,7 +532,6 @@ function networkConditionMatches(condition, details) {
 
 function resourceKindMatches(resourceKind, requestType) {
   if (resourceKind === "any") return true;
-  // Service Worker fetches surface as "fetch" in webRequest; treat same as XHR
   if (resourceKind === "fetch-xhr") return requestType === "xmlhttprequest" || requestType === "fetch";
   if (resourceKind === "websocket") return requestType === "websocket";
   if (resourceKind === "other") return requestType !== "xmlhttprequest" && requestType !== "fetch" && requestType !== "websocket";
@@ -501,17 +595,26 @@ function buildSnapshotForTab(tabId) {
   return snapshot;
 }
 
-function appendDiagnosticEntry(tabId, details, matches) {
+function appendDiagnosticEntry(tabId, details, matches, extras = {}) {
   const entries = tabDiagnosticEntries.get(tabId) || [];
   const entry = {
     id: createDiagnosticEntryId(),
+    kind: extras.kind || "match",
     requestId: details.requestId,
     url: details.url || "",
     method: (details.method || "GET").toUpperCase(),
     requestType: details.type || "unknown",
-    startedAt: Date.now(),
-    finishedAt: null,
-    status: "inflight",
+    initiator: extras.initiator || details.initiator || "",
+    originalTabId: typeof extras.originalTabId === "number"
+      ? extras.originalTabId
+      : (typeof details.tabId === "number" ? details.tabId : null),
+    attributionSource: extras.attributionSource || "direct-tab-id",
+    attributionNote: extras.attributionNote || "",
+    candidateTabIds: Array.isArray(extras.candidateTabIds) ? extras.candidateTabIds : [],
+    startedAt: extras.startedAt || Date.now(),
+    finishedAt: extras.finishedAt || null,
+    cooldownUntil: extras.cooldownUntil || null,
+    status: extras.status || "inflight",
     matches: matches.map(({ ruleId, conditionIndex }) => ({
       ruleId,
       conditionIndex
@@ -526,7 +629,20 @@ function appendDiagnosticEntry(tabId, details, matches) {
   return entry.id;
 }
 
-function updateDiagnosticEntry(tabId, diagnosticEntryId, finalStatus) {
+function appendIgnoredDiagnosticEntry(tabId, details, attribution) {
+  return appendDiagnosticEntry(tabId, details, [], {
+    kind: "ignored",
+    status: "ignored",
+    finishedAt: Date.now(),
+    attributionSource: attribution.source,
+    attributionNote: attribution.note,
+    initiator: details.initiator || "",
+    originalTabId: typeof details.tabId === "number" ? details.tabId : null,
+    candidateTabIds: attribution.candidateTabIds || []
+  });
+}
+
+function updateDiagnosticEntry(tabId, diagnosticEntryId, finalStatus, extras = {}) {
   if (!diagnosticEntryId) return;
   const entries = tabDiagnosticEntries.get(tabId);
   if (!entries?.length) return;
@@ -536,6 +652,7 @@ function updateDiagnosticEntry(tabId, diagnosticEntryId, finalStatus) {
 
   entry.status = finalStatus;
   entry.finishedAt = Date.now();
+  entry.cooldownUntil = extras.cooldownUntil || null;
 }
 
 function clearDiagnosticHistoryForTab(tabId) {
@@ -554,17 +671,25 @@ function buildDiagnosticsForTab(tabId) {
     tabId,
     tabUrl: tabUrls.get(tabId) || "",
     activeRequestCount: entries.filter((entry) => entry.status === "inflight").length,
+    ignoredRequestCount: entries.filter((entry) => entry.status === "ignored").length,
     cooldownRequestCount: Array.from(cooldownMatches.values()).filter((record) => record.tabId === tabId).length,
     matchedConditionCount: Array.from((tabConditionCounts.get(tabId) || new Map()).keys()).length,
     snapshot: buildSnapshotForTab(tabId),
-    entries: entries.map((entry) => ({{
+    entries: entries.map((entry) => ({
       id: entry.id,
+      kind: entry.kind,
       requestId: entry.requestId,
       url: entry.url,
       method: entry.method,
       requestType: entry.requestType,
+      initiator: entry.initiator,
+      originalTabId: entry.originalTabId,
+      attributionSource: entry.attributionSource,
+      attributionNote: entry.attributionNote,
+      candidateTabIds: entry.candidateTabIds,
       startedAt: entry.startedAt,
       finishedAt: entry.finishedAt,
+      cooldownUntil: entry.cooldownUntil,
       status: entry.status,
       matches: entry.matches
     }))
@@ -602,7 +727,7 @@ function wildcardMatch(pattern, href) {
   }
 
   const escaped = String(pattern || "")
-    .replace(/[.+^\${}()|[\]\\]/g, "\\$&")
+    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
     .replace(/\*/g, ".*");
   return new RegExp(`^${escaped}$`).test(String(href || ""));
 }
