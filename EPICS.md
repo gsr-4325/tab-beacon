@@ -52,9 +52,9 @@ It mirrors the current roadmap, but groups work strictly by Epic so it is easier
 - [x] Localize cooldown diagnostics label strings
 - [x] Add clearer diagnostics about why a request was or was not attributed to a tab
 - [x] Show attribution source / note / initiator details in diagnostics UI
+- [x] Refine same-origin attribution by rule-filtering ambiguous candidates
 
 ### Remaining
-- [ ] Revisit same-origin attribution with a more precise strategy than current conservative skip
 - [ ] Verify cooldown behavior on real AI sites and tune the duration if needed
 - [ ] Decide whether this Epic is complete after real-site verification
 

@@ -29,6 +29,7 @@ Make Tab Beacon a practical Chrome/Edge extension that can show whether AI web a
 - [x] Show network cooldown count in diagnostics
 - [x] Add cooldown diagnostics label strings to i18n
 - [x] Add request attribution diagnostics details
+- [x] Refine same-origin request attribution with rule filtering
 - [x] Finalize architecture and handoff notes in docs
 - [x] Add a per-Epic checklist overview
 
@@ -72,9 +73,9 @@ Make Tab Beacon a practical Chrome/Edge extension that can show whether AI web a
 - [x] Add cooldown diagnostics label strings to i18n
 - [x] Add clearer diagnostics about why a request was or was not attributed to a tab
 - [x] Show attribution source / note / initiator details in diagnostics UI
+- [x] Refine same-origin attribution by rule-filtering ambiguous candidates
 
 ### Remaining
-- [ ] Revisit same-origin attribution with a more precise strategy than current conservative skip
 - [ ] Verify cooldown behavior on real AI sites and tune the duration if needed
 - [ ] Decide whether this Epic is complete after real-site verification
 
@@ -123,7 +124,7 @@ Make Tab Beacon a practical Chrome/Edge extension that can show whether AI web a
 
 ## Next recommended order
 
-1. Continue Epic 3 by revisiting same-origin attribution with a more precise strategy than the current conservative skip.
-2. Do Epic 7 verification on real sites so Epic 3 can be judged complete or tuned further.
-3. Revisit Epic 4 once runtime consolidation reduces ambiguity in the current settings model.
-4. Attempt Epic 6 permission tightening only after the real-site verification pass.
+1. Do Epic 7 verification on real sites so Epic 3 can be judged complete or tuned further.
+2. Revisit Epic 4 once runtime consolidation reduces ambiguity in the current settings model.
+3. Attempt Epic 6 permission tightening only after the real-site verification pass.
+4. Return to Epic 2 only if the remaining helper duplication still causes maintenance pain.
