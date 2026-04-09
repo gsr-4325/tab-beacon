@@ -28,6 +28,7 @@
   const extensionApi = typeof chrome !== "undefined" ? chrome : null;
   const hasStorageApi = !!extensionApi?.storage?.local;
   const hasRuntimeApi = !!extensionApi?.runtime?.id;
+  const sharedSelectorUtils = globalThis.TabBeaconSelectorUtils || null;
 
   const DEFAULT_INDICATOR_SETTINGS = Object.freeze({
     indicatorStyle: "spinner",
@@ -239,11 +240,14 @@
   }
 
   function wildcardMatch(pattern, href) {
+    if (typeof sharedSelectorUtils?.wildcardMatch === "function") {
+      return sharedSelectorUtils.wildcardMatch(pattern, href);
+    }
     return new RegExp(
-      `^${pattern
+      `^${String(pattern || "")
         .replace(/[.+^${}()|[\]\\]/g, "\\$&")
         .replace(/\*/g, ".*")}$`
-    ).test(href);
+    ).test(String(href || ""));
   }
 
   function ensureRuleActivityState(ruleId) {
@@ -684,6 +688,17 @@
   }
 
   function resolveSelectorType(query, selectorType) {
+    if (typeof sharedSelectorUtils?.resolveSelectorType === "function") {
+      try {
+        return sharedSelectorUtils.resolveSelectorType(query, selectorType, document);
+      } catch (error) {
+        console.warn("[TabBeacon] shared selector type resolution failed", {
+          query,
+          selectorType,
+          error
+        });
+      }
+    }
     if (selectorType === "css" || selectorType === "xpath") return selectorType;
     const trimmed = query.trim();
     const xpathHint = /^(\.?\/{1,2}|\(|ancestor::|descendant::|following-sibling::|preceding-sibling::|self::|@)/i;
