@@ -6,11 +6,13 @@ try {
 
 const STORAGE_KEY = "tabBeaconRules";
 const MAX_DIAGNOSTIC_ENTRIES = 80;
+const NETWORK_IDLE_COOLDOWN_MS = 1200;
 const sharedSelectorUtils = globalThis.TabBeaconSelectorUtils || null;
 
 let rulesCache = [];
 const tabUrls = new Map();
 const requestMatches = new Map();
+const cooldownMatches = new Map();
 const tabConditionCounts = new Map();
 const tabDiagnosticEntries = new Map();
 
@@ -64,6 +66,12 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   tabUrls.delete(tabId);
   tabConditionCounts.delete(tabId);
   tabDiagnosticEntries.delete(tabId);
+  for (const [cooldownId, record] of cooldownMatches.entries()) {
+    if (record.tabId === tabId) {
+      clearTimeout(record.timerId);
+      cooldownMatches.delete(cooldownId);
+    }
+  }
   for (const [requestId, record] of requestMatches.entries()) {
     if (record.tabId === tabId) {
       requestMatches.delete(requestId);
@@ -88,7 +96,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   }
 
-  if (message.type === "tab-beacon/get-network-state") {
+  if (message.type === "tab-beacon/get-networkstate") {
     if (sender.tab?.id >= 0) {
       sendResponse({ snapshot: buildSnapshotForTab(sender.tab.id) });
       return true;
@@ -147,6 +155,10 @@ async function initialize({ preserveRuntimeState = false } = {}) {
 
 function clearRuntimeState() {
   requestMatches.clear();
+  for (const record of cooldownMatches.values()) {
+    clearTimeout(record.timerId);
+  }
+  cooldownMatches.clear();
   tabConditionCounts.clear();
   tabDiagnosticEntries.clear();
 }
@@ -170,9 +182,19 @@ function reconcileRuntimeStateWithRules() {
     record.matches = nextMatches;
   }
 
+  for (const [cooldownId, record] of cooldownMatches.entries()) {
+    const nextMatches = filterRelevantMatches(record.tabId, record.matches, ruleById, validConditionKeys);
+    if (!nextMatches.length) {
+      clearTimeout(record.timerId);
+      cooldownMatches.delete(cooldownId);
+      continue;
+    }
+    record.matches = nextMatches;
+  }
+
   for (const [tabId, entries] of tabDiagnosticEntries.entries()) {
     const nextEntries = entries
-      .map((entry) => ({
+      .map((entry) => ({{
         ...entry,
         matches: filterRelevantMatches(tabId, entry.matches, ruleById, validConditionKeys)
       }))
@@ -205,8 +227,8 @@ function filterRelevantMatches(tabId, matches, ruleById, validConditionKeys) {
 function rebuildConditionCountsFromRequestMatches() {
   tabConditionCounts.clear();
 
-  for (const record of requestMatches.values()) {
-    if (!record?.matches?.length) continue;
+  const applyRecordCounts = (record) => {
+    if (!record?.matches?.length) return;
 
     const counts = tabConditionCounts.get(record.tabId) || new Map();
     record.matches.forEach(({ ruleId, conditionIndex }) => {
@@ -214,6 +236,14 @@ function rebuildConditionCountsFromRequestMatches() {
       counts.set(key, (counts.get(key) || 0) + 1);
     });
     tabConditionCounts.set(record.tabId, counts);
+  };
+
+  for (const record of requestMatches.values()) {
+    applyRecordCounts(record);
+  }
+
+  for (const record of cooldownMatches.values()) {
+    applyRecordCounts(record);
   }
 }
 
@@ -221,7 +251,8 @@ function broadcastSnapshotsToTrackedTabs() {
   const tabIds = new Set([
     ...tabUrls.keys(),
     ...tabConditionCounts.keys(),
-    ...Array.from(requestMatches.values(), (record) => record.tabId)
+    ...Array.from(requestMatches.values(), (record) => record.tabId),
+    ...Array.from(cooldownMatches.values(), (record) => record.tabId)
   ]);
 
   tabIds.forEach((tabId) => {
@@ -269,15 +300,7 @@ function normalizeRules(rules) {
     }
 
     normalized.busyWhen = normalized.busyWhen
-      .map((condition, originalIndex) => ({
-        source: condition.source === "network" ? "network" : "dom",
-        originalIndex,
-        matchType: condition.matchType || "urlContains",
-        value: typeof condition.value === "string" ? condition.value.trim() : "",
-        method: condition.method || "ANY",
-        resourceKind: condition.resourceKind || "any"
-      }))
-      .filter((condition) => condition.source === "network" && condition.value);
+      .map((condition, originalIndex) => ({\n        source: condition.source === "network" ? "network" : "dom",\n        originalIndex,\n        matchType: condition.matchType || "urlContains",\n        value: typeof condition.value === "string" ? condition.value.trim() : "",\n        method: condition.method || "ANY",\n        resourceKind: condition.resourceKind || "any"\n      }))\n      .filter((condition) => condition.source === "network" && condition.value);
 
     return normalized;
   });
@@ -368,25 +391,18 @@ function handleRequestFinished(requestId, finalStatus = "completed") {
 
   updateDiagnosticEntry(record.tabId, record.diagnosticEntryId, finalStatus);
 
-  const counts = tabConditionCounts.get(record.tabId);
-  if (!counts) return;
-
-  record.matches.forEach(({ ruleId, conditionIndex }) => {
-    const key = `${ruleId}:${conditionIndex}`;
-    const nextValue = (counts.get(key) || 0) - 1;
-    if (nextValue > 0) {
-      counts.set(key, nextValue);
-    } else {
-      counts.delete(key);
-    }
-  });
-
-  if (counts.size) {
-    tabConditionCounts.set(record.tabId, counts);
-  } else {
-    tabConditionCounts.delete(record.tabId);
+  if (!record.matches?.length) {
+    sendSnapshotToTab(record.tabId);
+    return;
   }
 
+  if (NETWORK_IDLE_COOLDOWN_MS > 0) {
+    scheduleCooldown(record);
+    sendSnapshotToTab(record.tabId);
+    return;
+  }
+
+  decrementConditionCounts(record.tabId, record.matches);
   sendSnapshotToTab(record.tabId);
 }
 
@@ -426,6 +442,49 @@ function resourceKindMatches(resourceKind, requestType) {
   if (resourceKind === "websocket") return requestType === "websocket";
   if (resourceKind === "other") return requestType !== "xmlhttprequest" && requestType !== "fetch" && requestType !== "websocket";
   return true;
+}
+
+function scheduleCooldown(record) {
+  const cooldownId = createDiagnosticEntryId();
+  const timerId = setTimeout(() => {
+    expireCooldown(cooldownId);
+  }, NETWORK_IDLE_COOLDOWN_MS);
+
+  cooldownMatches.set(cooldownId, {
+    tabId: record.tabId,
+    matches: record.matches,
+    timerId
+  });
+}
+
+function expireCooldown(cooldownId) {
+  const record = cooldownMatches.get(cooldownId);
+  if (!record) return;
+
+  cooldownMatches.delete(cooldownId);
+  decrementConditionCounts(record.tabId, record.matches);
+  sendSnapshotToTab(record.tabId);
+}
+
+function decrementConditionCounts(tabId, matches) {
+  const counts = tabConditionCounts.get(tabId);
+  if (!counts) return;
+
+  matches.forEach(({ ruleId, conditionIndex }) => {
+    const key = `${ruleId}:${conditionIndex}`;
+    const nextValue = (counts.get(key) || 0) - 1;
+    if (nextValue > 0) {
+      counts.set(key, nextValue);
+    } else {
+      counts.delete(key);
+    }
+  });
+
+  if (counts.size) {
+    tabConditionCounts.set(tabId, counts);
+  } else {
+    tabConditionCounts.delete(tabId);
+  }
 }
 
 function buildSnapshotForTab(tabId) {
@@ -495,9 +554,10 @@ function buildDiagnosticsForTab(tabId) {
     tabId,
     tabUrl: tabUrls.get(tabId) || "",
     activeRequestCount: entries.filter((entry) => entry.status === "inflight").length,
+    cooldownRequestCount: Array.from(cooldownMatches.values()).filter((record) => record.tabId === tabId).length,
     matchedConditionCount: Array.from((tabConditionCounts.get(tabId) || new Map()).keys()).length,
     snapshot: buildSnapshotForTab(tabId),
-    entries: entries.map((entry) => ({
+    entries: entries.map((entry) => ({{
       id: entry.id,
       requestId: entry.requestId,
       url: entry.url,
@@ -542,7 +602,7 @@ function wildcardMatch(pattern, href) {
   }
 
   const escaped = String(pattern || "")
-    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+    .replace(/[.+^\${}()|[\]\\]/g, "\\$&")
     .replace(/\*/g, ".*");
   return new RegExp(`^${escaped}$`).test(String(href || ""));
 }
