@@ -50,9 +50,10 @@ It mirrors the current roadmap, but groups work strictly by Epic so it is easier
 - [x] Expose cooldown count through diagnostics data
 - [x] Show cooldown count in diagnostics UI
 - [x] Localize cooldown diagnostics label strings
+- [x] Add clearer diagnostics about why a request was or was not attributed to a tab
+- [x] Show attribution source / note / initiator details in diagnostics UI
 
 ### Remaining
-- [ ] Add clearer diagnostics about why a request was or was not attributed to a tab
 - [ ] Revisit same-origin attribution with a more precise strategy than current conservative skip
 - [ ] Verify cooldown behavior on real AI sites and tune the duration if needed
 - [ ] Decide whether this Epic is complete after real-site verification
