@@ -33,14 +33,18 @@
     const ja = {
       "direct-tab-id": "webRequest の tabId で直接帰属",
       "initiator-origin": "initiator origin から一意に帰属",
+      "rule-filtered-initiator-origin": "same-origin 候補をルール適合で絞って帰属",
       "ambiguous-initiator-origin": "同一 origin の複数タブがあり帰属を見送り",
+      "ambiguous-initiator-origin-after-rule-filter": "ルールで絞っても複数候補が残り帰属を見送り",
       "missing-tab-context": "tabId / initiator がなく帰属不可",
       "untracked-initiator-origin": "initiator origin に一致する追跡タブなし"
     };
     const en = {
       "direct-tab-id": "Direct webRequest tabId",
       "initiator-origin": "Recovered from initiator origin",
+      "rule-filtered-initiator-origin": "Recovered after rule-filtering same-origin candidates",
       "ambiguous-initiator-origin": "Skipped: ambiguous initiator origin",
+      "ambiguous-initiator-origin-after-rule-filter": "Skipped: multiple candidates remained after rule filtering",
       "missing-tab-context": "Skipped: missing tab context",
       "untracked-initiator-origin": "Skipped: no tracked tab for initiator origin"
     };
@@ -74,6 +78,13 @@
       addMetaLine(
         wrapper,
         `${isJapanese() ? "候補タブ" : "Candidate tabs"}: ${entry.candidateTabIds.join(", ")}`
+      );
+    }
+
+    if (Array.isArray(entry.filteredCandidateTabIds) && entry.filteredCandidateTabIds.length) {
+      addMetaLine(
+        wrapper,
+        `${isJapanese() ? "絞り込み後候補" : "Filtered candidates"}: ${entry.filteredCandidateTabIds.join(", ")}`
       );
     }
 

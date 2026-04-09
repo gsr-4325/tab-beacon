@@ -337,87 +337,14 @@ function findTabsByOrigin(origin) {
   return matchingTabIds;
 }
 
-function resolveRequestAttribution(details) {
-  if (details.tabId >= 0) {
-    return {
-      tabId: details.tabId,
-      source: "direct-tab-id",
-      note: "Attributed directly from webRequest tabId.",
-      candidateTabIds: []
-    };
-  }
-
-  if (!details.initiator) {
-    return {
-      tabId: -1,
-      source: "missing-tab-context",
-      note: "Skipped attribution because the request had no tabId and no initiator.",
-      candidateTabIds: []
-    };
-  }
-
-  const candidateTabIds = findTabsByOrigin(details.initiator);
-  if (candidateTabIds.length === 1) {
-    return {
-      tabId: candidateTabIds[0],
-      source: "initiator-origin",
-      note: "Recovered tab from a unique initiator origin match.",
-      candidateTabIds
-    };
-  }
-
-  if (candidateTabIds.length > 1) {
-    return {
-      tabId: -1,
-      source: "ambiguous-initiator-origin",
-      note: "Skipped attribution because multiple tracked tabs share this initiator origin.",
-      candidateTabIds
-    };
-  }
-
-  return {
-    tabId: -1,
-    source: "untracked-initiator-origin",
-    note: "Skipped attribution because no tracked tab matched the initiator origin.",
-    candidateTabIds: []
-  };
-}
-
-async function handleRequestStarted(details) {
-  const attribution = resolveRequestAttribution(details);
-
-  if (attribution.tabId < 0) {
-    if (attribution.source === "ambiguous-initiator-origin" && attribution.candidateTabIds.length) {
-      attribution.candidateTabIds.forEach((candidateTabId) => {
-        appendIgnoredDiagnosticEntry(candidateTabId, details, attribution);
-      });
-    }
-    return;
-  }
-
-  const tabId = attribution.tabId;
-  let tabUrl = tabUrls.get(tabId);
+function getNetworkMatchResultForTab(tabId, details) {
+  const tabUrl = tabUrls.get(tabId) || "";
   if (!tabUrl) {
-    try {
-      const tab = await chrome.tabs.get(tabId);
-      if (tab?.url) {
-        tabUrl = tab.url;
-        tabUrls.set(tabId, tabUrl);
-      }
-    } catch {
-      appendIgnoredDiagnosticEntry(tabId, details, {
-        ...attribution,
-        note: "Skipped diagnostics because the tab URL could not be resolved."
-      });
-      return;
-    }
-    if (!tabUrl) {
-      appendIgnoredDiagnosticEntry(tabId, details, {
-        ...attribution,
-        note: "Skipped diagnostics because the tab URL could not be resolved."
-      });
-      return;
-    }
+    return {
+      tabUrl: "",
+      candidateNetworkRules: [],
+      matchingConditions: []
+    };
   }
 
   const candidateRules = rulesCache.filter((rule) => {
@@ -426,10 +353,6 @@ async function handleRequestStarted(details) {
   const candidateNetworkRules = candidateRules.filter((rule) => {
     return rule.busyWhen.some((condition) => condition.source === "network");
   });
-
-  if (!candidateNetworkRules.length) {
-    return;
-  }
 
   const matchingConditions = [];
   for (const rule of candidateNetworkRules) {
@@ -443,7 +366,145 @@ async function handleRequestStarted(details) {
     });
   }
 
-  if (!matchingConditions.length) {
+  return {
+    tabUrl,
+    candidateNetworkRules,
+    matchingConditions
+  };
+}
+
+function resolveRequestAttribution(details) {
+  if (details.tabId >= 0) {
+    return {
+      tabId: details.tabId,
+      source: "direct-tab-id",
+      note: "Attributed directly from webRequest tabId.",
+      candidateTabIds: [],
+      filteredCandidateTabIds: [],
+      precomputedMatchResult: null
+    };
+  }
+
+  if (!details.initiator) {
+    return {
+      tabId: -1,
+      source: "missing-tab-context",
+      note: "Skipped attribution because the request had no tabId and no initiator.",
+      candidateTabIds: [],
+      filteredCandidateTabIds: [],
+      precomputedMatchResult: null
+    };
+  }
+
+  const candidateTabIds = findTabsByOrigin(details.initiator);
+  if (candidateTabIds.length === 1) {
+    return {
+      tabId: candidateTabIds[0],
+      source: "initiator-origin",
+      note: "Recovered tab from a unique initiator origin match.",
+      candidateTabIds,
+      filteredCandidateTabIds: candidateTabIds,
+      precomputedMatchResult: null
+    };
+  }
+
+  if (candidateTabIds.length > 1) {
+    const filteredCandidates = candidateTabIds
+      .map((candidateTabId) => ({
+        tabId: candidateTabId,
+        matchResult: getNetworkMatchResultForTab(candidateTabId, details)
+      }))
+      .filter(({ matchResult }) => matchResult.matchingConditions.length > 0);
+
+    if (filteredCandidates.length === 1) {
+      return {
+        tabId: filteredCandidates[0].tabId,
+        source: "rule-filtered-initiator-origin",
+        note: "Recovered tab from same-origin candidates after filtering by matching enabled network rules.",
+        candidateTabIds,
+        filteredCandidateTabIds: filteredCandidates.map(({ tabId }) => tabId),
+        precomputedMatchResult: filteredCandidates[0].matchResult
+      };
+    }
+
+    if (filteredCandidates.length > 1) {
+      return {
+        tabId: -1,
+        source: "ambiguous-initiator-origin-after-rule-filter",
+        note: "Skipped attribution because multiple same-origin tabs still matched enabled network rules.",
+        candidateTabIds,
+        filteredCandidateTabIds: filteredCandidates.map(({ tabId }) => tabId),
+        precomputedMatchResult: null
+      };
+    }
+
+    return {
+      tabId: -1,
+      source: "ambiguous-initiator-origin",
+      note: "Skipped attribution because multiple tracked tabs share this initiator origin and rule filtering could not narrow it to one tab.",
+      candidateTabIds,
+      filteredCandidateTabIds: [],
+      precomputedMatchResult: null
+    };
+  }
+
+  return {
+    tabId: -1,
+    source: "untracked-initiator-origin",
+    note: "Skipped attribution because no tracked tab matched the initiator origin.",
+    candidateTabIds: [],
+    filteredCandidateTabIds: [],
+    precomputedMatchResult: null
+  };
+}
+
+async function handleRequestStarted(details) {
+  const attribution = resolveRequestAttribution(details);
+
+  if (attribution.tabId < 0) {
+    if (
+      (attribution.source === "ambiguous-initiator-origin" || attribution.source === "ambiguous-initiator-origin-after-rule-filter")
+      && attribution.candidateTabIds.length
+    ) {
+      attribution.candidateTabIds.forEach((candidateTabId) => {
+        appendIgnoredDiagnosticEntry(candidateTabId, details, attribution);
+      });
+    }
+    return;
+  }
+
+  const tabId = attribution.tabId;
+  let matchResult = attribution.precomputedMatchResult || getNetworkMatchResultForTab(tabId, details);
+
+  if (!matchResult.tabUrl) {
+    try {
+      const tab = await chrome.tabs.get(tabId);
+      if (tab?.url) {
+        tabUrls.set(tabId, tab.url);
+        matchResult = getNetworkMatchResultForTab(tabId, details);
+      }
+    } catch {
+      appendIgnoredDiagnosticEntry(tabId, details, {
+        ...attribution,
+        note: "Skipped diagnostics because the tab URL could not be resolved."
+      });
+      return;
+    }
+  }
+
+  if (!matchResult.tabUrl) {
+    appendIgnoredDiagnosticEntry(tabId, details, {
+      ...attribution,
+      note: "Skipped diagnostics because the tab URL could not be resolved."
+    });
+    return;
+  }
+
+  if (!matchResult.candidateNetworkRules.length) {
+    return;
+  }
+
+  if (!matchResult.matchingConditions.length) {
     appendIgnoredDiagnosticEntry(tabId, details, {
       ...attribution,
       note: `${attribution.note} No enabled network condition matched this request.`
@@ -451,23 +512,24 @@ async function handleRequestStarted(details) {
     return;
   }
 
-  const diagnosticEntryId = appendDiagnosticEntry(tabId, details, matchingConditions, {
+  const diagnosticEntryId = appendDiagnosticEntry(tabId, details, matchResult.matchingConditions, {
     kind: "match",
     attributionSource: attribution.source,
     attributionNote: attribution.note,
     initiator: details.initiator || "",
     originalTabId: typeof details.tabId === "number" ? details.tabId : null,
-    candidateTabIds: attribution.candidateTabIds
+    candidateTabIds: attribution.candidateTabIds,
+    filteredCandidateTabIds: attribution.filteredCandidateTabIds
   });
 
   requestMatches.set(details.requestId, {
     tabId,
-    matches: matchingConditions,
+    matches: matchResult.matchingConditions,
     diagnosticEntryId
   });
 
   const counts = tabConditionCounts.get(tabId) || new Map();
-  matchingConditions.forEach(({ ruleId, conditionIndex }) => {
+  matchResult.matchingConditions.forEach(({ ruleId, conditionIndex }) => {
     const key = `${ruleId}:${conditionIndex}`;
     counts.set(key, (counts.get(key) || 0) + 1);
   });
@@ -611,6 +673,7 @@ function appendDiagnosticEntry(tabId, details, matches, extras = {}) {
     attributionSource: extras.attributionSource || "direct-tab-id",
     attributionNote: extras.attributionNote || "",
     candidateTabIds: Array.isArray(extras.candidateTabIds) ? extras.candidateTabIds : [],
+    filteredCandidateTabIds: Array.isArray(extras.filteredCandidateTabIds) ? extras.filteredCandidateTabIds : [],
     startedAt: extras.startedAt || Date.now(),
     finishedAt: extras.finishedAt || null,
     cooldownUntil: extras.cooldownUntil || null,
@@ -638,7 +701,8 @@ function appendIgnoredDiagnosticEntry(tabId, details, attribution) {
     attributionNote: attribution.note,
     initiator: details.initiator || "",
     originalTabId: typeof details.tabId === "number" ? details.tabId : null,
-    candidateTabIds: attribution.candidateTabIds || []
+    candidateTabIds: attribution.candidateTabIds || [],
+    filteredCandidateTabIds: attribution.filteredCandidateTabIds || []
   });
 }
 
@@ -687,6 +751,7 @@ function buildDiagnosticsForTab(tabId) {
       attributionSource: entry.attributionSource,
       attributionNote: entry.attributionNote,
       candidateTabIds: entry.candidateTabIds,
+      filteredCandidateTabIds: entry.filteredCandidateTabIds,
       startedAt: entry.startedAt,
       finishedAt: entry.finishedAt,
       cooldownUntil: entry.cooldownUntil,
