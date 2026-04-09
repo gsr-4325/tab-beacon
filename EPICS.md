@@ -11,11 +11,11 @@ It mirrors the current roadmap, but groups work strictly by Epic so it is easier
 ### Completed
 - [x] Remove the unused legacy `content.js`
 - [x] Align reinjection script order with the manifest
+- [x] Make `content-indicator-renderer.js` reuse shared selector helpers where safe
 
 ### Remaining
-- [ ] Make `content-indicator-renderer.js` use shared selector helpers directly
-- [ ] Reduce remaining duplicated selector / matching helpers in content runtime
 - [ ] Recheck sandbox behavior after content-side consolidation
+- [ ] Decide whether any remaining content-only helpers should stay local
 
 ## Epic 2: shared rule / selector core extraction
 
@@ -30,11 +30,13 @@ It mirrors the current roadmap, but groups work strictly by Epic so it is easier
 - [x] Reuse shared `wildcardMatch` in `background.js`
 - [x] Bridge shared selector resolution into options runtime
 - [x] Reapply selector bridge to dynamically added options inputs
+- [x] Make content runtime consume shared `resolveSelectorType`
+- [x] Reuse shared `wildcardMatch` in content runtime
 
 ### Remaining
-- [ ] Make content runtime consume shared `resolveSelectorType`
 - [ ] Replace more local selector helpers with shared helpers where safe
 - [ ] Decide whether rule normalization should move into a separate shared module
+- [ ] Decide whether Epic 2 is complete after the remaining duplication review
 
 ## Epic 3: network attribution and stability improvements
 
@@ -47,7 +49,7 @@ It mirrors the current roadmap, but groups work strictly by Epic so it is easier
 - [x] Add network idle cooldown handling
 - [x] Expose cooldown count through diagnostics data
 - [x] Show cooldown count in diagnostics UI
-- [x] Localize cooldown diagnostics fallback label
+- [x] Localize cooldown diagnostics label strings
 
 ### Remaining
 - [ ] Add clearer diagnostics about why a request was or was not attributed to a tab
@@ -78,6 +80,7 @@ It mirrors the current roadmap, but groups work strictly by Epic so it is easier
 - [x] Document current architecture and responsibility boundaries
 - [x] Synchronize ROADMAP with implemented features and current priorities
 - [x] Rewrite ROADMAP into a clean UTF-8 progress view
+- [x] Add a per-Epic checklist overview
 
 ### Remaining
 - [ ] Keep the checklist current as other Epics move forward

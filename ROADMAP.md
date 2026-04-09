@@ -22,23 +22,25 @@ Make Tab Beacon a practical Chrome/Edge extension that can show whether AI web a
 - [x] Reuse shared wildcard matcher in `background.js`
 - [x] Bridge shared selector utils into the options runtime
 - [x] Refresh selector bridge for dynamically added options inputs
+- [x] Reuse shared selector helpers in content runtime
 - [x] Preserve network diagnostics across rule autosave
 - [x] Avoid ambiguous same-origin tab attribution
 - [x] Add network idle cooldown handling
 - [x] Show network cooldown count in diagnostics
-- [x] Localize the cooldown diagnostics fallback label
+- [x] Add cooldown diagnostics label strings to i18n
 - [x] Finalize architecture and handoff notes in docs
+- [x] Add a per-Epic checklist overview
 
 ## Epic 1: content runtime consolidation
 
 ### Done
 - [x] Remove the unused legacy `content.js`
 - [x] Align reinjection script order with the manifest
+- [x] Make `content-indicator-renderer.js` reuse shared selector helpers where safe
 
 ### Remaining
-- [ ] Make `content-indicator-renderer.js` use shared selector helpers directly
-- [ ] Reduce remaining duplicated selector / matching helpers in content runtime
 - [ ] Recheck sandbox behavior after content-side consolidation
+- [ ] Decide whether any remaining content-only helpers should stay local
 
 ## Epic 2: shared rule / selector core extraction
 
@@ -50,11 +52,13 @@ Make Tab Beacon a practical Chrome/Edge extension that can show whether AI web a
 - [x] Reuse shared `wildcardMatch` in `background.js`
 - [x] Bridge shared selector resolution into options runtime
 - [x] Reapply selector bridge to dynamically added options inputs
+- [x] Make content runtime consume shared `resolveSelectorType`
+- [x] Reuse shared `wildcardMatch` in content runtime
 
 ### Remaining
-- [ ] Make content runtime consume shared `resolveSelectorType`
 - [ ] Replace more local selector helpers with shared helpers where safe
 - [ ] Decide whether rule normalization should move into a separate shared module
+- [ ] Decide whether Epic 2 is complete after the remaining duplication review
 
 ## Epic 3: network attribution and stability improvements
 
@@ -64,6 +68,7 @@ Make Tab Beacon a practical Chrome/Edge extension that can show whether AI web a
 - [x] Add network idle cooldown handling
 - [x] Expose cooldown count through diagnostics data
 - [x] Show cooldown count in diagnostics UI
+- [x] Add cooldown diagnostics label strings to i18n
 
 ### Remaining
 - [ ] Add clearer diagnostics about why a request was or was not attributed to a tab
@@ -87,6 +92,8 @@ Make Tab Beacon a practical Chrome/Edge extension that can show whether AI web a
 - [x] Update README to reflect current runtime entry points
 - [x] Document current architecture and responsibility boundaries
 - [x] Synchronize ROADMAP with implemented features and current priorities
+- [x] Rewrite ROADMAP into a clean UTF-8 progress view
+- [x] Add a per-Epic checklist overview
 
 ### Remaining
 - [ ] Keep the roadmap current as Epics 1 to 4 and 6 to 7 move forward
@@ -114,7 +121,7 @@ Make Tab Beacon a practical Chrome/Edge extension that can show whether AI web a
 
 ## Next recommended order
 
-1. Finish more of Epic 2 by making content runtime consume shared selector helpers.
+1. Finish more of Epic 2 by reviewing remaining selector/helper duplication and deciding whether it should stay local.
 2. Continue Epic 3 by improving request attribution diagnostics and tuning cooldown.
 3. Revisit Epic 4 once runtime consolidation reduces ambiguity in the current settings model.
 4. Do Epic 7 verification before attempting Epic 6 permission tightening.
