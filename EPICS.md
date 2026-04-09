@@ -64,11 +64,11 @@ It mirrors the current roadmap, but groups work strictly by Epic so it is easier
 - [ ] Not complete
 
 ### Completed
-- [ ] None yet
+- [x] Stop persisting stale `iconMode` in the options/editor save path
 
 ### Remaining
+- [ ] Remove any remaining runtime-only `iconMode` leftovers if they still cause confusion
 - [ ] Decide whether indicator style is global-only or can be rule-specific
-- [ ] Remove or revive stale `iconMode` style state consistently across runtime and options
 - [ ] Simplify related UI and storage shape after the direction is fixed
 
 ## Epic 5: docs / handoff synchronization
@@ -112,3 +112,13 @@ It mirrors the current roadmap, but groups work strictly by Epic so it is easier
 - [ ] Verify same-origin multi-tab behavior on real sites
 - [ ] Verify cooldown behavior and diagnostics usefulness on real sites
 - [ ] Measure whether any remaining content-side duplication causes practical issues
+
+## Human tasks backlog
+
+These are the tasks that are best done later by a human with the unpacked extension loaded in a real browser.
+
+- [ ] Check sandbox behavior after the recent content-side consolidation
+- [ ] Verify ChatGPT behavior on real conversation pages with the current DOM and network rules
+- [ ] Verify same-origin multi-tab behavior on real sites and confirm the new rule-filtered attribution looks correct
+- [ ] Verify cooldown behavior in diagnostics and tune whether `1200ms` still feels right
+- [ ] Decide whether Epic 3 can be marked complete after the real-site pass

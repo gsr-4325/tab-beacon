@@ -30,6 +30,7 @@ Make Tab Beacon a practical Chrome/Edge extension that can show whether AI web a
 - [x] Add cooldown diagnostics label strings to i18n
 - [x] Add request attribution diagnostics details
 - [x] Refine same-origin request attribution with rule filtering
+- [x] Stop persisting stale `iconMode` in the options/editor path
 - [x] Finalize architecture and handoff notes in docs
 - [x] Add a per-Epic checklist overview
 
@@ -82,11 +83,11 @@ Make Tab Beacon a practical Chrome/Edge extension that can show whether AI web a
 ## Epic 4: indicator settings cleanup
 
 ### Done
-- [ ] None yet
+- [x] Stop persisting stale `iconMode` in the options/editor path
 
 ### Remaining
+- [ ] Remove any remaining runtime-only `iconMode` leftovers if they still cause confusion
 - [ ] Decide whether indicator style is global-only or can be rule-specific
-- [ ] Remove or revive stale `iconMode` style state consistently across runtime and options
 - [ ] Simplify related UI and storage shape after the direction is fixed
 
 ## Epic 5: docs / handoff synchronization
@@ -122,9 +123,19 @@ Make Tab Beacon a practical Chrome/Edge extension that can show whether AI web a
 - [ ] Verify cooldown behavior and diagnostics usefulness on real sites
 - [ ] Measure whether any remaining content-side duplication causes practical issues
 
+## Human tasks backlog
+
+These are the tasks that are best done later by a human with the unpacked extension loaded in a real browser.
+
+- [ ] Check sandbox behavior after the recent content-side consolidation
+- [ ] Verify ChatGPT behavior on real conversation pages with the current DOM and network rules
+- [ ] Verify same-origin multi-tab behavior on real sites and confirm the new rule-filtered attribution looks correct
+- [ ] Verify cooldown behavior in diagnostics and tune whether `1200ms` still feels right
+- [ ] Decide whether Epic 3 can be marked complete after the real-site pass
+
 ## Next recommended order
 
-1. Do Epic 7 verification on real sites so Epic 3 can be judged complete or tuned further.
-2. Revisit Epic 4 once runtime consolidation reduces ambiguity in the current settings model.
+1. Keep pushing Epic 4 by removing the last confusing `iconMode` leftovers and clarifying indicator ownership.
+2. Do Epic 7 verification on real sites so Epic 3 can be judged complete or tuned further.
 3. Attempt Epic 6 permission tightening only after the real-site verification pass.
 4. Return to Epic 2 only if the remaining helper duplication still causes maintenance pain.
