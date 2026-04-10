@@ -123,6 +123,7 @@ Purpose:
 - [x] Strip historical `iconMode` from content-side rule reads before bootstrap
 - [x] Persist stripped historical `iconMode` from the content cleanup bridge on load
 - [x] Patch options cleanup helpers so migrated/default/editor rules stay `iconMode`-free end-to-end
+- [x] Add a real-site verification checklist for the human browser pass
 
 ## Epic details
 
@@ -209,7 +210,7 @@ Purpose:
 ### Epic 7: real-site verification
 
 #### Done
-- [ ] None yet
+- [x] Add `docs/real-site-verification-checklist.md` for the human browser pass
 
 #### Remaining
 - [ ] Verify ChatGPT behavior with current DOM and network rules
@@ -227,12 +228,13 @@ These are the tasks that are best done later by a human with the unpacked extens
 - [ ] Verify cooldown behavior in diagnostics and tune whether `1200ms` still feels right
 - [ ] Decide whether Epic 3 can be marked complete after the real-site pass
 - [ ] Verify that upgraded profiles with legacy stored rules no longer retain `iconMode` after ordinary browsing and opening the options page
+- [ ] Run through `docs/real-site-verification-checklist.md` and report findings in the provided format
 
 ## What the next AI should do first
 
 1. Read this file fully before changing direction.
 2. Continue Epic 4 until one more cleanup pass makes it clear whether it is done.
-3. After that, move to Epic 7 real-site verification support work and any AI-side prep for the human pass.
+3. Use `docs/real-site-verification-checklist.md` to support the human real-site pass.
 4. Do not start Epic 6 permission tightening before Epic 7 has validated the current runtime.
 
 ## Drift prevention notes
