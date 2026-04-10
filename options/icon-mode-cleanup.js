@@ -1,5 +1,10 @@
 (() => {
   const STORAGE_KEY = "tabBeaconRules";
+  const CHATGPT_PROJECT_PATTERN = "https://chatgpt.com/g/*/project*";
+  const CHATGPT_MATCH_PATTERNS = new Set([
+    "https://chatgpt.com/c/*",
+    "https://chatgpt.com/g/*/c/*"
+  ]);
 
   const stripIconMode = (rule) => {
     if (!rule || typeof rule !== "object" || Array.isArray(rule)) return rule;
@@ -8,10 +13,45 @@
     return rest;
   };
 
+  const isBundledChatGptRule = (rule) => {
+    if (!rule || typeof rule !== "object" || Array.isArray(rule)) return false;
+    if (rule.name === "ChatGPT") return true;
+    const matches = Array.isArray(rule.matches) ? rule.matches : [];
+    return matches.some((pattern) => CHATGPT_MATCH_PATTERNS.has(pattern));
+  };
+
+  const sanitizeChatGptRule = (rule) => {
+    if (!isBundledChatGptRule(rule)) return rule;
+
+    const currentMatches = Array.isArray(rule.matches) ? rule.matches : [];
+    const nextMatches = currentMatches.filter((pattern) => pattern !== CHATGPT_PROJECT_PATTERN);
+    const currentBusyWhen = Array.isArray(rule.busyWhen) ? rule.busyWhen : [];
+    const nextBusyWhen = currentBusyWhen.filter((condition) => !(
+      condition?.source === "dom" && condition?.query === '[data-testid="stop-button"]'
+    ));
+
+    const matchesChanged = nextMatches.length !== currentMatches.length;
+    const busyWhenChanged = nextBusyWhen.length !== currentBusyWhen.length;
+    const smartBusyChanged = rule.useSmartBusySignals !== false;
+
+    if (!matchesChanged && !busyWhenChanged && !smartBusyChanged) {
+      return rule;
+    }
+
+    return {
+      ...rule,
+      matches: nextMatches,
+      busyWhen: nextBusyWhen,
+      useSmartBusySignals: false
+    };
+  };
+
+  const sanitizeRule = (rule) => sanitizeChatGptRule(stripIconMode(rule));
+
   const stripRules = (rules) => {
     let changed = false;
     const next = rules.map((rule) => {
-      const stripped = stripIconMode(rule);
+      const stripped = sanitizeRule(rule);
       if (stripped !== rule) changed = true;
       return stripped;
     });
@@ -27,26 +67,26 @@
 
     const originalNormalizeRuleForEditor = normalizeRuleForEditor;
     normalizeRuleForEditor = function(rule) {
-      const normalized = originalNormalizeRuleForEditor(rule);
+      const normalized = sanitizeRule(originalNormalizeRuleForEditor(rule));
       delete normalized.iconMode;
       return normalized;
     };
 
     const originalCreateEmptyRule = createEmptyRule;
     createEmptyRule = function() {
-      const rule = originalCreateEmptyRule();
+      const rule = sanitizeRule(originalCreateEmptyRule());
       delete rule.iconMode;
       return rule;
     };
 
     const originalBuildDefaultRules = buildDefaultRules;
     buildDefaultRules = function() {
-      return originalBuildDefaultRules().map((rule) => stripIconMode(rule));
+      return originalBuildDefaultRules().map((rule) => sanitizeRule(rule));
     };
 
     const originalCollectRulesFromDom = collectRulesFromDom;
     collectRulesFromDom = function() {
-      return originalCollectRulesFromDom().map((rule) => stripIconMode(rule));
+      return originalCollectRulesFromDom().map((rule) => sanitizeRule(rule));
     };
 
     if (typeof DEBUG_LOCAL_SANDBOX_PRESET === "object" && DEBUG_LOCAL_SANDBOX_PRESET) {
