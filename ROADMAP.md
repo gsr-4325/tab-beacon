@@ -130,6 +130,8 @@ Purpose:
 - [x] Remove the remaining `iconMode` source leftover from content runtime rule normalization
 - [x] Add an options preload cleanup shim so storage reads and writes are sanitized before `options-app.js` initializes
 - [x] Add a real-site verification report template for returning findings in a reusable format
+- [x] Remove unreleased `iconMode` compatibility shims from the active options/content boot paths
+- [x] Add a current-schema options bridge so defaults and editor saves no longer rely on legacy `iconMode` cleanup hooks
 
 ## Epic details
 
@@ -186,10 +188,11 @@ Purpose:
 - [x] Simplify related storage / migration cleanup via the dedicated `iconMode` cleanup bridges
 - [x] Remove the remaining `iconMode` source leftover from content runtime rule normalization
 - [x] Sanitize options-side storage reads and writes before `options-app.js` boot using a dedicated preload cleanup shim
+- [x] Remove unreleased backward-compatibility logic for old saved settings from the active runtime, especially legacy `iconMode` cleanup and migration shims
 
 #### Remaining
-- [ ] Remove unreleased backward-compatibility logic for old saved settings, especially legacy `iconMode` cleanup and migration shims
 - [ ] Remove the textual `iconMode` leftovers still present in `options/options-app.js` if that cleanup still matters after removing compatibility code
+- [ ] Delete the now-unused legacy cleanup files once current-schema handling is fully inlined
 - [ ] Decide whether Epic 4 is complete after one more verification pass
 
 ### Epic 5: docs / handoff synchronization
@@ -222,9 +225,10 @@ Purpose:
 - [x] Add `docs/real-site-verification-report-template.md` for returning results
 
 #### Remaining
-- [x]  Verify ChatGPT behavior with current DOM and network rules
+- [x] Verify ChatGPT behavior with current DOM and network rules
 - [x] Verify cooldown behavior and diagnostics usefulness on real sites
 - [ ] Measure whether any remaining content-side duplication causes practical issues
+- [ ] Smoke-test options reset / edit / import flows after removing the active `iconMode` compatibility shims
 
 ## Human tasks backlog
 
@@ -238,11 +242,14 @@ These are the tasks that are best done later by a human with the unpacked extens
 - [x] Decide whether Epic 3 can be marked complete after the real-site pass
 - [x] Run through `docs/real-site-verification-checklist.md` and return findings using `docs/real-site-verification-report-template.md`
 
+### Remaining
+- [ ] Smoke-test options reset / edit / import flows after removing the active `iconMode` compatibility shims
+
 ## What the next AI should do first
 
 1. Read this file fully before changing direction.
-2. Remove unreleased backward-compatibility logic for old saved settings, especially legacy `iconMode` cleanup and migration code.
-3. Support the human real-site pass using `docs/real-site-verification-checklist.md` and `docs/real-site-verification-report-template.md`.
+2. Remove the textual `iconMode` leftovers still present in `options/options-app.js` and delete the now-unused legacy cleanup files once the current-schema handling is safely inlined.
+3. Support the human browser smoke pass for options reset / edit / import after the active `iconMode` compatibility shims were removed.
 4. Do not start Epic 6 permission tightening before Epic 7 has validated the current runtime.
 
 ## Drift prevention notes
