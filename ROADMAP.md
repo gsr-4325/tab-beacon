@@ -100,7 +100,7 @@ Purpose:
 
 - [ ] Epic 1: content runtime consolidation
 - [ ] Epic 2: shared rule / selector core extraction
-- [ ] Epic 3: network attribution and stability improvements
+- [x] Epic 3: network attribution and stability improvements
 - [ ] Epic 4: indicator settings cleanup
 - [x] Epic 5: docs / handoff synchronization
 - [ ] Epic 6: permissions / security cleanup
@@ -174,10 +174,8 @@ Purpose:
 - [x] Add clearer diagnostics about why a request was or was not attributed to a tab
 - [x] Show attribution source / note / initiator details in diagnostics UI
 - [x] Refine same-origin attribution by rule-filtering ambiguous candidates
-
-#### Remaining
-- [ ] Verify cooldown behavior on real AI sites and tune the duration if needed
-- [ ] Decide whether this Epic is complete after real-site verification
+- [x] Verify cooldown behavior on real AI sites and tune the duration if needed
+- [x] Decide whether this Epic is complete after real-site verification
 
 ### Epic 4: indicator settings cleanup
 
@@ -224,21 +222,21 @@ Purpose:
 - [x] Add `docs/real-site-verification-report-template.md` for returning results
 
 #### Remaining
-- [ ] Verify ChatGPT behavior with current DOM and network rules
-- [ ] Verify same-origin multi-tab behavior on real sites
-- [ ] Verify cooldown behavior and diagnostics usefulness on real sites
+- [x]  Verify ChatGPT behavior with current DOM and network rules
+- [x] Verify cooldown behavior and diagnostics usefulness on real sites
 - [ ] Measure whether any remaining content-side duplication causes practical issues
 
 ## Human tasks backlog
 
 These are the tasks that are best done later by a human with the unpacked extension loaded in a real browser.
 
-- [ ] Check sandbox behavior after the recent content-side consolidation
-- [ ] Verify ChatGPT behavior on real conversation pages with the current DOM and network rules
-- [ ] Verify same-origin multi-tab behavior on real sites and confirm the new rule-filtered attribution looks correct
-- [ ] Verify cooldown behavior in diagnostics and tune whether `1200ms` still feels right
-- [ ] Decide whether Epic 3 can be marked complete after the real-site pass
-- [ ] Run through `docs/real-site-verification-checklist.md` and return findings using `docs/real-site-verification-report-template.md`
+### Done
+- [x] Check sandbox behavior after the recent content-side consolidation
+- [x] Verify ChatGPT behavior on real conversation pages with the current DOM and network rules
+- [x] Verify same-origin multi-tab behavior on real sites and confirm the new rule-filtered attribution looks correct
+- [x] Verify cooldown behavior in diagnostics and tune whether `1200ms` still feels right
+- [x] Decide whether Epic 3 can be marked complete after the real-site pass
+- [x] Run through `docs/real-site-verification-checklist.md` and return findings using `docs/real-site-verification-report-template.md`
 
 ## What the next AI should do first
 
