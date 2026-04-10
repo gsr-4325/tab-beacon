@@ -34,20 +34,20 @@
     : null;
 
   storageArea.get = function patchedGet(keys, callback) {
-    const maybePromise = originalGet(keys, typeof callback === "function"
-      ? (result) => callback(sanitizeRecord(result))
-      : undefined);
-
     if (typeof callback === "function") {
-      return maybePromise;
+      return originalGet(keys, (result) => callback(sanitizeRecord(result)));
     }
 
-    return Promise.resolve(maybePromise).then((result) => sanitizeRecord(result));
+    return Promise.resolve(originalGet(keys)).then((result) => sanitizeRecord(result));
   };
 
   if (originalSet) {
     storageArea.set = function patchedSet(items, callback) {
-      return originalSet(sanitizeRecord(items), callback);
+      if (typeof callback === "function") {
+        return originalSet(sanitizeRecord(items), callback);
+      }
+
+      return originalSet(sanitizeRecord(items));
     };
   }
 

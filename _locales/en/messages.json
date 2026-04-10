@@ -135,7 +135,12 @@
     "message": "Inspect recent captured requests and see which ones matched your network conditions."
   },
   "networkDiagnosticsCooldownLabel": {
-    "message": "Cooldown $COUNT$"
+    "message": "Cooldown $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
   },
   "debugRenderMethodTitle": {
     "message": "Render method"
@@ -371,7 +376,7 @@
     "message": "Area"
   },
   "scopeQueryPlaceholder": {
-    "message": "Example: div[data-scroll-root] main#main or //main[@id=\\"main\\"]"
+    "message": "Example: div[data-scroll-root] main#main or //main[@id=\"main\"]"
   },
   "scopeSpecificAreasNote": {
     "message": "If multiple areas are listed, Tab Beacon will use any matching area."
@@ -422,7 +427,7 @@
     "message": "Busy query"
   },
   "busyQueryPlaceholder": {
-    "message": "Example: [aria-busy=\\"true\\"] or //button[contains(@aria-label, \\"Stop\\")]"
+    "message": "Example: [aria-busy=\"true\"] or //button[contains(@aria-label, \"Stop\")]"
   },
   "networkMatchType": {
     "message": "URL match"
@@ -555,7 +560,7 @@
     "message": "Help for conditions"
   },
   "conditionsHelpTooltip": {
-    "message": "Conditions can mix DOM and network checks.\nDOM example: [aria-busy=\\true\\"] or //button[contains(@aria-label, \\"Stop\\")]\nNetwork example: urlContains: /backend-api/ or pathPrefix: /backend-api/conversation\nCondition join ANY matches when one condition is true. ALL matches only when every condition is true."
+    "message": "Conditions can mix DOM and network checks.\nDOM example: [aria-busy=\"true\"] or //button[contains(@aria-label, \"Stop\")]\nNetwork example: urlContains: /backend-api/ or pathPrefix: /backend-api/conversation\nCondition join ANY matches when one condition is true. ALL matches only when every condition is true."
   },
   "footerSince": {
     "message": "Since 2026/04/01"
