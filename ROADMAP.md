@@ -126,6 +126,7 @@ Purpose:
 - [x] Add a real-site verification checklist for the human browser pass
 - [x] Remove the remaining `iconMode` source leftover from content runtime rule normalization
 - [x] Add an options preload cleanup shim so storage reads and writes are sanitized before `options-app.js` initializes
+- [x] Add a real-site verification report template for returning findings in a reusable format
 
 ## Epic details
 
@@ -197,6 +198,7 @@ Purpose:
 - [x] Synchronize roadmap with implemented features and current priorities
 - [x] Rewrite planning into a clean UTF-8 progress view
 - [x] Make this file the canonical handoff document
+- [x] Add `docs/real-site-verification-report-template.md` so human findings return in a reusable format
 
 #### Remaining
 - [ ] Keep this file current as work continues
@@ -215,6 +217,7 @@ Purpose:
 
 #### Done
 - [x] Add `docs/real-site-verification-checklist.md` for the human browser pass
+- [x] Add `docs/real-site-verification-report-template.md` for returning results
 
 #### Remaining
 - [ ] Verify ChatGPT behavior with current DOM and network rules
@@ -232,12 +235,12 @@ These are the tasks that are best done later by a human with the unpacked extens
 - [ ] Verify cooldown behavior in diagnostics and tune whether `1200ms` still feels right
 - [ ] Decide whether Epic 3 can be marked complete after the real-site pass
 - [ ] Verify that upgraded profiles with legacy stored rules no longer retain `iconMode` after ordinary browsing and opening the options page
-- [ ] Run through `docs/real-site-verification-checklist.md` and report findings in the provided format
+- [ ] Run through `docs/real-site-verification-checklist.md` and return findings using `docs/real-site-verification-report-template.md`
 
 ## What the next AI should do first
 
 1. Read this file fully before changing direction.
-2. Support the human real-site pass using `docs/real-site-verification-checklist.md`.
+2. Support the human real-site pass using `docs/real-site-verification-checklist.md` and `docs/real-site-verification-report-template.md`.
 3. Treat the remaining `options/options-app.js` `iconMode` text as low-risk textual debt unless the connector safely allows the large-file rewrite.
 4. Do not start Epic 6 permission tightening before Epic 7 has validated the current runtime.
 
