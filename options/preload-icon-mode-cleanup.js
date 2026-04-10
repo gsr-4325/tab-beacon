@@ -2,6 +2,11 @@
   const storageArea = chrome?.storage?.local;
   const RULES_STORAGE_KEY = "tabBeaconRules";
   const PATCH_FLAG = "__tabBeaconIconModePreloadPatched";
+  const CHATGPT_PROJECT_PATTERN = "https://chatgpt.com/g/*/project*";
+  const CHATGPT_MATCH_PATTERNS = new Set([
+    "https://chatgpt.com/c/*",
+    "https://chatgpt.com/g/*/c/*"
+  ]);
 
   if (!storageArea || storageArea[PATCH_FLAG]) {
     return;
@@ -14,9 +19,34 @@
     return rest;
   };
 
+  const isBundledChatGptRule = (rule) => {
+    if (!rule || typeof rule !== "object" || Array.isArray(rule)) return false;
+    if (rule.name === "ChatGPT") return true;
+    const matches = Array.isArray(rule.matches) ? rule.matches : [];
+    return matches.some((pattern) => CHATGPT_MATCH_PATTERNS.has(pattern));
+  };
+
+  const sanitizeChatGptRule = (rule) => {
+    if (!isBundledChatGptRule(rule)) return rule;
+
+    const currentMatches = Array.isArray(rule.matches) ? rule.matches : [];
+    const nextMatches = currentMatches.filter((pattern) => pattern !== CHATGPT_PROJECT_PATTERN);
+
+    if (nextMatches.length === currentMatches.length) {
+      return rule;
+    }
+
+    return {
+      ...rule,
+      matches: nextMatches
+    };
+  };
+
+  const sanitizeRule = (rule) => sanitizeChatGptRule(stripIconMode(rule));
+
   const stripRules = (rules) => {
     if (!Array.isArray(rules)) return rules;
-    return rules.map((rule) => stripIconMode(rule));
+    return rules.map((rule) => sanitizeRule(rule));
   };
 
   const sanitizeRecord = (value) => {

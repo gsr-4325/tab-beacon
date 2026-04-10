@@ -34,24 +34,14 @@
 
     const currentMatches = Array.isArray(rule.matches) ? rule.matches : [];
     const nextMatches = currentMatches.filter((pattern) => pattern !== CHATGPT_PROJECT_PATTERN);
-    const currentBusyWhen = Array.isArray(rule.busyWhen) ? rule.busyWhen : [];
-    const nextBusyWhen = currentBusyWhen.filter((condition) => !(
-      condition?.source === "dom" && condition?.query === '[data-testid="stop-button"]'
-    ));
 
-    const matchesChanged = nextMatches.length !== currentMatches.length;
-    const busyWhenChanged = nextBusyWhen.length !== currentBusyWhen.length;
-    const smartBusyChanged = rule.useSmartBusySignals !== false;
-
-    if (!matchesChanged && !busyWhenChanged && !smartBusyChanged) {
+    if (nextMatches.length === currentMatches.length) {
       return rule;
     }
 
     return {
       ...rule,
-      matches: nextMatches,
-      busyWhen: nextBusyWhen,
-      useSmartBusySignals: false
+      matches: nextMatches
     };
   };
 
