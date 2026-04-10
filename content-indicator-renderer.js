@@ -205,8 +205,7 @@
         : (domScopes.length ? "selector" : "auto"),
       domScopes: [],
       useSmartBusySignals: rule.useSmartBusySignals !== false,
-      busyEndGraceMs: normalizeBusyEndGraceMs(rule.busyEndGraceMs),
-      iconMode: rule.iconMode || "overlaySpinner"
+      busyEndGraceMs: normalizeBusyEndGraceMs(rule.busyEndGraceMs)
     };
     if (Array.isArray(rule.busyWhen) && rule.busyWhen.length) {
       normalized.busyWhen = rule.busyWhen;
