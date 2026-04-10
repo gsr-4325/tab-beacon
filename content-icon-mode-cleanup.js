@@ -5,6 +5,11 @@
   }
 
   const RULES_STORAGE_KEY = "tabBeaconRules";
+  const CHATGPT_PROJECT_PATTERN = "https://chatgpt.com/g/*/project*";
+  const CHATGPT_MATCH_PATTERNS = new Set([
+    "https://chatgpt.com/c/*",
+    "https://chatgpt.com/g/*/c/*"
+  ]);
   const originalGet = storageArea.get.bind(storageArea);
   const originalSet = typeof storageArea.set === "function"
     ? storageArea.set.bind(storageArea)
@@ -17,10 +22,45 @@
     return rest;
   };
 
+  const isBundledChatGptRule = (rule) => {
+    if (!rule || typeof rule !== "object" || Array.isArray(rule)) return false;
+    if (rule.name === "ChatGPT") return true;
+    const matches = Array.isArray(rule.matches) ? rule.matches : [];
+    return matches.some((pattern) => CHATGPT_MATCH_PATTERNS.has(pattern));
+  };
+
+  const sanitizeChatGptRule = (rule) => {
+    if (!isBundledChatGptRule(rule)) return rule;
+
+    const currentMatches = Array.isArray(rule.matches) ? rule.matches : [];
+    const nextMatches = currentMatches.filter((pattern) => pattern !== CHATGPT_PROJECT_PATTERN);
+    const currentBusyWhen = Array.isArray(rule.busyWhen) ? rule.busyWhen : [];
+    const nextBusyWhen = currentBusyWhen.filter((condition) => !(
+      condition?.source === "dom" && condition?.query === '[data-testid="stop-button"]'
+    ));
+
+    const matchesChanged = nextMatches.length !== currentMatches.length;
+    const busyWhenChanged = nextBusyWhen.length !== currentBusyWhen.length;
+    const smartBusyChanged = rule.useSmartBusySignals !== false;
+
+    if (!matchesChanged && !busyWhenChanged && !smartBusyChanged) {
+      return rule;
+    }
+
+    return {
+      ...rule,
+      matches: nextMatches,
+      busyWhen: nextBusyWhen,
+      useSmartBusySignals: false
+    };
+  };
+
+  const sanitizeRule = (rule) => sanitizeChatGptRule(stripIconMode(rule));
+
   const stripRules = (rules) => {
     let changed = false;
     const next = rules.map((rule) => {
-      const stripped = stripIconMode(rule);
+      const stripped = sanitizeRule(rule);
       if (stripped !== rule) changed = true;
       return stripped;
     });
