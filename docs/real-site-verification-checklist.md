@@ -9,7 +9,6 @@ Use it to validate Epics 3, 4, and 7 in a repeatable order.
 - Open the options page.
 - Turn **Debug mode** on.
 - Keep **Network diagnostics** available so you can refresh the tab list and diagnostics after each check.
-- If you have an older profile that used previous builds, prefer testing once with that profile too.
 
 ## 1. Sandbox sanity check
 
@@ -36,7 +35,6 @@ Goal:
 Suggested URLs:
 - `https://chatgpt.com/c/*`
 - `https://chatgpt.com/g/*/c/*`
-- `https://chatgpt.com/g/*/project*`
 
 Steps:
 1. Open a real ChatGPT conversation page.
@@ -50,7 +48,6 @@ Record:
 - whether busy started too late
 - whether busy ended too early or too late
 - whether diagnostics clearly explain which condition matched
-- whether project pages behave differently from conversation pages
 
 ## 3. Same-origin multi-tab attribution check
 
@@ -88,24 +85,7 @@ Record:
 - whether `1200ms` feels too short, about right, or too long
 - whether any flicker is still noticeable
 
-## 5. Legacy `iconMode` cleanup check
-
-Goal:
-- verify old stored rules do not keep stale rule-specific indicator state after normal use
-
-Steps:
-1. Start from a browser profile that has older stored Tab Beacon rules if available.
-2. Open a matched site once so content-side cleanup can run.
-3. Open the options page once so options-side cleanup can run.
-4. Export settings.
-5. Inspect the exported JSON.
-
-Record:
-- whether any rule object still contains `iconMode`
-- whether ordinary browsing plus opening options is enough to remove it
-- whether reset/import/export reintroduces any rule-level indicator field
-
-## 6. Report back format
+## 5. Report back format
 
 Please report findings in this shape so the next AI can act quickly.
 
@@ -117,6 +97,5 @@ Please report findings in this shape so the next AI can act quickly.
 - ChatGPT result:
 - Multi-tab attribution result:
 - Cooldown judgement for `1200ms`:
-- Any exported settings still containing `iconMode`:
 - Screenshots or console errors:
 - Recommended next change:

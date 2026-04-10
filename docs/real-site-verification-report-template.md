@@ -9,7 +9,7 @@ Keep each section short and concrete so the next AI can turn it into code or roa
 - Browser and version:
 - Extension load mode:
 - Profile type:
-  - clean profile / upgraded profile / unknown
+  - clean profile / ordinary dev profile / unknown
 - Indicator settings used:
   - indicatorStyle:
   - renderMethod:
@@ -59,19 +59,7 @@ Keep each section short and concrete so the next AI can turn it into code or roa
   - none / slight / obvious
 - Notes:
 
-## 5. Legacy `iconMode` cleanup
-
-- Old profile available:
-  - yes / no
-- Any exported rule still contained `iconMode`:
-  - yes / no
-- Ordinary browsing plus opening options removed it:
-  - yes / no / not tested
-- Reset, import, or export reintroduced it:
-  - yes / no / not tested
-- Notes:
-
-## 6. Overall judgement
+## 5. Overall judgement
 
 - Epic 3 status suggestion:
   - keep open / ready to close

@@ -24,6 +24,7 @@ These are not current priorities and should not pull the next AI off course.
 - Making indicator style rule-specific
 - Tightening permissions before real-site verification is complete
 - Large cosmetic refactors that do not reduce ambiguity or technical debt
+- Preserving backward compatibility for old saved settings before the extension is publicly released
 
 ## Architecture snapshot
 
@@ -40,7 +41,7 @@ Main runtime pieces at the moment:
   - shared selector/wildcard helpers used across runtimes
 - `options/options-app.js` plus boot-time bridge scripts
   - settings editor and diagnostics UI
-  - bridge scripts now sanitize legacy `iconMode` both before and after options runtime bootstrap
+  - some bridge scripts still exist from legacy cleanup work and should be reduced when they no longer help current behavior
 
 ## Important product decisions already made
 
@@ -51,6 +52,8 @@ These are decisions the next AI should preserve unless the user explicitly chang
 - Same-origin ambiguous request attribution should not guess recklessly; it may recover attribution only when rule filtering narrows it to one tab.
 - `ROADMAP.md` is the canonical planning and handoff document.
 - `EPICS.md` should not duplicate the plan anymore.
+- Because the extension is not publicly released yet, backward compatibility for older versions or stored settings is not required.
+- Before public release, prefer removing old-version compatibility logic over preserving it.
 
 ## Why each Epic exists
 
@@ -187,7 +190,8 @@ Purpose:
 - [x] Sanitize options-side storage reads and writes before `options-app.js` boot using a dedicated preload cleanup shim
 
 #### Remaining
-- [ ] Remove the textual `iconMode` leftovers still present in `options/options-app.js` when the connector allows a safe large-file rewrite
+- [ ] Remove unreleased backward-compatibility logic for old saved settings, especially legacy `iconMode` cleanup and migration shims
+- [ ] Remove the textual `iconMode` leftovers still present in `options/options-app.js` if that cleanup still matters after removing compatibility code
 - [ ] Decide whether Epic 4 is complete after one more verification pass
 
 ### Epic 5: docs / handoff synchronization
@@ -234,14 +238,13 @@ These are the tasks that are best done later by a human with the unpacked extens
 - [ ] Verify same-origin multi-tab behavior on real sites and confirm the new rule-filtered attribution looks correct
 - [ ] Verify cooldown behavior in diagnostics and tune whether `1200ms` still feels right
 - [ ] Decide whether Epic 3 can be marked complete after the real-site pass
-- [ ] Verify that upgraded profiles with legacy stored rules no longer retain `iconMode` after ordinary browsing and opening the options page
 - [ ] Run through `docs/real-site-verification-checklist.md` and return findings using `docs/real-site-verification-report-template.md`
 
 ## What the next AI should do first
 
 1. Read this file fully before changing direction.
-2. Support the human real-site pass using `docs/real-site-verification-checklist.md` and `docs/real-site-verification-report-template.md`.
-3. Treat the remaining `options/options-app.js` `iconMode` text as low-risk textual debt unless the connector safely allows the large-file rewrite.
+2. Remove unreleased backward-compatibility logic for old saved settings, especially legacy `iconMode` cleanup and migration code.
+3. Support the human real-site pass using `docs/real-site-verification-checklist.md` and `docs/real-site-verification-report-template.md`.
 4. Do not start Epic 6 permission tightening before Epic 7 has validated the current runtime.
 
 ## Drift prevention notes
@@ -251,3 +254,4 @@ The next AI should avoid these mistakes.
 - Do not reintroduce rule-specific indicator style unless the user explicitly asks for that direction.
 - Do not treat unresolved real-site verification as already complete.
 - Do not chase unrelated UI polish while Epics 3, 4, and 7 still affect correctness.
+- Before public release, do not keep old-version compatibility logic unless the user explicitly asks for it.
