@@ -64,12 +64,14 @@ It mirrors the current roadmap, but groups work strictly by Epic so it is easier
 - [ ] Not complete
 
 ### Completed
+- [x] Decide that indicator style is global-only, not rule-specific
 - [x] Stop persisting stale `iconMode` in the options/editor save path
+- [x] Strip historical `iconMode` from content-side rule reads before bootstrap
 
 ### Remaining
-- [ ] Remove any remaining runtime-only `iconMode` leftovers if they still cause confusion
-- [ ] Decide whether indicator style is global-only or can be rule-specific
-- [ ] Simplify related UI and storage shape after the direction is fixed
+- [ ] Remove any remaining large-file source leftovers for `iconMode` when a full-file cleanup pass is practical
+- [ ] Simplify related storage / migration code further now that the direction is fixed
+- [ ] Decide whether Epic 4 is complete after one more cleanup pass
 
 ## Epic 5: docs / handoff synchronization
 

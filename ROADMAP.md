@@ -31,6 +31,7 @@ Make Tab Beacon a practical Chrome/Edge extension that can show whether AI web a
 - [x] Add request attribution diagnostics details
 - [x] Refine same-origin request attribution with rule filtering
 - [x] Stop persisting stale `iconMode` in the options/editor path
+- [x] Strip historical `iconMode` from content-side rule reads before bootstrap
 - [x] Finalize architecture and handoff notes in docs
 - [x] Add a per-Epic checklist overview
 
@@ -83,12 +84,14 @@ Make Tab Beacon a practical Chrome/Edge extension that can show whether AI web a
 ## Epic 4: indicator settings cleanup
 
 ### Done
+- [x] Decide that indicator style is global-only, not rule-specific
 - [x] Stop persisting stale `iconMode` in the options/editor path
+- [x] Strip historical `iconMode` from content-side rule reads before bootstrap
 
 ### Remaining
-- [ ] Remove any remaining runtime-only `iconMode` leftovers if they still cause confusion
-- [ ] Decide whether indicator style is global-only or can be rule-specific
-- [ ] Simplify related UI and storage shape after the direction is fixed
+- [ ] Remove any remaining large-file source leftovers for `iconMode` when a full-file cleanup pass is practical
+- [ ] Simplify related storage / migration code further now that the direction is fixed
+- [ ] Decide whether Epic 4 is complete after one more cleanup pass
 
 ## Epic 5: docs / handoff synchronization
 
@@ -135,7 +138,7 @@ These are the tasks that are best done later by a human with the unpacked extens
 
 ## Next recommended order
 
-1. Keep pushing Epic 4 by removing the last confusing `iconMode` leftovers and clarifying indicator ownership.
+1. Keep pushing Epic 4 by removing the last confusing `iconMode` leftovers and simplifying cleanup paths.
 2. Do Epic 7 verification on real sites so Epic 3 can be judged complete or tuned further.
 3. Attempt Epic 6 permission tightening only after the real-site verification pass.
 4. Return to Epic 2 only if the remaining helper duplication still causes maintenance pain.

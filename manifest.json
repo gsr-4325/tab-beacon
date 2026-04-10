@@ -36,6 +36,7 @@
       ],
       "js": [
         "shared/tab-beacon-selector-utils.js",
+        "content-icon-mode-cleanup.js",
         "content-indicator-renderer.js"
       ],
       "run_at": "document_idle"
