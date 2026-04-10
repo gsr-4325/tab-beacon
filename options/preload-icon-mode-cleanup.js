@@ -7,6 +7,16 @@
     "https://chatgpt.com/c/*",
     "https://chatgpt.com/g/*/c/*"
   ]);
+  const CHATGPT_ASSISTANT_DOM_SCOPES = [
+    {
+      selectorType: "xpath",
+      query: "(//*[@id='thread']//section[@data-turn='assistant'])[last()]"
+    },
+    {
+      selectorType: "xpath",
+      query: "(//main[@id='main']//section[@data-turn='assistant'])[last()]"
+    }
+  ];
 
   if (!storageArea || storageArea[PATCH_FLAG]) {
     return;
@@ -26,19 +36,33 @@
     return matches.some((pattern) => CHATGPT_MATCH_PATTERNS.has(pattern));
   };
 
+  const hasSameDomScopes = (rule) => {
+    const domScopes = Array.isArray(rule?.domScopes) ? rule.domScopes : [];
+    if (domScopes.length !== CHATGPT_ASSISTANT_DOM_SCOPES.length) return false;
+    return CHATGPT_ASSISTANT_DOM_SCOPES.every((expected, index) => {
+      const actual = domScopes[index];
+      return actual?.selectorType === expected.selectorType && actual?.query === expected.query;
+    });
+  };
+
   const sanitizeChatGptRule = (rule) => {
     if (!isBundledChatGptRule(rule)) return rule;
 
     const currentMatches = Array.isArray(rule.matches) ? rule.matches : [];
     const nextMatches = currentMatches.filter((pattern) => pattern !== CHATGPT_PROJECT_PATTERN);
+    const domScopeModeChanged = rule.domScopeMode !== "selector";
+    const domScopesChanged = !hasSameDomScopes(rule);
+    const matchesChanged = nextMatches.length !== currentMatches.length;
 
-    if (nextMatches.length === currentMatches.length) {
+    if (!matchesChanged && !domScopeModeChanged && !domScopesChanged) {
       return rule;
     }
 
     return {
       ...rule,
-      matches: nextMatches
+      matches: nextMatches,
+      domScopeMode: "selector",
+      domScopes: CHATGPT_ASSISTANT_DOM_SCOPES.map((scope) => ({ ...scope }))
     };
   };
 
