@@ -5,7 +5,7 @@ If a future AI needs project context, it should read this file first.
 
 ## Current working branch
 
-- `chore/runtime-doc-sync-pass1`
+- `chore/runtime-doc-sync-pass2`
 
 ## What Tab Beacon is trying to become
 
@@ -121,6 +121,8 @@ Purpose:
 - [x] Refine same-origin request attribution with rule filtering
 - [x] Stop persisting stale `iconMode` in the options/editor path
 - [x] Strip historical `iconMode` from content-side rule reads before bootstrap
+- [x] Persist stripped historical `iconMode` from the content cleanup bridge on load
+- [x] Patch options cleanup helpers so migrated/default/editor rules stay `iconMode`-free end-to-end
 
 ## Epic details
 
@@ -176,10 +178,10 @@ Purpose:
 - [x] Decide that indicator style is global-only, not rule-specific
 - [x] Stop persisting stale `iconMode` in the options/editor path
 - [x] Strip historical `iconMode` from content-side rule reads before bootstrap
+- [x] Simplify related storage / migration cleanup via the dedicated `iconMode` cleanup bridges
 
 #### Remaining
 - [ ] Remove any remaining large-file source leftovers for `iconMode` when a full-file cleanup pass is practical
-- [ ] Simplify related storage / migration code further now that the direction is fixed
 - [ ] Decide whether Epic 4 is complete after one more cleanup pass
 
 ### Epic 5: docs / handoff synchronization
@@ -224,6 +226,7 @@ These are the tasks that are best done later by a human with the unpacked extens
 - [ ] Verify same-origin multi-tab behavior on real sites and confirm the new rule-filtered attribution looks correct
 - [ ] Verify cooldown behavior in diagnostics and tune whether `1200ms` still feels right
 - [ ] Decide whether Epic 3 can be marked complete after the real-site pass
+- [ ] Verify that upgraded profiles with legacy stored rules no longer retain `iconMode` after ordinary browsing and opening the options page
 
 ## What the next AI should do first
 

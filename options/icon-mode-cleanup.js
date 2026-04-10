@@ -19,6 +19,12 @@
   };
 
   function patchGlobals() {
+    const originalMigrateRules = migrateRules;
+    migrateRules = function(rules) {
+      const migrated = originalMigrateRules(rules);
+      return stripRules(Array.isArray(migrated) ? migrated : []).next;
+    };
+
     const originalNormalizeRuleForEditor = normalizeRuleForEditor;
     normalizeRuleForEditor = function(rule) {
       const normalized = originalNormalizeRuleForEditor(rule);
@@ -69,6 +75,7 @@
   function ready() {
     return (
       typeof renderRules === "function" &&
+      typeof migrateRules === "function" &&
       typeof normalizeRuleForEditor === "function" &&
       typeof createEmptyRule === "function" &&
       typeof collectRulesFromDom === "function" &&
