@@ -40,7 +40,7 @@ Main runtime pieces at the moment:
   - shared selector/wildcard helpers used across runtimes
 - `options/options-app.js` plus boot-time bridge scripts
   - settings editor and diagnostics UI
-  - a number of bridge scripts currently patch behavior without requiring huge file rewrites
+  - bridge scripts now sanitize legacy `iconMode` both before and after options runtime bootstrap
 
 ## Important product decisions already made
 
@@ -125,6 +125,7 @@ Purpose:
 - [x] Patch options cleanup helpers so migrated/default/editor rules stay `iconMode`-free end-to-end
 - [x] Add a real-site verification checklist for the human browser pass
 - [x] Remove the remaining `iconMode` source leftover from content runtime rule normalization
+- [x] Add an options preload cleanup shim so storage reads and writes are sanitized before `options-app.js` initializes
 
 ## Epic details
 
@@ -182,10 +183,11 @@ Purpose:
 - [x] Strip historical `iconMode` from content-side rule reads before bootstrap
 - [x] Simplify related storage / migration cleanup via the dedicated `iconMode` cleanup bridges
 - [x] Remove the remaining `iconMode` source leftover from content runtime rule normalization
+- [x] Sanitize options-side storage reads and writes before `options-app.js` boot using a dedicated preload cleanup shim
 
 #### Remaining
-- [ ] Remove the remaining large-file source leftovers for `iconMode` in `options/options-app.js`
-- [ ] Decide whether Epic 4 is complete after one more cleanup and verification pass
+- [ ] Remove the textual `iconMode` leftovers still present in `options/options-app.js` when the connector allows a safe large-file rewrite
+- [ ] Decide whether Epic 4 is complete after one more verification pass
 
 ### Epic 5: docs / handoff synchronization
 
@@ -235,8 +237,8 @@ These are the tasks that are best done later by a human with the unpacked extens
 ## What the next AI should do first
 
 1. Read this file fully before changing direction.
-2. Finish the remaining `iconMode` source cleanup in `options/options-app.js`.
-3. Use `docs/real-site-verification-checklist.md` to support the human real-site pass.
+2. Support the human real-site pass using `docs/real-site-verification-checklist.md`.
+3. Treat the remaining `options/options-app.js` `iconMode` text as low-risk textual debt unless the connector safely allows the large-file rewrite.
 4. Do not start Epic 6 permission tightening before Epic 7 has validated the current runtime.
 
 ## Drift prevention notes
