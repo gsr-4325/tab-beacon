@@ -137,6 +137,8 @@ Purpose:
 - [x] Delay busy favicon rendering until page load completes or the page favicon is available
 - [x] Re-evaluate busy state for a short settle window after SPA route changes
 - [x] Start DOM observers and DOM busy evaluation before async favicon and background refresh during SPA bootstrap
+- [x] Include selector-scope root elements in DOM busy matching instead of checking descendants only
+- [x] Let smart busy detect stop-like controls inside composer regions while still ignoring editable fields
 
 ## Epic details
 
@@ -149,6 +151,8 @@ Purpose:
 - [x] Delay favicon mutation until page load completes or a real page icon can be captured
 - [x] Re-run scoped DOM evaluation briefly after SPA route changes
 - [x] Prioritize DOM observer reattachment before async bootstrap work on SPA route changes
+- [x] Treat selector-scope root elements as valid DOM match targets during busy evaluation
+- [x] Narrow smart-busy composer ignores so stop buttons are not filtered out with text inputs
 
 #### Remaining
 - [ ] Recheck sandbox behavior after content-side consolidation

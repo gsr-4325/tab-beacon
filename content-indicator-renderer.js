@@ -14,13 +14,26 @@
   const ROUTE_SETTLE_WINDOW_MS = 2500;
   const ROUTE_SETTLE_INTERVAL_MS = 120;
   const EXT_NAME = "TabBeacon";
-  const COMPOSER_IGNORE_SELECTOR = [
+  const SMART_BUSY_IGNORE_SELF_SELECTOR = [
     "textarea",
     "input",
     "[contenteditable='true']",
     "[role='textbox']",
     "[data-testid='composer']",
     "[data-testid='prompt-textarea']"
+  ].join(",");
+  const SMART_BUSY_IGNORE_ANCESTOR_SELECTOR = [
+    "textarea",
+    "input",
+    "[contenteditable='true']",
+    "[role='textbox']",
+    "[data-testid='prompt-textarea']"
+  ].join(",");
+  const SMART_BUSY_ALLOWED_CONTROL_SELECTOR = [
+    "button",
+    "[role='button']",
+    "a",
+    "[data-testid='stop-button']"
   ].join(",");
   const OBSERVER_DETAIL_OPTIONS = {
     childList: true,
@@ -712,6 +725,9 @@
       const type = resolveSelectorType(query, selectorType);
       for (const root of roots) {
         if (type === "css") {
+          if (root instanceof Element && root.matches(query)) {
+            return root;
+          }
           const found = root.querySelector(query) || searchShadowDom(root, query);
           if (found) return found;
           continue;
@@ -867,6 +883,9 @@
   }
 
   function findSmartBusyNode(root, selector) {
+    if (root instanceof Element && root.matches(selector) && isUsableSmartBusyNode(root)) {
+      return root;
+    }
     for (const node of root.querySelectorAll(selector)) {
       if (isUsableSmartBusyNode(node)) return node;
     }
@@ -879,11 +898,16 @@
   }
 
   function isIgnoredSmartBusyNode(node) {
-    return !!(
-      node.closest?.('[data-tabbeacon-ignore-smart-busy="true"]')
-      || node.matches?.(COMPOSER_IGNORE_SELECTOR)
-      || node.closest?.(COMPOSER_IGNORE_SELECTOR)
-    );
+    if (node.closest?.('[data-tabbeacon-ignore-smart-busy="true"]')) {
+      return true;
+    }
+    if (node.matches?.(SMART_BUSY_IGNORE_SELF_SELECTOR)) {
+      return true;
+    }
+    if (node.matches?.(SMART_BUSY_ALLOWED_CONTROL_SELECTOR)) {
+      return false;
+    }
+    return !!node.closest?.(SMART_BUSY_IGNORE_ANCESTOR_SELECTOR);
   }
 
   function isProbablyVisible(node) {
