@@ -46,10 +46,12 @@
     activeRules: [],
     currentStatus: "idle",
     originalIcons: [],
+    headObserver: null,
     animationTimer: null,
     animationFrames: null,
     animationFrameIndex: 0,
     baseIconDataUrl: null,
+    iconRenderToken: 0,
     observer: null,
     observerRebuildTimer: null,
     reevaluateTimer: null,
@@ -144,6 +146,7 @@
     await registerCurrentTabUrl(href);
     if (bootstrapToken !== state.bootstrapToken) return;
     syncBusyStateWithRules({ allowGrace: false });
+    installHeadObserver();
     installObservers();
   }
 
@@ -338,8 +341,10 @@
       if (message.type === "tab-beacon/apply-indicator-settings") {
         state.indicatorSettings = normalizeIndicatorSettings(message.settings);
         if (state.currentStatus === "busy") {
-          startAnimation().catch((err) => console.error("[TabBeacon] startAnimation failed", err));
+          const renderToken = ++state.iconRenderToken;
+          startAnimation(renderToken).catch((err) => console.error("[TabBeacon] startAnimation failed", err));
         } else {
+          state.iconRenderToken += 1;
           stopAnimation();
           restoreOriginalIcons();
         }
@@ -483,8 +488,10 @@
           changes[INDICATOR_STORAGE_KEY].newValue
         );
         if (state.currentStatus === "busy") {
-          startAnimation().catch((err) => console.error("[TabBeacon] startAnimation failed", err));
+          const renderToken = ++state.iconRenderToken;
+          startAnimation(renderToken).catch((err) => console.error("[TabBeacon] startAnimation failed", err));
         } else {
+          state.iconRenderToken += 1;
           stopAnimation();
           restoreOriginalIcons();
         }
@@ -826,6 +833,65 @@
     }));
   }
 
+  function captureLivePageIcons() {
+    return Array.from(document.querySelectorAll("link[rel~='icon']"))
+      .filter((link) => link.id !== EXT_ICON_LINK_ID)
+      .map((link) => ({
+        href: link.href,
+        rel: link.getAttribute("rel") || "icon",
+        type: link.getAttribute("type") || "",
+        sizes: link.getAttribute("sizes") || ""
+      }));
+  }
+
+  function syncOriginalIconsFromDocument() {
+    const liveIcons = captureLivePageIcons();
+    if (liveIcons.length) {
+      state.originalIcons = liveIcons;
+      state.baseIconDataUrl = null;
+      return;
+    }
+
+    if (state.currentStatus !== "busy" && !document.getElementById(EXT_ICON_LINK_ID)) {
+      state.originalIcons = [];
+      state.baseIconDataUrl = null;
+    }
+  }
+
+  function installHeadObserver() {
+    if (!document.head) {
+      window.addEventListener("DOMContentLoaded", installHeadObserver, { once: true });
+      return;
+    }
+
+    state.headObserver?.disconnect();
+    state.headObserver = new MutationObserver((mutations) => {
+      if (!mutations.some(isIconMutation)) return;
+      syncOriginalIconsFromDocument();
+    });
+    state.headObserver.observe(document.head, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["href", "rel", "sizes", "type"]
+    });
+  }
+
+  function isIconMutation(mutation) {
+    if (isTrackedIconNode(mutation.target)) return true;
+    for (const node of mutation.addedNodes || []) {
+      if (isTrackedIconNode(node)) return true;
+    }
+    for (const node of mutation.removedNodes || []) {
+      if (isTrackedIconNode(node)) return true;
+    }
+    return false;
+  }
+
+  function isTrackedIconNode(node) {
+    return !!(node instanceof HTMLLinkElement && (node.id === EXT_ICON_LINK_ID || /\bicon\b/i.test(node.rel || "")));
+  }
+
   async function resolveBaseIconDataUrl(originalIcons) {
     const preferredHref = pickPreferredIconHref(originalIcons);
     if (!preferredHref) return createFallbackBaseIcon();
@@ -891,40 +957,54 @@
     dbg(`status: ${state.currentStatus} → ${nextStatus}`);
     state.currentStatus = nextStatus;
     if (nextStatus === "busy") {
-      startAnimation().catch((err) => console.error("[TabBeacon] startAnimation failed", err));
+      const renderToken = ++state.iconRenderToken;
+      startAnimation(renderToken).catch((err) => console.error("[TabBeacon] startAnimation failed", err));
       return;
     }
+    state.iconRenderToken += 1;
     stopAnimation();
     restoreOriginalIcons();
   }
 
-  async function startAnimation() {
+  async function startAnimation(renderToken = state.iconRenderToken) {
     stopAnimation();
+    if (renderToken !== state.iconRenderToken || state.currentStatus !== "busy") return;
     if (!state.baseIconDataUrl) {
-      state.baseIconDataUrl = await resolveBaseIconDataUrl(state.originalIcons);
+      const resolvedBaseIcon = await resolveBaseIconDataUrl(state.originalIcons);
+      if (renderToken !== state.iconRenderToken || state.currentStatus !== "busy") return;
+      state.baseIconDataUrl = resolvedBaseIcon;
     }
 
     if (state.indicatorSettings.indicatorStyle === "static-badge") {
+      const badgeDataUrl = await generateStaticBadgeDataUrl(
+        state.baseIconDataUrl,
+        state.indicatorSettings.badgeStyle,
+        state.indicatorSettings.badgeColor
+      );
+      if (renderToken !== state.iconRenderToken || state.currentStatus !== "busy") return;
       setGeneratedIcon(
-        await generateStaticBadgeDataUrl(
-          state.baseIconDataUrl,
-          state.indicatorSettings.badgeStyle,
-          state.indicatorSettings.badgeColor
-        ),
+        badgeDataUrl,
         "image/png"
       );
       return;
     }
 
     if (state.indicatorSettings.renderMethod === "gif") {
+      if (renderToken !== state.iconRenderToken || state.currentStatus !== "busy") return;
       setGeneratedIcon(ANIMATED_BUSY_ICON_DATA_URL, "image/gif");
       return;
     }
 
-    state.animationFrames = await generateSpinnerFrames(state.baseIconDataUrl);
+    const frames = await generateSpinnerFrames(state.baseIconDataUrl);
+    if (renderToken !== state.iconRenderToken || state.currentStatus !== "busy") return;
+    state.animationFrames = frames;
     state.animationFrameIndex = 0;
     setGeneratedIcon(state.animationFrames[0], "image/png");
     state.animationTimer = window.setInterval(() => {
+      if (renderToken !== state.iconRenderToken || state.currentStatus !== "busy") {
+        stopAnimation();
+        return;
+      }
       if (!state.animationFrames?.length) return;
       state.animationFrameIndex = (state.animationFrameIndex + 1) % state.animationFrames.length;
       setGeneratedIcon(state.animationFrames[state.animationFrameIndex], "image/png");
@@ -1109,6 +1189,7 @@
     state.observerRebuildTimer = null;
     state.reevaluateTimer = null;
     state.reevaluateMaxWaitTimer = null;
+    state.iconRenderToken += 1;
     cancelAllRuleIdleTimers();
     state.ruleActivity = new Map();
     stopAnimation();
@@ -1118,6 +1199,8 @@
     state.currentStatus = "idle";
     state.observer?.disconnect();
     state.observer = null;
+    state.headObserver?.disconnect();
+    state.headObserver = null;
     state.originalIcons = [];
     state.baseIconDataUrl = null;
     state.animationFrames = null;

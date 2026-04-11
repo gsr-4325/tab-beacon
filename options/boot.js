@@ -114,6 +114,7 @@
 
     await loadScript("../i18n.js");
     await loadScript("../shared/tab-beacon-selector-utils.js");
+    await loadScript("./storage-api-bridge.js");
     await loadScript("./options-app.js");
     await loadScript("./current-rule-schema.js");
     await loadScript("./selector-utils-bridge.js");
