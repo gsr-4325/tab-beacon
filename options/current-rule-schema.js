@@ -7,10 +7,6 @@
     {
       selectorType: "xpath",
       query: "(//*[@id='thread']//section[@data-turn='assistant'])[last()]"
-    },
-    {
-      selectorType: "xpath",
-      query: "(//main[@id='main']//section[@data-turn='assistant'])[last()]"
     }
   ];
 
