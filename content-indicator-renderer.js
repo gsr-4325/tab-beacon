@@ -11,6 +11,8 @@
   const EVALUATE_DEBOUNCE_MS = 120;
   const EVALUATE_MAX_WAIT_MS = 400;
   const OBSERVER_REBUILD_DEBOUNCE_MS = 120;
+  const ROUTE_SETTLE_WINDOW_MS = 2500;
+  const ROUTE_SETTLE_INTERVAL_MS = 120;
   const EXT_NAME = "TabBeacon";
   const COMPOSER_IGNORE_SELECTOR = [
     "textarea",
@@ -67,6 +69,9 @@
     observerRebuildTimer: null,
     reevaluateTimer: null,
     reevaluateMaxWaitTimer: null,
+    routeSettleTimer: null,
+    routeSettleInterval: null,
+    routeSettleHref: "",
     historyHooked: false,
     storageHooked: false,
     runtimeHooked: false,
@@ -100,11 +105,13 @@
     const bootstrapToken = ++state.bootstrapToken;
     const href = location.href;
     state.currentHref = href;
+    state.pageLoadComplete = state.pageLoadComplete || document.readyState === "complete";
 
     if (!hasStorageApi || !hasRuntimeApi) logMissingExtensionApi();
     installRuntimeHooks();
     installHistoryHooks();
     watchStorageChanges();
+    installLoadListener();
 
     const [rulesResult, uiStateResult, indicatorResult] = await Promise.all([
       loadRules(),
@@ -152,19 +159,21 @@
     state.activeRules = matchingRules;
     state.ruleActivity = new Map();
     state.originalIcons = captureOriginalIcons();
+    installObservers();
+    syncBusyStateWithRules({ allowGrace: false });
+    installHeadObserver();
+
     const resolvedBaseIcon = await resolveBaseIconDataUrl(state.originalIcons, {
       allowFallback: state.pageLoadComplete
     });
     state.baseIconDataUrl = resolvedBaseIcon.dataUrl;
     state.baseIconSource = resolvedBaseIcon.source;
     if (bootstrapToken !== state.bootstrapToken) return;
+    rerenderBusyIconIfReady();
 
     await registerCurrentTabUrl(href);
     if (bootstrapToken !== state.bootstrapToken) return;
     syncBusyStateWithRules({ allowGrace: false });
-    installLoadListener();
-    installHeadObserver();
-    installObservers();
   }
 
   bootstrap().catch((error) =>
@@ -517,6 +526,7 @@
   function handleLocationChange() {
     const href = location.href;
     if (href !== state.currentHref) {
+      startRouteSettleTracking(href);
       bootstrap().catch((error) => console.error("[TabBeacon] route reload failed", error));
       return;
     }
@@ -542,6 +552,39 @@
         syncBusyStateWithRules();
       }, EVALUATE_MAX_WAIT_MS);
     }
+  }
+
+  function startRouteSettleTracking(href) {
+    stopRouteSettleTracking();
+    state.routeSettleHref = href;
+    const tick = () => {
+      if (location.href !== href) {
+        stopRouteSettleTracking();
+        return;
+      }
+      if (!state.activeRules.length) return;
+      if (hasScopedDomObservationRules()) {
+        scheduleObserverRebuild();
+      }
+      syncBusyStateWithRules({ allowGrace: false });
+    };
+    tick();
+    state.routeSettleInterval = window.setInterval(tick, ROUTE_SETTLE_INTERVAL_MS);
+    state.routeSettleTimer = window.setTimeout(() => {
+      stopRouteSettleTracking();
+    }, ROUTE_SETTLE_WINDOW_MS);
+  }
+
+  function stopRouteSettleTracking() {
+    if (state.routeSettleInterval) {
+      clearInterval(state.routeSettleInterval);
+      state.routeSettleInterval = null;
+    }
+    if (state.routeSettleTimer) {
+      clearTimeout(state.routeSettleTimer);
+      state.routeSettleTimer = null;
+    }
+    state.routeSettleHref = "";
   }
 
   function evaluateRuleBusy(rule) {
@@ -1241,7 +1284,7 @@
       }
       return;
     }
-    if (state.baseIconDataUrl) {
+    if (state.baseIconDataUrl && state.baseIconSource === "page") {
       const link = document.createElement("link");
       link.rel = "icon";
       link.href = state.baseIconDataUrl;
@@ -1253,6 +1296,7 @@
     clearTimeout(state.observerRebuildTimer);
     clearTimeout(state.reevaluateTimer);
     clearTimeout(state.reevaluateMaxWaitTimer);
+    stopRouteSettleTracking();
     state.observerRebuildTimer = null;
     state.reevaluateTimer = null;
     state.reevaluateMaxWaitTimer = null;

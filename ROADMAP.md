@@ -135,6 +135,8 @@ Purpose:
 - [x] Remove the current-schema bridge and legacy cleanup files after dropping unreleased compatibility paths
 - [x] Remove the remaining textual `iconMode` leftovers from `options/options-app.js`
 - [x] Delay busy favicon rendering until page load completes or the page favicon is available
+- [x] Re-evaluate busy state for a short settle window after SPA route changes
+- [x] Start DOM observers and DOM busy evaluation before async favicon and background refresh during SPA bootstrap
 
 ## Epic details
 
@@ -145,6 +147,8 @@ Purpose:
 - [x] Align reinjection script order with the manifest
 - [x] Make `content-indicator-renderer.js` reuse shared selector helpers where safe
 - [x] Delay favicon mutation until page load completes or a real page icon can be captured
+- [x] Re-run scoped DOM evaluation briefly after SPA route changes
+- [x] Prioritize DOM observer reattachment before async bootstrap work on SPA route changes
 
 #### Remaining
 - [ ] Recheck sandbox behavior after content-side consolidation
