@@ -8,7 +8,6 @@ const STORAGE_KEY = "tabBeaconRules";
 const MAX_DIAGNOSTIC_ENTRIES = 80;
 const NETWORK_IDLE_COOLDOWN_MS = 1200;
 const sharedSelectorUtils = globalThis.TabBeaconSelectorUtils || null;
-
 let rulesCache = [];
 const tabUrls = new Map();
 const requestMatches = new Map();
@@ -100,7 +99,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   }
 
-  if (message.type === "tab-beacon/get-networkstate" || message.type === "tab-beacon/get-network-state") {
+  if (message.type === "tab-beacon/get-network-state") {
     if (sender.tab?.id >= 0) {
       sendResponse({ snapshot: buildSnapshotForTab(sender.tab.id) });
       return true;
@@ -291,21 +290,11 @@ function normalizeRules(rules) {
       id: rule.id || `rule-${index}`,
       enabled: rule.enabled !== false,
       matches: Array.isArray(rule.matches) ? rule.matches : [],
-      busyWhen: [],
-      selectorType: rule.selectorType || "auto",
-      busyQuery: typeof rule.busyQuery === "string" ? rule.busyQuery.trim() : ""
+      busyWhen: []
     };
 
     if (Array.isArray(rule.busyWhen) && rule.busyWhen.length) {
       normalized.busyWhen = rule.busyWhen;
-    } else if (normalized.busyQuery) {
-      normalized.busyWhen = [
-        {
-          source: "dom",
-          selectorType: normalized.selectorType,
-          query: normalized.busyQuery
-        }
-      ];
     }
 
     normalized.busyWhen = normalized.busyWhen

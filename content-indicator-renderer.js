@@ -12,6 +12,14 @@
   const EVALUATE_MAX_WAIT_MS = 400;
   const OBSERVER_REBUILD_DEBOUNCE_MS = 120;
   const EXT_NAME = "TabBeacon";
+  const COMPOSER_IGNORE_SELECTOR = [
+    "textarea",
+    "input",
+    "[contenteditable='true']",
+    "[role='textbox']",
+    "[data-testid='composer']",
+    "[data-testid='prompt-textarea']"
+  ].join(",");
   const OBSERVER_DETAIL_OPTIONS = {
     childList: true,
     subtree: true,
@@ -29,6 +37,7 @@
   const hasStorageApi = !!extensionApi?.storage?.local;
   const hasRuntimeApi = !!extensionApi?.runtime?.id;
   const sharedSelectorUtils = globalThis.TabBeaconSelectorUtils || null;
+  const isFileProtocol = location.protocol === "file:";
 
   const DEFAULT_INDICATOR_SETTINGS = Object.freeze({
     indicatorStyle: "spinner",
@@ -45,12 +54,14 @@
   const state = {
     activeRules: [],
     currentStatus: "idle",
+    pageLoadComplete: document.readyState === "complete",
     originalIcons: [],
     headObserver: null,
     animationTimer: null,
     animationFrames: null,
     animationFrameIndex: 0,
     baseIconDataUrl: null,
+    baseIconSource: "unknown",
     iconRenderToken: 0,
     observer: null,
     observerRebuildTimer: null,
@@ -71,6 +82,7 @@
   };
 
   function logMissingExtensionApi() {
+    if (isFileProtocol) return;
     console.warn("[TabBeacon] extension APIs are unavailable in this execution context", {
       hasStorageApi,
       hasRuntimeApi,
@@ -140,12 +152,17 @@
     state.activeRules = matchingRules;
     state.ruleActivity = new Map();
     state.originalIcons = captureOriginalIcons();
-    state.baseIconDataUrl = await resolveBaseIconDataUrl(state.originalIcons);
+    const resolvedBaseIcon = await resolveBaseIconDataUrl(state.originalIcons, {
+      allowFallback: state.pageLoadComplete
+    });
+    state.baseIconDataUrl = resolvedBaseIcon.dataUrl;
+    state.baseIconSource = resolvedBaseIcon.source;
     if (bootstrapToken !== state.bootstrapToken) return;
 
     await registerCurrentTabUrl(href);
     if (bootstrapToken !== state.bootstrapToken) return;
     syncBusyStateWithRules({ allowGrace: false });
+    installLoadListener();
     installHeadObserver();
     installObservers();
   }
@@ -186,17 +203,7 @@
   }
 
   function normalizeRule(rule, index = 0) {
-    const legacyDomScopeQuery = typeof rule.domScopeQuery === "string"
-      ? rule.domScopeQuery
-      : (typeof rule.domScopeSelector === "string" ? rule.domScopeSelector : "");
-    const domScopes = Array.isArray(rule.domScopes) && rule.domScopes.length
-      ? rule.domScopes
-      : legacyDomScopeQuery
-        ? [{
-            selectorType: rule.domScopeSelectorType || "auto",
-            query: legacyDomScopeQuery
-          }]
-        : [];
+    const domScopes = Array.isArray(rule.domScopes) ? rule.domScopes : [];
     const normalized = {
       id: rule.id || `rule-${index}`,
       enabled: rule.enabled !== false,
@@ -212,14 +219,6 @@
     };
     if (Array.isArray(rule.busyWhen) && rule.busyWhen.length) {
       normalized.busyWhen = rule.busyWhen;
-    } else if (typeof rule.busyQuery === "string" && rule.busyQuery.trim()) {
-      normalized.busyWhen = [
-        {
-          source: "dom",
-          selectorType: rule.selectorType || "auto",
-          query: rule.busyQuery.trim()
-        }
-      ];
     }
     normalized.busyWhen = normalized.busyWhen
       .map((condition) => ({
@@ -341,8 +340,7 @@
       if (message.type === "tab-beacon/apply-indicator-settings") {
         state.indicatorSettings = normalizeIndicatorSettings(message.settings);
         if (state.currentStatus === "busy") {
-          const renderToken = ++state.iconRenderToken;
-          startAnimation(renderToken).catch((err) => console.error("[TabBeacon] startAnimation failed", err));
+          rerenderBusyIconIfReady();
         } else {
           state.iconRenderToken += 1;
           stopAnimation();
@@ -488,8 +486,7 @@
           changes[INDICATOR_STORAGE_KEY].newValue
         );
         if (state.currentStatus === "busy") {
-          const renderToken = ++state.iconRenderToken;
-          startAnimation(renderToken).catch((err) => console.error("[TabBeacon] startAnimation failed", err));
+          rerenderBusyIconIfReady();
         } else {
           state.iconRenderToken += 1;
           stopAnimation();
@@ -748,13 +745,14 @@
     if (!roots.length) return false;
 
     for (const root of roots) {
-      if (root.querySelector('[aria-busy="true"]') || searchShadowDom(root, '[aria-busy="true"]')) {
+      const busyNode = findSmartBusyNode(root, '[aria-busy="true"]');
+      if (busyNode) {
         return true;
       }
     }
     const stopLikePattern = /(\bstop\b|\bcancel\b|\binterrupt\b|停止|中断|生成を停止)/i;
     const isStopLike = (node) => {
-      if (node.closest?.('[data-tabbeacon-ignore-smart-busy="true"]')) return false;
+      if (!isUsableSmartBusyNode(node)) return false;
       const label = [
         node.getAttribute("aria-label"),
         node.getAttribute("title"),
@@ -784,7 +782,8 @@
     }
 
     for (const root of roots) {
-      if (root.querySelector('[aria-live][aria-busy="true"]') || searchShadowDom(root, '[aria-live][aria-busy="true"]')) {
+      const liveBusyNode = findSmartBusyNode(root, '[aria-live][aria-busy="true"]');
+      if (liveBusyNode) {
         return true;
       }
     }
@@ -824,6 +823,36 @@
     return results;
   }
 
+  function findSmartBusyNode(root, selector) {
+    for (const node of root.querySelectorAll(selector)) {
+      if (isUsableSmartBusyNode(node)) return node;
+    }
+    const shadowMatches = collectShadowElements(root, selector, 120);
+    return shadowMatches.find((node) => isUsableSmartBusyNode(node)) || null;
+  }
+
+  function isUsableSmartBusyNode(node) {
+    return !isIgnoredSmartBusyNode(node) && isProbablyVisible(node);
+  }
+
+  function isIgnoredSmartBusyNode(node) {
+    return !!(
+      node.closest?.('[data-tabbeacon-ignore-smart-busy="true"]')
+      || node.matches?.(COMPOSER_IGNORE_SELECTOR)
+      || node.closest?.(COMPOSER_IGNORE_SELECTOR)
+    );
+  }
+
+  function isProbablyVisible(node) {
+    if (!(node instanceof Element)) return false;
+    const style = window.getComputedStyle(node);
+    if (!style || style.display === "none" || style.visibility === "hidden" || style.opacity === "0") {
+      return false;
+    }
+    const rect = node.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  }
+
   function captureOriginalIcons() {
     return Array.from(document.querySelectorAll("link[rel~='icon']")).map((link) => ({
       href: link.href,
@@ -849,13 +878,23 @@
     if (liveIcons.length) {
       state.originalIcons = liveIcons;
       state.baseIconDataUrl = null;
+      state.baseIconSource = "pending";
       return;
     }
 
     if (state.currentStatus !== "busy" && !document.getElementById(EXT_ICON_LINK_ID)) {
       state.originalIcons = [];
       state.baseIconDataUrl = null;
+      state.baseIconSource = "missing";
     }
+  }
+
+  function installLoadListener() {
+    if (state.pageLoadComplete) return;
+    window.addEventListener("load", () => {
+      state.pageLoadComplete = true;
+      rerenderBusyIconIfReady();
+    }, { once: true });
   }
 
   function installHeadObserver() {
@@ -868,6 +907,7 @@
     state.headObserver = new MutationObserver((mutations) => {
       if (!mutations.some(isIconMutation)) return;
       syncOriginalIconsFromDocument();
+      rerenderBusyIconIfReady();
     });
     state.headObserver.observe(document.head, {
       childList: true,
@@ -892,14 +932,25 @@
     return !!(node instanceof HTMLLinkElement && (node.id === EXT_ICON_LINK_ID || /\bicon\b/i.test(node.rel || "")));
   }
 
-  async function resolveBaseIconDataUrl(originalIcons) {
+  async function resolveBaseIconDataUrl(originalIcons, { allowFallback = true } = {}) {
     const preferredHref = pickPreferredIconHref(originalIcons);
-    if (!preferredHref) return createFallbackBaseIcon();
+    if (!preferredHref) {
+      return allowFallback
+        ? { dataUrl: createFallbackBaseIcon(), source: "fallback" }
+        : { dataUrl: null, source: "missing" };
+    }
     try {
-      return await imageUrlToDataUrl(preferredHref);
+      return {
+        dataUrl: await imageUrlToDataUrl(preferredHref),
+        source: "page"
+      };
     } catch (error) {
+      if (!allowFallback) {
+        console.warn("[TabBeacon] failed to render original favicon before load; delaying busy icon", error);
+        return { dataUrl: null, source: "unresolved" };
+      }
       console.warn("[TabBeacon] failed to render original favicon, using fallback", error);
-      return createFallbackBaseIcon();
+      return { dataUrl: createFallbackBaseIcon(), source: "fallback" };
     }
   }
 
@@ -957,8 +1008,7 @@
     dbg(`status: ${state.currentStatus} → ${nextStatus}`);
     state.currentStatus = nextStatus;
     if (nextStatus === "busy") {
-      const renderToken = ++state.iconRenderToken;
-      startAnimation(renderToken).catch((err) => console.error("[TabBeacon] startAnimation failed", err));
+      rerenderBusyIconIfReady();
       return;
     }
     state.iconRenderToken += 1;
@@ -966,13 +1016,30 @@
     restoreOriginalIcons();
   }
 
+  function canRenderBusyIcon() {
+    return state.pageLoadComplete || state.baseIconSource === "page" || state.originalIcons.length > 0;
+  }
+
+  function rerenderBusyIconIfReady() {
+    if (state.currentStatus !== "busy" || !canRenderBusyIcon()) return;
+    const renderToken = ++state.iconRenderToken;
+    startAnimation(renderToken).catch((err) => console.error("[TabBeacon] startAnimation failed", err));
+  }
+
   async function startAnimation(renderToken = state.iconRenderToken) {
     stopAnimation();
     if (renderToken !== state.iconRenderToken || state.currentStatus !== "busy") return;
     if (!state.baseIconDataUrl) {
-      const resolvedBaseIcon = await resolveBaseIconDataUrl(state.originalIcons);
+      const resolvedBaseIcon = await resolveBaseIconDataUrl(state.originalIcons, {
+        allowFallback: state.pageLoadComplete
+      });
       if (renderToken !== state.iconRenderToken || state.currentStatus !== "busy") return;
-      state.baseIconDataUrl = resolvedBaseIcon;
+      state.baseIconDataUrl = resolvedBaseIcon.dataUrl;
+      state.baseIconSource = resolvedBaseIcon.source;
+    }
+    if (!state.baseIconDataUrl) {
+      dbg("busy icon rendering delayed until page load or source favicon is available");
+      return;
     }
 
     if (state.indicatorSettings.indicatorStyle === "static-badge") {
@@ -1203,6 +1270,7 @@
     state.headObserver = null;
     state.originalIcons = [];
     state.baseIconDataUrl = null;
+    state.baseIconSource = "unknown";
     state.animationFrames = null;
     state.animationFrameIndex = 0;
     if (resetRules) {

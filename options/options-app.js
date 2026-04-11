@@ -19,8 +19,7 @@ function buildDefaultRules() {
       enabled: true,
       matches: [
         "https://chatgpt.com/c/*",
-        "https://chatgpt.com/g/*/c/*",
-        "https://chatgpt.com/g/*/project*"
+        "https://chatgpt.com/g/*/c/*"
       ],
       matchMode: "any",
       busyWhen: [
@@ -45,16 +44,15 @@ function buildDefaultRules() {
       domScopeMode: "selector",
       domScopes: [
         {
-          selectorType: "css",
-          query: "#thread"
+          selectorType: "xpath",
+          query: "(//*[@id='thread']//section[@data-turn='assistant'])[last()]"
         },
         {
           selectorType: "css",
-          query: 'div[data-scroll-root] main#main'
+          query: "#thread-bottom"
         }
       ],
-      useSmartBusySignals: true,
-      iconMode: "overlaySpinner"
+      useSmartBusySignals: true
     },
     {
       id: crypto.randomUUID(),
@@ -89,8 +87,7 @@ function buildDefaultRules() {
           resourceKind: "fetch-xhr"
         }
       ],
-      useSmartBusySignals: true,
-      iconMode: "overlaySpinner"
+      useSmartBusySignals: true
     },
     {
       id: crypto.randomUUID(),
@@ -115,8 +112,7 @@ function buildDefaultRules() {
           resourceKind: "fetch-xhr"
         }
       ],
-      useSmartBusySignals: true,
-      iconMode: "overlaySpinner"
+      useSmartBusySignals: true
     },
     {
       id: crypto.randomUUID(),
@@ -139,8 +135,7 @@ function buildDefaultRules() {
           query: '[data-testid="stop-button"]'
         }
       ],
-      useSmartBusySignals: true,
-      iconMode: "overlaySpinner"
+      useSmartBusySignals: true
     }
   ];
 }
@@ -171,8 +166,7 @@ const DEBUG_LOCAL_SANDBOX_PRESET = {
       resourceKind: "fetch-xhr"
     }
   ],
-  useSmartBusySignals: true,
-  iconMode: "overlaySpinner"
+  useSmartBusySignals: true
 };
 
 const indicatorSettingsToggleButton = document.getElementById("indicatorSettingsToggle");
@@ -243,8 +237,6 @@ async function init() {
   const hasStoredRules = Array.isArray(rulesResult[STORAGE_KEY]) && rulesResult[STORAGE_KEY].length > 0;
   let initialRules = hasStoredRules ? rulesResult[STORAGE_KEY] : DEFAULT_RULES;
 
-  initialRules = migrateRules(initialRules);
-
   const uiState = uiStateResult[UI_STATE_KEY] || {};
 
   if (hasStoredRules) {
@@ -264,7 +256,7 @@ async function init() {
 
   const debugExpanded = typeof uiState.debugExpanded === "boolean"
     ? uiState.debugExpanded
-    : !!uiState.showDebugTools;
+    : false;
 
   setDebugSectionExpanded(debugExpanded);
   setDebugModeSwitchState(debugModeEnabled);
@@ -479,7 +471,7 @@ async function applyImportedSettings(payload) {
     ? { ...(currentUiStateResult[UI_STATE_KEY] || {}), ...payload.uiState }
     : (currentUiStateResult[UI_STATE_KEY] || {});
   const debugModeEnabled = !!mergedUiState.debugMode;
-  const importedRules = syncRulesWithDebugMode(migrateRules(payload.rules), debugModeEnabled);
+  const importedRules = syncRulesWithDebugMode(payload.rules, debugModeEnabled);
   const nextIndicatorSettings = isPlainObject(payload.indicatorSettings)
     ? payload.indicatorSettings
     : currentIndicatorSettings;
@@ -496,7 +488,7 @@ async function applyImportedSettings(payload) {
   renderRules(importedRules.map(normalizeRuleForEditor));
   const debugExpanded = typeof mergedUiState.debugExpanded === "boolean"
     ? mergedUiState.debugExpanded
-    : !!mergedUiState.showDebugTools;
+    : false;
   setDebugSectionExpanded(debugExpanded);
   setDebugModeSwitchState(debugModeEnabled);
   updateDebugPresetStatus(importedRules);
@@ -798,7 +790,7 @@ async function seedMissingDefaults(rules, uiState) {
 
   const toAdd = defaults.filter((d) => {
     if (seededPresets.has(d.name) || existingNames.has(d.name)) return false;
-    // Skip if an existing rule already covers the same hostnames (e.g. renamed legacy rule)
+    // Skip if an existing rule already covers the same hostnames.
     const defaultHosts = extractHostnames(d.matches);
     return !existingHostnames.some((h) => defaultHosts.has(h));
   });
@@ -820,58 +812,16 @@ async function seedMissingDefaults(rules, uiState) {
   return updatedRules;
 }
 
-function migrateRules(rules) {
-  let changed = false;
-  const migrated = rules.map((rule) => {
-    if (!Array.isArray(rule.busyWhen)) return rule;
-    const filtered = rule.busyWhen.filter(
-      (c) => !(c.source === "dom" && c.query === '[aria-busy="true"]' && rule.name === "Gemini")
-    );
-    const removable = !!rule.removable;
-    // Rename legacy content-script fallback rule name
-    const name = rule.name === "ChatGPT (starter)" ? "ChatGPT" : rule.name;
-    const matches = Array.isArray(rule.matches) ? [...rule.matches] : [];
-    const shouldAddChatGptProjectMatch = name === "ChatGPT"
-      && matches.some((m) => typeof m === "string" && m.includes("chatgpt.com"))
-      && !matches.includes("https://chatgpt.com/g/*/project*");
-    if (shouldAddChatGptProjectMatch) {
-      matches.push("https://chatgpt.com/g/*/project*");
-    }
-    if (
-      filtered.length === rule.busyWhen.length
-      && removable === !!rule.removable
-      && name === rule.name
-      && !shouldAddChatGptProjectMatch
-    ) return rule;
-    changed = true;
-    return { ...rule, name, busyWhen: filtered, removable, matches };
-  });
-  if (changed) {
-    chrome.storage.local.set({ [STORAGE_KEY]: migrated });
-  }
-  return migrated;
-}
-
 function normalizeRuleForEditor(rule) {
-  const legacyDomScopeQuery = typeof rule.domScopeQuery === "string"
-    ? rule.domScopeQuery
-    : (typeof rule.domScopeSelector === "string" ? rule.domScopeSelector : "");
   const domScopeMode = ["auto", "document", "selector"].includes(rule.domScopeMode)
     ? rule.domScopeMode
-    : ((Array.isArray(rule.domScopes) && rule.domScopes.length) || legacyDomScopeQuery ? "selector" : "auto");
+    : (Array.isArray(rule.domScopes) && rule.domScopes.length ? "selector" : "auto");
   const domScopes = Array.isArray(rule.domScopes) && rule.domScopes.length
     ? rule.domScopes
-    : legacyDomScopeQuery
-      ? [{
-          selectorType: ["auto", "css", "xpath"].includes(rule.domScopeSelectorType) ? rule.domScopeSelectorType : "auto",
-          query: legacyDomScopeQuery
-        }]
-      : [createEmptyScope()];
+    : [createEmptyScope()];
   const busyWhen = Array.isArray(rule.busyWhen) && rule.busyWhen.length
     ? rule.busyWhen
-    : rule.busyQuery
-      ? [{ source: "dom", selectorType: rule.selectorType || "auto", query: rule.busyQuery }]
-      : [{ source: "dom", selectorType: "auto", query: "" }];
+    : [{ source: "dom", selectorType: "auto", query: "" }];
 
   const id = rule.id || crypto.randomUUID();
   const origin = rule.origin === SYSTEM_ORIGIN ? SYSTEM_ORIGIN : USER_ORIGIN;
@@ -903,8 +853,7 @@ function normalizeRuleForEditor(rule) {
       selectorType: ["auto", "css", "xpath"].includes(scope.selectorType) ? scope.selectorType : "auto",
       query: typeof scope.query === "string" ? scope.query : ""
     })),
-    useSmartBusySignals: rule.useSmartBusySignals !== false,
-    iconMode: rule.iconMode || "overlaySpinner"
+    useSmartBusySignals: rule.useSmartBusySignals !== false
   };
 }
 
@@ -1337,8 +1286,7 @@ function createEmptyRule() {
     busyWhen: [createEmptyCondition()],
     domScopeMode: "auto",
     domScopes: [createEmptyScope()],
-    useSmartBusySignals: true,
-    iconMode: "overlaySpinner"
+    useSmartBusySignals: true
   };
 }
 
@@ -1588,8 +1536,7 @@ function collectRulesFromDom() {
       }).filter((condition) => (condition.source === "network" ? condition.value : condition.query)),
       domScopeMode: root.querySelector(".rule-dom-scope-mode").value,
       domScopes: collectScopesFromRuleRoot(root).filter((scope) => scope.query),
-      useSmartBusySignals: root.querySelector(".rule-smart-busy").checked,
-      iconMode: "overlaySpinner"
+      useSmartBusySignals: root.querySelector(".rule-smart-busy").checked
     };
   });
 }

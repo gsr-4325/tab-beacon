@@ -2,7 +2,6 @@
   const themeBootstrap = window.TabBeaconThemeBootstrap || {};
   const THEME_STORAGE_KEY = window.TabBeaconThemeBootstrap?.THEME_STORAGE_KEY || "tabBeaconOptionsTheme";
   const MODE_STORAGE_KEY = "tabBeaconDefaultColorMode";
-  const LEGACY_MODE_STORAGE_KEY = "tabBeaconWin11ColorMode";
   const CURRENT_THEME = "default";
   const COLOR_MODES = ["dark", "light"];
 
@@ -172,7 +171,7 @@
 
   function getStoredMode() {
     try {
-      return resolveMode(window.localStorage.getItem(MODE_STORAGE_KEY) || window.localStorage.getItem(LEGACY_MODE_STORAGE_KEY));
+      return resolveMode(window.localStorage.getItem(MODE_STORAGE_KEY));
     } catch {
       return resolveMode("auto");
     }
@@ -182,7 +181,6 @@
     try {
       const resolved = COLOR_MODES.includes(mode) ? mode : resolveMode("auto");
       window.localStorage.setItem(MODE_STORAGE_KEY, resolved);
-      window.localStorage.removeItem(LEGACY_MODE_STORAGE_KEY);
     } catch {}
   }
 

@@ -132,6 +132,9 @@ Purpose:
 - [x] Add a real-site verification report template for returning findings in a reusable format
 - [x] Remove unreleased `iconMode` compatibility shims from the active options/content boot paths
 - [x] Add a current-schema options bridge so defaults and editor saves no longer rely on legacy `iconMode` cleanup hooks
+- [x] Remove the current-schema bridge and legacy cleanup files after dropping unreleased compatibility paths
+- [x] Remove the remaining textual `iconMode` leftovers from `options/options-app.js`
+- [x] Delay busy favicon rendering until page load completes or the page favicon is available
 
 ## Epic details
 
@@ -141,6 +144,7 @@ Purpose:
 - [x] Remove the unused legacy `content.js`
 - [x] Align reinjection script order with the manifest
 - [x] Make `content-indicator-renderer.js` reuse shared selector helpers where safe
+- [x] Delay favicon mutation until page load completes or a real page icon can be captured
 
 #### Remaining
 - [ ] Recheck sandbox behavior after content-side consolidation
@@ -191,8 +195,6 @@ Purpose:
 - [x] Remove unreleased backward-compatibility logic for old saved settings from the active runtime, especially legacy `iconMode` cleanup and migration shims
 
 #### Remaining
-- [ ] Remove the textual `iconMode` leftovers still present in `options/options-app.js` if that cleanup still matters after removing compatibility code
-- [ ] Delete the now-unused legacy cleanup files once current-schema handling is fully inlined
 - [ ] Decide whether Epic 4 is complete after one more verification pass
 
 ### Epic 5: docs / handoff synchronization
@@ -248,9 +250,8 @@ These are the tasks that are best done later by a human with the unpacked extens
 ## What the next AI should do first
 
 1. Read this file fully before changing direction.
-2. Remove the textual `iconMode` leftovers still present in `options/options-app.js` and delete the now-unused legacy cleanup files once the current-schema handling is safely inlined.
-3. Support the human browser smoke pass for options reset / edit / import after the active `iconMode` compatibility shims were removed.
-4. Do not start Epic 6 permission tightening before Epic 7 has validated the current runtime.
+2. Support the human browser smoke pass for options reset / edit / import after the active `iconMode` compatibility shims were removed.
+3. Do not start Epic 6 permission tightening before Epic 7 has validated the current runtime.
 
 ## Drift prevention notes
 

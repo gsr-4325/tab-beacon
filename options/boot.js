@@ -5,14 +5,9 @@
   const AVAILABLE_THEMES = new Set(
     themeRegistry?.getThemes?.().map((theme) => theme.id) || [DEFAULT_THEME]
   );
-  const LEGACY_THEME_ALIASES = {
-    default: DEFAULT_THEME,
-    ...(themeRegistry?.aliases || {})
-  };
-
   function normalizeThemeName(value) {
     const candidate = (value || "").trim();
-    const mapped = LEGACY_THEME_ALIASES[candidate] || candidate;
+    const mapped = candidate || DEFAULT_THEME;
     if (!/^[a-z0-9-]+$/i.test(mapped)) return DEFAULT_THEME;
     return AVAILABLE_THEMES.has(mapped) ? mapped : DEFAULT_THEME;
   }
@@ -116,7 +111,6 @@
     await loadScript("../shared/tab-beacon-selector-utils.js");
     await loadScript("./storage-api-bridge.js");
     await loadScript("./options-app.js");
-    await loadScript("./current-rule-schema.js");
     await loadScript("./selector-utils-bridge.js");
     await loadScript("./diagnostics-cooldown-bridge.js");
     await loadScript("./diagnostics-attribution-bridge.js");

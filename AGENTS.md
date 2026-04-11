@@ -12,3 +12,5 @@
 - Legacy settings cleanup code is not automatically valuable just because it exists.
 - If a cleanup bridge, migration helper, or stored-settings compatibility path only exists to support unreleased historical builds, it is a removal candidate.
 - When updating planning docs, keep them aligned with this pre-release policy.
+- Avoid embedding site-specific special-case logic for individual products such as `chatgpt.com` into extension runtime or settings plumbing.
+- Prefer expressing site differences through user-visible rule data, presets, and generic mechanisms rather than hard-coded per-site branches or patch files.
